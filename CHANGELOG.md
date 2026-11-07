@@ -4,6 +4,13 @@ Casora grew out of [Hemma](https://github.com/willsanderson/Hemma) 2.1.2 (MIT) a
 developed independently since 26.09.2026. Hemma's earlier entries are in the Git history.
 The German version is in [CHANGELOG.de.md](CHANGELOG.de.md).
 
+## 26.11.22 – 07.11.2026
+
+A wall-panel screensaver: a large clock over a photo, with the weather and an optional calendar.
+
+### New
+- **Screensaver:** under Settings, Tapping & tablet, Wall tablet. After 1, 2, 5 or 10 idle minutes the dashboard is covered by a large clock. The photo follows the weather, or rotates on its own. The weather source already chosen for the dashboard supplies the forecast, and one calendar can be shown along the bottom. A tap brings the dashboard back.
+
 ## 26.11.21 – 07.11.2026
 
 Your own assistant can now propose the setup, the room's energy becomes a ring, and a garage door left ajar for air no longer counts as open.

@@ -4,6 +4,13 @@ Casora ist aus [Hemma](https://github.com/willsanderson/Hemma) 2.1.2 (MIT) entst
 dem 26.09.2026 eigenständig weiterentwickelt. Hemmas frühere Einträge stehen in der Git-Historie.
 Die englische Fassung steht in [CHANGELOG.md](CHANGELOG.md).
 
+## 26.11.22 – 07.11.2026
+
+Ein Bildschirmschoner fürs Wand-Tablet: eine große Uhr über einem Foto, mit Wetter und einem Kalender nach Wahl.
+
+### Neu
+- **Bildschirmschoner:** unter Einstellungen, Tippen & Tablet, Wand-Tablet. Nach 1, 2, 5 oder 10 Minuten ohne Nutzung legt sich eine große Uhr über das Dashboard. Das Foto folgt dem Wetter oder wechselt von allein. Die Wetterquelle des Dashboards liefert die Vorhersage, und ein Kalender kann unten stehen. Ein Tippen holt das Dashboard zurück.
+
 ## 26.11.21 – 07.11.2026
 
 Dein eigener Assistent kann jetzt den Aufbau vorschlagen, die Energie im Raum wird zum Ring, und ein Garagentor mit Lüftungsspalt zählt nicht mehr als offen.
