@@ -4,6 +4,50 @@ Casora grew out of [Hemma](https://github.com/willsanderson/Hemma) 2.1.2 (MIT) a
 developed independently since 26.09.2026. Hemma's earlier entries are in the Git history.
 The German version is in [CHANGELOG.de.md](CHANGELOG.de.md).
 
+## 26.11.24 – 08.11.2026
+
+A fix for scenes showing up in the wrong room.
+
+### Fixed
+- **Scene in a room it does not belong to (#142):** a room without a Home Assistant area of the same name, such as a "Maintenance" room, took on the area of a few of its tiles and showed that area's scenes. Now an area counts only if more than half of the room's tiles are in it.
+
+## 26.11.23 – 08.11.2026
+
+Air conditioners in the thermostat, windows that count only when you are away, clearer security badges, and a Shade button you can set.
+
+### New
+- **Air conditioners in the thermostat popup (#144):** the popup offers the modes the device reports, including Cool, Heat/Cool, Dry and Fan only. Devices that cool also get fan, preset and swing. For a heating that only claims cooling modes, the tile has "Hide cooling".
+- **Count a door or window only when away (#141):** in the Studio under Doors and windows. While someone is home such a window stays visible but does not count as unsecured. When everyone is away, or the alarm is armed away, it warns again.
+- **Own value per gate (#138):** under Settings › Home & Devices › Advanced › Shutters at night every garage door has its own "Counts as closed up to … %".
+- **Settable Shade (#145):** the button in the blinds popup moves to a position you choose, says which, and can be hidden.
+- **Cards of your own (#143):** a new guide explains how your own tiles survive updates. You can show them in Discussions now.
+
+### Changed
+- **Security badge:** a single finding stands in words ("Window open"). The doors and windows sub-badges count ("All closed", "2 open", "2 tilted"), and doors and windows sit side by side in the usual order.
+- **A camera without an alert** now says "Calm" instead of "Secure".
+- **Blinds (#145):** the buttons fit the device ("Raise/Lower", "Extend/Retract"), the popup says when they move several covers, and groups that are not fully open read "Partly open".
+- **Tile row:** the left and right arrows are gone again in the fade look.
+- **Diagnostics (#136):** "Copy diagnostics" now shows batteries and whether the browser still runs old code.
+
+### Fixed
+- **Batteries listed twice (#136):** with Battery Notes every device still stood twice in the popup, the filter from 26.11.21 only covered the tile.
+- **Unreadable running scene (#142):** in German the scene had a transparent tile with dark text on the phone.
+- **Scene in the wrong room (#142):** a scene with an area of its own now shows only there, not in every room where it switches a device.
+
+## 26.11.22 – 07.11.2026
+
+Mealie joins the recipe tile, blinds get their own "counts as closed" value, and a fix for HA's integration check.
+
+### New
+- **Mealie in the recipe tile (#140):** with Home Assistant's Mealie integration the recipe tile shows today's dish ("Today · Pumpkin soup") with time, servings and tags. The popup shows the dish with its picture, description and tags, the meal plan of the next 7 days with every meal, the ingredients, the preparation steps and the Mealie shopping list to tick off. Without Mealie the tile stays as it was (Cookidoo, idea of the week).
+- **Counts as closed per blind (#138):** in the Studio under Security every picked blind has its own "Counts as closed up to … %" (0–99 %). Empty uses the general value; a blind that moves still counts as open.
+
+### Changed
+- **Messages › Appliances to watch (#139):** the field explains what it does: the bell says "… finished" when an appliance goes from running to off, idle or finished; other sensors, such as a temperature, send nothing there.
+
+### Fixed
+- **Integration check:** the description of `casora.setup_plan` no longer contains curly braces, which Home Assistant's hassfest read as placeholders.
+
 ## 26.11.21 – 07.11.2026
 
 Your own assistant can now propose the setup, the room's energy becomes a ring, and a garage door left ajar for air no longer counts as open.

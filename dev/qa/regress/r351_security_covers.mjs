@@ -175,6 +175,8 @@ await run('Desktop', dk.page, false, 'desktop');
 // ── Studio: Settings › Haus & Geräte › Erweitert › „Jalousien in der Nacht“ (group „Sicherheit: Jalousien“, since 04.11. without its own heading) ──
 await studio(dk.page, dash.url);
 const H = (fn, a) => dk.page.evaluate(fn, a);
+// A garage door, faked in the browser: the block lists it with its own value (#138).
+await fakeStates(dk.page, { 'cover.qa_gate_probe': { state: 'open', attributes: { device_class: 'garage', friendly_name: 'QA Garage', current_position: 1 } } }, { sticky: true });
 await H(() => window.__panel()._bOpenSettings && window.__panel()._bOpenSettings());
 await dk.page.waitForTimeout(1000);
 await dk.page.locator('.cs-hubsearch input').fill('Rollladen');
@@ -200,6 +202,28 @@ await check('Studio: „Nur abends und nachts“ on by default', st.night === 't
 await check('Studio: covers listed by area with check marks, the four picked ones checked', st.rows >= 4 && st.checked === 4 && st.areas.length >= 1, st);
 await dk.page.evaluate(() => { const r = window.__panel().shadowRoot; const g = r.querySelector('#pane [data-pkey="security"]'); if (g) g.scrollIntoView({ block: 'start' }); });
 await shoot(dk.page, 'desktop-4-studio.png');
+// Issue 138 follow-up: every picked cover has its own „Gilt als geschlossen bis … %“ row below it (empty = the
+// general value as placeholder); typing a value puts it in the draft's security.closed_up_to_by.
+const own = await H(() => {
+  const r = window.__panel().shadowRoot;
+  const rows = [...r.querySelectorAll('#pane .casora-psec-covers .frow.casora-psec-own')];
+  const inp = rows[0] && rows[0].querySelector('input.casora-psec-own-in');
+  const prev = rows[0] && rows[0].previousElementSibling;
+  if (inp) { inp.value = '40'; inp.dispatchEvent(new Event('input')); }
+  return { rows: rows.length, title: rows[0] ? rows[0].querySelector('b').textContent : '', after: prev ? prev.getAttribute('aria-checked') : null,
+    placeholder: inp ? inp.placeholder : null, by: (((window.__panel()._cs || {}).S || {}).security || {}).closed_up_to_by || null };
+});
+await check('Studio: an own „Gilt als geschlossen bis“ row under each picked cover', own.rows === 4 && own.title === 'Gilt als geschlossen bis' && own.after === 'true' && own.placeholder === '0', own);
+await check('Studio: an own value goes into the draft (closed_up_to_by)', own.by && Object.values(own.by)[0] === 40 && Object.keys(own.by).length === 1, own);
+const gate = await H(() => {
+  const r = window.__panel().shadowRoot;
+  const rows = [...r.querySelectorAll('#pane .casora-psec-gates .frow')];
+  const row = rows.find((x) => /QA Garage/.test(x.textContent));
+  const inp = row && row.querySelector('input.casora-psec-own-in');
+  if (inp) { inp.value = '15'; inp.dispatchEvent(new Event('input')); }
+  return { head: (r.querySelector('#pane .casora-psec-gates .fhead') || {}).textContent, found: !!row, by: (((window.__panel()._cs || {}).S || {}).security || {}).closed_up_to_by || null };
+});
+await check('Studio: a gate has its own value row, in the draft under closed_up_to_by', gate.found && gate.by && gate.by['cover.qa_gate_probe'] === 15, gate);
 // Unpick one: check mark goes, the save bar asks to save (nothing is saved here).
 await H(() => { const r = window.__panel().shadowRoot; const x = r.querySelector('#pane .casora-psec-covers .frow[aria-checked="true"]'); x.click(); });
 await dk.page.waitForTimeout(600);
@@ -207,6 +231,7 @@ const after = await H(() => { const r = window.__panel().shadowRoot; return { ch
   bar: !!r.querySelector('.cs-bar:not(.cs-clean)'), draft: ((window.__panel()._cs || {}).S || {}).security };
 });
 await check('Studio: unpicking marks it and offers saving', after.checked === 3 && after.bar && after.draft.covers.length === 3, after);
+await check('Studio: the unpicked cover loses its own row', await H(() => window.__panel().shadowRoot.querySelectorAll('#pane .casora-psec-covers .frow.casora-psec-own').length) === 3);
 await dk.browser.close();
 
 const ph = await open({ width: 393, height: 852, mobile: true, safari: true, scale: 2, dark: true, theme: 'Casora' });

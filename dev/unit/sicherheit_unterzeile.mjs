@@ -33,27 +33,33 @@ for (const r of both(sec({ triggered: true, locks: 1, windows: 2 }), { alarmStat
 
 // Ausführlich: Worte, „Schloss offen“ statt „1 Schloss“, Reihenfolge nach Wichtigkeit.
 const mix = sec({ locks: 1, windows: 2, doorsTilted: 1, camDead: 1 });
-assert.deepEqual(sum(mix, { summary: 'detailed' }), { text: 'Schloss offen · 2 Fenster offen · Tür gekippt · Kamera offline', html: null });
+assert.deepEqual(sum(mix, { summary: 'detailed' }), { text: '2 Fenster offen · Tür gekippt · Schloss offen · Kamera offline', html: null });
 const all = sec({ disarmed: true, doors: 2, gates: 1, locks: 2, windows: 1, windowsTilted: 3, doorsTilted: 2, lockDead: 2, camDead: 2 });
 assert.equal(sum(all, { summary: 'detailed' }).text,
-  'Alarm aus · 2 Türen offen · Tor offen · 2 Schlösser offen · Fenster offen · 3 Fenster gekippt · 2 Türen gekippt · 2 Schlösser offline · 2 Kameras offline');
+  'Alarm aus · 2 Türen offen · Fenster offen · 3 Fenster gekippt · 2 Türen gekippt · Tor offen · 2 Schlösser offen · 2 Schlösser offline · 2 Kameras offline');
 assert.equal(sum(sec({ gates: 2, lockDead: 1 }), { summary: 'detailed' }).text, '2 Tore offen · Schloss offline');
 assert.equal(sum(sec({ disarmed: true }), { summary: 'detailed' }).text, 'Alarm aus');
 
 // Kurz (Standard, auch ohne Angabe): ein Symbol je Meldung mit Zahl und Vorlese-Text.
 for (const o of [{}, { summary: 'short' }, { summary: 'irgendwas' }]) {
   const r = sum(mix, o);
-  assert.equal(r.text, 'Schloss offen · 2 Fenster offen · Tür gekippt · Kamera offline', 'Text bleibt die Liste (Tooltip)');
+  assert.equal(r.text, '2 Fenster offen · Tür gekippt · Schloss offen · Kamera offline', 'Text bleibt die Liste (Tooltip)');
   assert.ok(r.html && r.html.startsWith('<span class="cs-sum"'));
 }
 const html = sum(all, {}).html;
 const icons = [...html.matchAll(/url\('\/i\/([\w-]+)\.svg'\)/g)].map((m) => m[1]).filter((x, i, a) => a.indexOf(x) === i);
-assert.deepEqual(icons, ['door-open', 'garage', 'lock-open', 'window-open', 'window-tilt', 'lock', 'camera'], 'Reihenfolge der Symbole');
+assert.deepEqual(icons, ['door-open', 'window-open', 'window-tilt', 'garage', 'lock-open', 'lock', 'camera'], 'Reihenfolge der Symbole');
 const labels = [...html.matchAll(/aria-label="([^"]+)" title="([^"]+)"/g)].map((m) => { assert.equal(m[1], m[2]); return m[1]; });
-assert.deepEqual(labels, ['2 Türen offen', 'Tor offen', '2 Schlösser offen', 'Fenster offen', '3 Fenster gekippt', '2 Türen gekippt', '2 Schlösser offline', '2 Kameras offline']);
+assert.deepEqual(labels, ['2 Türen offen', 'Fenster offen', '3 Fenster gekippt', '2 Türen gekippt', 'Tor offen', '2 Schlösser offen', '2 Schlösser offline', '2 Kameras offline']);
 assert.ok(html.indexOf('>Alarm aus<') > 0 && html.indexOf('>Alarm aus<') < html.indexOf('door-open'), 'Alarm aus steht vorn, als Wort');
-// gekippt hat ein eigenes Symbol (nicht das von „offen“), offline ist durchgestrichen.
-const one = (o) => sum(sec(o), {}).html;
+// Security badge rework (07.11.2026): one finding alone stands in words, short form too („Fenster offen“, not
+// „1 offen ▢ 1“ – the same number twice).
+for (const [o, w] of [[{ windows: 1 }, 'Fenster offen'], [{ windows: 2 }, '2 Fenster offen'], [{ locks: 1 }, 'Schloss offen'],
+  [{ camDead: 1 }, 'Kamera offline'], [{ windowsTilted: 1 }, 'Fenster gekippt'], [{ disarmed: true }, 'Alarm aus']]) {
+  assert.deepEqual(sum(sec(o), {}), { text: w, html: null }, 'one finding in words: ' + w);
+}
+// gekippt hat ein eigenes Symbol (nicht das von „offen“), offline ist durchgestrichen – where icons show (two or more).
+const one = (o) => sum(sec({ ...o, doors: 1 }), {}).html;
 assert.ok(one({ windowsTilted: 1 }).includes('window-tilt') && !one({ windowsTilted: 1 }).includes('window-open'));
 assert.ok(one({ windows: 1 }).includes('window-open') && !one({ windows: 1 }).includes('window-tilt'));
 assert.ok(one({ camDead: 1 }).includes('rotate(-45deg)') && !one({ locks: 1 }).includes('rotate(-45deg)'));
@@ -61,7 +67,7 @@ assert.ok(one({ camDead: 1 }).includes('rotate(-45deg)') && !one({ locks: 1 }).i
 assert.ok(/font-weight:700">1<\/span>/.test(one({ locks: 1 })));
 // Attribute werden übersetzt (Englisch) und maskiert.
 window.casoraTr = (t) => ({ '2 Fenster offen': '2 windows open' }[t] || t);
-assert.ok(sum(sec({ windows: 2 }), {}).html.includes('aria-label="2 windows open"'));
+assert.ok(sum(sec({ windows: 2, doors: 1 }), {}).html.includes('aria-label="2 windows open"'));
 delete window.casoraTr;
 
 // Englisch: alle Wörter haben einen Eintrag in phrases/en.json.

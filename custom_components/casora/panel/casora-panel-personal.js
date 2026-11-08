@@ -86,6 +86,7 @@
     s.contacts = s.contacts || {};
     s.contacts.groups = Array.isArray(s.contacts.groups) ? s.contacts.groups : [];
     s.contacts.hidden = Array.isArray(s.contacts.hidden) ? s.contacts.hidden : [];
+    s.contacts.away_only = Array.isArray(s.contacts.away_only) ? s.contacts.away_only : [];
     s.contacts.names = s.contacts.names && typeof s.contacts.names === "object" ? s.contacts.names : {};
     s.security = s.security && typeof s.security === "object" ? s.security : {};
     s.security.covers = Array.isArray(s.security.covers) ? s.security.covers : [];
@@ -193,8 +194,8 @@
 
       // ── Building blocks ────────────────────────────────────────────────────
       // cls: device_class filter as in the panel (_entityList), list or {domain: [...]}.
-      const ent = (value, domains, onChange, ph, cls) => self._combo(value || "", self._entityList(domains, cls),
-        ph || (self._pickHint ? self._pickHint(domains) : ""), onChange).wrap;
+      const ent = (value, domains, onChange, ph, cls, opts) => self._combo(value || "", self._entityList(domains, cls),
+        ph || (self._pickHint ? self._pickHint(domains) : ""), onChange, opts).wrap;
       const txt = (value, ph, onChange, short) => {
         const i = document.createElement("input");
         i.className = "fin" + (short ? " casora-short" : "");
@@ -409,14 +410,23 @@
         const CONTACT = ["door", "window", "opening", "garage_door"];
         S.contacts.hidden.forEach((id, i) => {
           row(g, i ? "" : "Hidden", [
-            ent(id, ["binary_sensor"], (v) => { S.contacts.hidden[i] = v; }, null, CONTACT),
+            ent(id, ["binary_sensor"], (v) => { S.contacts.hidden[i] = v; }, null, CONTACT, { withRoom: true }),
             del(() => { S.contacts.hidden.splice(i, 1); }),
           ], i ? undefined : "This door or window does not count for security.");
         });
         addRow(g, "Hide a door or window", () => { S.contacts.hidden.push(""); });
+        // #141: counts only while the house is away (alarm armed away or everyone gone, casoraSecurityAway) – a window
+        // left open for air while someone is home is no security matter (contacts.away_only, 00-finder.js contacts()).
+        S.contacts.away_only.forEach((id, i) => {
+          row(g, i ? "" : "Only when away", [
+            ent(id, ["binary_sensor"], (v) => { S.contacts.away_only[i] = v; }, null, CONTACT, { withRoom: true }),
+            del(() => { S.contacts.away_only.splice(i, 1); }),
+          ], i ? undefined : "This door or window only counts for security when nobody is home or the alarm is armed away.");
+        });
+        addRow(g, "Count a door or window only when away", () => { S.contacts.away_only.push(""); });
         mapRows(S.contacts.names).forEach(([id, name], i) => {
           row(g, i ? "" : "Own name", [
-            ent(id, ["binary_sensor"], (v) => { setMap(S.contacts.names, id, v, S.contacts.names[id] || ""); render(); }, null, CONTACT),
+            ent(id, ["binary_sensor"], (v) => { setMap(S.contacts.names, id, v, S.contacts.names[id] || ""); render(); }, null, CONTACT, { withRoom: true }),
             txt(name, "Name", (v) => { S.contacts.names[id] = v; }, true),
             del(() => { delete S.contacts.names[id]; }),
           ], i ? undefined : "The name this door or window has in the security popups.");
@@ -475,6 +485,51 @@
         sec.covers.forEach((id) => { if (id && !listed.includes(id)) listed.push(id); });
         const meta = (id) => (typeof self._entMeta === "function" ? self._entMeta(id) : { name: self._prettyEntity(id), area: "" });
         listed.sort((a, b) => String(meta(a).name).localeCompare(String(meta(b).name)));
+        // Own „counts as closed up to“ of one cover or gate (security.closed_up_to_by, whole percent 0–99, checked in
+        // _csSave); empty = the general value above, shown as placeholder.
+        const ownInput = (id, name) => {
+          const ow = document.createElement("div");
+          ow.className = "cs-num";
+          const oi = document.createElement("input");
+          oi.type = "text";
+          oi.inputMode = "numeric";
+          oi.className = "casora-psec-own-in";
+          oi.placeholder = String(sec.closed_up_to || 0);
+          const by = sec.closed_up_to_by || {};
+          oi.value = by[id] != null ? String(by[id]) : "";
+          oi.setAttribute("aria-label", (window.casoraI18n ? window.casoraI18n.t("Counts as closed up to") : "Counts as closed up to") + " – " + name);
+          oi.setAttribute("data-no-i18n", "");
+          oi.oninput = () => {
+            const v = oi.value.trim();
+            sec.closed_up_to_by = sec.closed_up_to_by && typeof sec.closed_up_to_by === "object" ? sec.closed_up_to_by : {};
+            if (!v) delete sec.closed_up_to_by[id];
+            else sec.closed_up_to_by[id] = /^\d+$/.test(v) ? Number(v) : NaN;
+            if (!Object.keys(sec.closed_up_to_by).length) delete sec.closed_up_to_by;
+            if (typeof self._csBar === "function") self._csBar();
+          };
+          const ou = document.createElement("span");
+          ou.textContent = "%";
+          ou.setAttribute("data-no-i18n", "");
+          ow.append(oi, ou);
+          return ow;
+        };
+        // Gates count without being picked, so each has just its own value (issue 138; the reporter looked for the
+        // garage door in the list of blinds).
+        const gates = Object.keys(hass.states).filter((id) => {
+          if (!id.startsWith("cover.")) return false;
+          const e = reg[id];
+          if (e && (e.hidden || e.entity_category)) return false;
+          return GATE.includes(String((hass.states[id].attributes || {}).device_class || "").toLowerCase());
+        }).sort((a, b) => String(meta(a).name).localeCompare(String(meta(b).name)));
+        if (gates.length) {
+          const list = self._flowGroup(host, { header: "Gates: counts as closed up to" });
+          list.parentElement.classList.add("casora-psec-gates");
+          gates.forEach((id) => {
+            const m = meta(id), name = (m && (m.short || m.name)) || id;
+            const r = self._flowRow(list, { title: name, raw: true, sub: "Empty: the value above" });
+            r.row.appendChild(ownInput(id, name));
+          });
+        }
         if (!listed.length) {
           self._flowRow(g, { title: "No covers found", dim: true });
         } else {
@@ -493,10 +548,18 @@
                 check: sec.covers.includes(id), onTap: () => {
                   const i = sec.covers.indexOf(id);
                   if (i >= 0) sec.covers.splice(i, 1); else sec.covers.push(id);
-                  r.row.setAttribute("aria-checked", i >= 0 ? "false" : "true");
+                  // Unpicked: its own value goes too; render shows or hides the row below.
+                  if (i >= 0 && sec.closed_up_to_by) delete sec.closed_up_to_by[id];
+                  render();
                 } });
               const sub = r.row.querySelector(".rtext > span");
               if (sub && st) sub.setAttribute("data-no-i18n", "");
+              // Issue 138 follow-up: an own „counts as closed up to“ per picked cover.
+              if (sec.covers.includes(id)) {
+                const own = self._flowRow(list, { title: "Counts as closed up to", sub: "Empty: the value above" });
+                own.row.classList.add("casora-psec-own");
+                own.row.appendChild(ownInput(id, (m && (m.short || m.name)) || id));
+              }
             });
           });
         }

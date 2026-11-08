@@ -4,6 +4,50 @@ Casora ist aus [Hemma](https://github.com/willsanderson/Hemma) 2.1.2 (MIT) entst
 dem 26.09.2026 eigenständig weiterentwickelt. Hemmas frühere Einträge stehen in der Git-Historie.
 Die englische Fassung steht in [CHANGELOG.md](CHANGELOG.md).
 
+## 26.11.24 – 08.11.2026
+
+Ein Fix für Szenen im falschen Raum.
+
+### Behoben
+- **Szene in einem fremden Raum (#142):** Ein Raum ohne gleichnamigen Bereich in Home Assistant, etwa „Wartung“, übernahm den Bereich einzelner Kacheln und zeigte dessen Szenen. Jetzt zählt ein Bereich nur, wenn mehr als die Hälfte der Kacheln des Raums darin liegt.
+
+## 26.11.23 – 08.11.2026
+
+Klimaanlagen im Thermostat, Fenster, die nur bei Abwesenheit zählen, klarere Sicherheits-Badges, und das Beschatten lässt sich einstellen.
+
+### Neu
+- **Klimaanlagen im Thermostat-Popup (#144):** Das Popup bietet die Modi an, die das Gerät meldet, auch Kühlen, Heizen/Kühlen, Entfeuchten und Nur Lüfter. Geräte, die kühlen, bekommen zusätzlich Lüfter, Voreinstellung und Lamellen. Für eine Heizung, die Kühlmodi nur meldet, gibt es an der Kachel „Kühlen ausblenden“.
+- **Tür oder Fenster nur bei Abwesenheit zählen (#141):** Im Studio unter Türen und Fenster. Solange jemand zu Hause ist, bleibt so ein Fenster sichtbar, gilt aber nicht als unsicher. Sind alle weg oder steht die Alarmanlage auf abwesend, warnt es wieder.
+- **Eigener Wert pro Tor (#138):** Unter Einstellungen › Haus & Geräte › Erweitert › Jalousien in der Nacht hat jedes Garagentor sein eigenes „Gilt als geschlossen bis … %“.
+- **Beschatten einstellbar (#145):** Der Knopf im Jalousie-Popup fährt auf eine Position, die du festlegst, zeigt sie an und lässt sich ausblenden.
+- **Eigene Karten (#143):** Eine neue Anleitung erklärt, wie eigene Kacheln Updates überstehen. Zeigen könnt ihr sie jetzt unter Discussions.
+
+### Geändert
+- **Sicherheits-Badge:** Eine einzelne Meldung steht in Worten („Fenster offen“). Die Unterbadges Türen und Fenster zählen („Alle geschlossen“, „2 geöffnet“, „2 gekippt“), und Türen und Fenster stehen in der üblichen Reihenfolge nebeneinander.
+- **Kamera ohne Meldung** heißt jetzt „Ruhig“ statt „Sicher“.
+- **Jalousien (#145):** Die Knöpfe passen zum Gerät („Heben/Senken“, „Ausfahren/Einfahren“), das Popup sagt, wenn sie mehrere Geräte bewegen, und nicht ganz offene Gruppen heißen „Teilweise geöffnet“.
+- **Kachelreihe:** Die Pfeile links und rechts sind im Ausblend-Look wieder weg.
+- **Diagnose (#136):** „Diagnose kopieren“ zeigt jetzt Batterien und ob der Browser noch alten Code ausführt.
+
+### Behoben
+- **Batterien doppelt (#136):** Mit Battery Notes stand jedes Gerät weiterhin doppelt im Popup, der Filter aus 26.11.21 galt nur für die Kachel.
+- **Laufende Szene unlesbar (#142):** In deutscher Sprache hatte die Szene am Handy eine durchsichtige Fläche mit dunkler Schrift.
+- **Szene im falschen Raum (#142):** Eine Szene mit eigenem Bereich erscheint nur noch dort, nicht mehr in jedem Raum, in dem sie ein Gerät schaltet.
+
+## 26.11.22 – 07.11.2026
+
+Mealie kommt in die Rezept-Kachel, Rollos bekommen ihren eigenen „Gilt als geschlossen“-Wert, und ein Fix für HAs Integrationsprüfung.
+
+### Neu
+- **Mealie in der Rezept-Kachel (#140):** Mit der Mealie-Integration von Home Assistant zeigt die Rezept-Kachel das Gericht von heute („Heute · Kürbissuppe“) mit Zeit, Portionen und Tags. Das Popup zeigt das Gericht mit Bild, Beschreibung und Tags, den Speiseplan der nächsten 7 Tage mit jeder Mahlzeit, die Zutaten, die Zubereitungsschritte und die Mealie-Einkaufsliste zum Abhaken. Ohne Mealie bleibt die Kachel wie bisher (Cookidoo, Idee der Woche).
+- **Geschlossen pro Rollo (#138):** Im Studio unter Sicherheit hat jedes ausgewählte Rollo sein eigenes „Gilt als geschlossen bis … %“ (0–99 %). Leer gilt der allgemeine Wert; ein Rollo in Bewegung zählt weiter als offen.
+
+### Geändert
+- **Meldungen › Zu überwachende Geräte (#139):** Das Feld erklärt, was es tut: Die Glocke meldet „… fertig“, wenn ein Gerät von „läuft“ auf aus, idle oder fertig wechselt; andere Sensoren, etwa eine Temperatur, melden dort nichts.
+
+### Behoben
+- **Integrationsprüfung:** Die Beschreibung von `casora.setup_plan` enthält keine geschweiften Klammern mehr, die hassfest von Home Assistant als Platzhalter las.
+
 ## 26.11.21 – 07.11.2026
 
 Dein eigener Assistent kann jetzt den Aufbau vorschlagen, die Energie im Raum wird zum Ring, und ein Garagentor mit Lüftungsspalt zählt nicht mehr als offen.

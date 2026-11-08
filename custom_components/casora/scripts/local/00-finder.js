@@ -1111,11 +1111,32 @@ window.casoraIsPlant = window.casoraIsPlant || function (hass, id) {
     // Settings › Doors and windows › Hidden (#69): left out of every group, found automatically or not. A door with
     // two sensors shows as its combined sensor: hiding either one hides the door.
     var hidden = (cfg.contacts && cfg.contacts.hidden) || [];
+    // Issue #141: „Counts only when nobody is home“ (contacts.away_only) – a window left open for air while someone is
+    // home is no security matter (an alarm panel's home mode leaves such zones out too). Not counted
+    // unless the house is away by the security rule (securityAway: alarm armed away/vacation, or all persons gone).
+    // Without any person or alarm panel nobody can tell – then it counts, as before.
+    var away = awayOnly(cfg);
+    // They stay listed: quiet holds them (the doors/windows popups show them in a group of their own, neutral), only
+    // the groups – what the badges count – leave them out.
+    var tells = away.length && Object.keys(S).some(function (id) { return id.indexOf('person.') === 0 || id.indexOf('alarm_control_panel.') === 0; });
+    var quiet = [];
+    if (tells && !securityAway(hass)) groups.forEach(function (g) {
+      g.members = (g.members || []).filter(function (x) {
+        var q = away.indexOf(x) >= 0 || away.indexOf(sub[x]) >= 0;
+        if (q && hidden.indexOf(x) < 0 && hidden.indexOf(sub[x]) < 0 && quiet.indexOf(x) < 0) quiet.push(x);
+        return !q;
+      });
+    });
     if (hidden.length) groups.forEach(function (g) {
       g.members = (g.members || []).filter(function (x) { return hidden.indexOf(x) < 0 && hidden.indexOf(sub[x]) < 0; });
     });
-    return { groups: groups, sub: sub, excl: excl, tilt: tilt };
+    return { groups: groups, sub: sub, excl: excl, tilt: tilt, quiet: quiet };
   }
+  function awayOnly(cfg) {
+    var a = cfg && cfg.contacts && cfg.contacts.away_only;
+    return Array.isArray(a) ? a.filter(function (x) { return typeof x === 'string' && x; }) : [];
+  }
+
   // contacts() reads every binary sensor. Through button-card's state proxy each read subscribes the card to that
   // entity (it then redrew on every motion sensor of the house, and every further proxy read searched that list),
   // and it ran again for every card on every update. So: once per states object of HA's root element (HA replaces it
@@ -1126,6 +1147,9 @@ window.casoraIsPlant = window.casoraIsPlant || function (hass, id) {
   };
   var ccShared = { S: null, R: null, cfg: null, v: null };
   var contactsShared = function (hass) {
+    // With „only when nobody is home“ the result depends on being away: ask through the caller's hass, which subscribes
+    // its card to the persons and alarm panels, so it redraws when someone comes or goes.
+    if (hass && hass.states && awayOnly(window.CASORA_SETTINGS).length) securityAway(hass);
     var root = rootHass(), raw = root && root.states;
     if (!raw || !hass || reg(hass) !== reg(root)) return contacts(hass);
     var cfg = window.CASORA_SETTINGS || null;
@@ -1248,14 +1272,16 @@ window.casoraIsPlant = window.casoraIsPlant || function (hass, id) {
     var want = kind === 'window' ? 'window' : 'door';
     if (ownKinds(S, v, sees)[want]) return [];
     var cc = contactsOnce(hass), out = [];
-    cc.groups.forEach(function (g) {
-      (g.members || []).forEach(function (x) {
-        if (cc.excl.indexOf(x) >= 0 || !sees(x)) return;
-        var win = String(((S[x] || {}).attributes || {}).device_class || '') === 'window';
-        var id = cc.sub[x] || x;
-        if (win === (want === 'window') && out.indexOf(id) < 0) out.push(id);
-      });
-    });
+    // #141: one that counts only when nobody is home (quiet right now) stays in its sub-badge, shown but not warning
+    // (securityLevel rates it ok).
+    var take = function (x) {
+      if (cc.excl.indexOf(x) >= 0 || !sees(x)) return;
+      var win = String(((S[x] || {}).attributes || {}).device_class || '') === 'window';
+      var id = cc.sub[x] || x;
+      if (win === (want === 'window') && out.indexOf(id) < 0) out.push(id);
+    };
+    cc.groups.forEach(function (g) { (g.members || []).forEach(take); });
+    (cc.quiet || []).forEach(take);
     return out;
   };
   // One state for such a list (variables.contacts of casora_badge_contact_group): on while one is open,
@@ -1277,7 +1303,9 @@ window.casoraIsPlant = window.casoraIsPlant || function (hass, id) {
     return {
       entity_id: ids[0], state: open ? 'on' : live ? 'off' : 'unavailable',
       attributes: { device_class: v.contacts_kind === 'window' ? 'window' : 'door', friendly_name: v.label || '',
-        tilt: open > 0 && tilted === open, entity_id: ids.slice() },
+        tilt: open > 0 && tilted === open, entity_id: ids.slice(),
+        // How many are open/tilted by this same rule – the sub-badge's „2 geöffnet“ (security badge rework, 07.11.2026).
+        casora_open: open, casora_tilted: tilted },
     };
   };
   // Is this door/window tilted right now? The one answer for every place that names its state (popup head, dial,
@@ -1582,6 +1610,11 @@ window.casoraIsPlant = window.casoraIsPlant || function (hass, id) {
         if (['garage', 'gate', 'door'].indexOf(dc) >= 0 && gOpen) up(isAway() ? 'alarm' : 'warn');
       }
     });
+    // #141: a door/window that counts only when nobody is home is fine while someone is (casoraContacts().quiet).
+    if (contacts.length) {
+      var cq = contactsOnce(hass), quiet = cq.quiet || [];
+      if (quiet.length) contacts = contacts.filter(function (x) { return quiet.indexOf(x) < 0 && quiet.indexOf((cq.sub || {})[x]) < 0; });
+    }
     // Doors/windows: contact + tilt sensor (+ combined sensor) are one opening.
     if (contacts.length) openings(hass, contacts).forEach(function (u) {
       if (u.state === 'open') up(isAway() ? 'alarm' : 'warn');
@@ -1698,7 +1731,8 @@ window.casoraIsPlant = window.casoraIsPlant || function (hass, id) {
         return undefined;
       };
 
-      // Security: alarm, doors, gates, locks, windows, blinds, cameras, other (the sub-line's order).
+      // Security: alarm, doors, windows, gates, locks, blinds, cameras, other (the sub-line's order; doors and windows
+      // side by side, owner 08.11.2026).
       var GATE = ['garage', 'gate', 'door'];
       var low = function (x) { return String(x == null ? '' : x).toLowerCase(); };
       var keyOf = function (id, states) {
@@ -1727,7 +1761,7 @@ window.casoraIsPlant = window.casoraIsPlant || function (hass, id) {
         if (kind === 'door' || kind === 'window') return kind + 's';
         return keyOf(cfg.entity, states);
       };
-      window.casoraSecSub = make(['alarm', 'doors', 'gates', 'locks', 'windows', 'covers', 'cameras', 'other'], secCard);
+      window.casoraSecSub = make(['alarm', 'doors', 'windows', 'gates', 'locks', 'covers', 'cameras', 'other'], secCard);
       window.casoraSecSub.keyOf = keyOf;
 
       // Climate: temperature, humidity, air quality, blinds (the sub-row's order in button_card_templates.json).
@@ -1782,7 +1816,7 @@ window.casoraIsPlant = window.casoraIsPlant || function (hass, id) {
   // o.order: security_sub_order (casoraSecSub), the Studio's own order of the kinds.
   // Returns { text, html }: text is always the list in words (also for tooltip/screen reader),
   // html only for 'short' with findings, otherwise null.
-  // Order by importance: alarm off, door, gate, lock, window open, tilted, covers, offline.
+  // Order: alarm off, door, window open, tilted, gate, lock, covers, offline.
   window.casoraSecuritySummary = function (sec, o) {
     var S = sec || {};
     o = o || {};
@@ -1796,12 +1830,12 @@ window.casoraIsPlant = window.casoraIsPlant || function (hass, id) {
     var L = [];
     if (S.disarmed) L.push(['Alarm aus', null, 0, false, 'alarm']);
     if (S.doors) L.push([n(S.doors, 'Tür offen', 'Türen offen'), 'door-open', S.doors, false, 'doors']);
-    if (S.gates) L.push([n(S.gates, 'Tor offen', 'Tore offen'), 'garage', S.gates, false, 'gates']);
-    if (S.locks) L.push([n(S.locks, 'Schloss offen', 'Schlösser offen'), 'lock-open', S.locks, false, 'locks']);
-    if (S.lockJammed) L.push([S.lockJammed === 1 ? 'Schloss klemmt' : S.lockJammed + ' Schlösser klemmen', 'lock-unlocking', S.lockJammed, false, 'locks']);
     if (S.windows) L.push([n(S.windows, 'Fenster offen', 'Fenster offen'), 'window-open', S.windows, false, 'windows']);
     if (S.windowsTilted) L.push([n(S.windowsTilted, 'Fenster gekippt', 'Fenster gekippt'), 'window-tilt', S.windowsTilted, false, 'windows']);
     if (S.doorsTilted) L.push([n(S.doorsTilted, 'Tür gekippt', 'Türen gekippt'), 'window-tilt', S.doorsTilted, false, 'doors']);
+    if (S.gates) L.push([n(S.gates, 'Tor offen', 'Tore offen'), 'garage', S.gates, false, 'gates']);
+    if (S.locks) L.push([n(S.locks, 'Schloss offen', 'Schlösser offen'), 'lock-open', S.locks, false, 'locks']);
+    if (S.lockJammed) L.push([S.lockJammed === 1 ? 'Schloss klemmt' : S.lockJammed + ' Schlösser klemmen', 'lock-unlocking', S.lockJammed, false, 'locks']);
     // Selected covers open in the evening/night (#76, 34-security-covers.js), Home only.
     if (S.covers) L.push([n(S.covers, 'Jalousie offen', 'Jalousien offen'), 'cover_open', S.covers, false, 'covers']);
     if (S.lockDead) L.push([n(S.lockDead, 'Schloss offline', 'Schlösser offline'), 'lock', S.lockDead, true, 'locks']);
@@ -1810,6 +1844,9 @@ window.casoraIsPlant = window.casoraIsPlant || function (hass, id) {
     if (o.order && window.casoraSecSub) L = window.casoraSecSub.sort(L, o.order, function (x) { return x[4]; });
     var text = L.map(function (x) { return x[0]; }).join(' · ');
     if (o.summary === 'detailed') return { text: text, html: null };
+    // One finding only: its words say it best („Fenster offen“) – the short form read „1 offen ▢ 1“, the same number
+    // twice (security badge rework, 07.11.2026). Several: the lead word and one icon each, as below.
+    if (L.length === 1) return { text: text, html: null };
     // Short: one icon per finding; „gekippt“ has an icon of its own, offline is struck through.
     // Tooltip and screen-reader text say what is meant („2 Fenster offen“) – casora-i18n.js does
     // not translate attributes by itself, hence casoraTr here.

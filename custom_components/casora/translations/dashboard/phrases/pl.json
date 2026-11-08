@@ -2574,6 +2574,10 @@
     "Sehr feucht": "Bardzo wilgotno",
     "sehr feucht": "bardzo wilgotno",
     "Beschatten": "Zacienij",
+    "Heben": "Podnieś",
+    "Senken": "Opuść",
+    "Ausfahren": "Rozwiń",
+    "Einfahren": "Zwiń",
     "Fährt zurück": "Wraca",
     "Geparkt": "Zaparkowany",
     "Kein Akkustand": "Brak poziomu baterii",
@@ -2824,9 +2828,32 @@
     "Neustart: der Auftrag für deinen Assistenten ist verfallen": "Restart: zadanie dla twojego asystenta przepadło",
     "Claude prüft das Rad …": "Claude sprawdza rower …",
     "Claude wertet die Heizwoche aus …": "Claude analizuje tydzień ogrzewania …",
-    "Claude wertet die letzten 7 Tage aus …": "Claude analizuje ostatnie 7 dni …"
+    "Claude wertet die letzten 7 Tage aus …": "Claude analizuje ostatnie 7 dni …",
+    "Frühstück": "Śniadanie",
+    "Mittagessen": "Obiad",
+    "Abendessen": "Kolacja",
+    "Beilage": "Dodatek",
+    "Dessert": "Deser",
+    "Snack": "Przekąska",
+    "Notiz": "Notatka",
+    "Ohne Namen": "Bez nazwy",
+    "Mealie nicht erreichbar": "Mealie nieosiągalne",
+    "In Mealie für die nächsten 7 Tage planen": "Zaplanuj następne 7 dni w Mealie",
+    "Nächstes Gericht": "Następne danie",
+    "Zutaten": "Składniki",
+    "Zubereitung": "Przygotowanie",
+    "1 Portion": "1 porcja",
+    "Zählt nur bei Abwesenheit": "Liczy się tylko pod nieobecność"
   },
   "patterns": [
+    [
+      "^Beschatten (\\d+) %$",
+      "Zacienij {1} %"
+    ],
+    [
+      "^Gilt für alle (\\d+)$",
+      "Dotyczy wszystkich ({1})"
+    ],
     [
       "^Bauteil (\\d+) %$",
       "Część {1} %"
@@ -4281,11 +4308,11 @@
     ],
     [
       "^Spitze\\s24\\sStd\\.:\\s(.+)$",
-      "Szczyt w 24\u00a0h: {1}"
+      "Szczyt w 24 h: {1}"
     ],
     [
       "^Üblich\\sbis\\s(.+)$",
-      "Zwykle do\u00a0{1}"
+      "Zwykle do {1}"
     ],
     [
       "^(\\d+) Geräte ohne Wert$",
@@ -5074,6 +5101,10 @@
     [
       "^Letzter Test (.+)$",
       "Ostatni test {1}"
+    ],
+    [
+      "^(\\d+(?:,\\d+)?) Portionen$",
+      "Porcje: {1}"
     ]
   ]
 }

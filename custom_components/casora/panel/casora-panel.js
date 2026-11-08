@@ -2563,7 +2563,8 @@ const SECTIONS = [
 
       { ...LIST("notification_appliances", "Appliances to watch",
         ["sensor", "binary_sensor", "switch", "vacuum"]),
-        always: true, advanced: true, ord: 12 },
+        always: true, advanced: true, ord: 12,
+        hint: "Washing machine, dryer, printer …: the bell says “… finished” when the state goes from running (on, running, washing …) to off, idle or finished. Other sensors, such as a temperature, never send a message here." },
 
       { ...MAP("notification_appliance_timers", "Time remaining",
         "notification_appliances", ["sensor"]), classes: ["duration", "timestamp"],
@@ -4737,6 +4738,15 @@ const SPARK_FIELD = (hint) => ({ key: "sparkline", label: "Trend on tile", type:
 const CHART_COLOR = (placeholder) => ({ key: "chart_color", label: "Chart color", type: "text",
   advanced: true, placeholder: placeholder || "#00C3D0", hint: "A hex color, e.g. #30D158." });
 // casora_cover: the shade automation switch in the popup (#81 – users asked for it, popup-richtlinien-v3.md §8 exception).
+// casora_cover (#145): the popup's main buttons. Words only; what is sent stays the same.
+const COVER_BUTTON_FIELDS = [
+  { key: "cover_words", label: "Button words", type: "select", advanced: true, group: "Popup",
+    options: ["", "open", "raise", "extend"],
+    optionLabels: { "": "By device", open: "Open / Close", raise: "Raise / Lower", extend: "Extend / Retract" } },
+  { key: "shade_position", label: "Shade position", type: "number", advanced: true, group: "Popup", placeholder: "50",
+    hint: "1 to 99 %. The Shade button moves the cover to this position." },
+  { key: "shade_hide", label: "Hide Shade button", type: "bool", advanced: true, group: "Popup" },
+];
 const COVER_AUTOMATION_FIELDS = [
   { key: "smart_automation_entity", label: "Shade automation", domains: ["switch"],
     advanced: true, group: "Popup",
@@ -4769,6 +4779,8 @@ const TILE_TYPES = [
       TOGGLE_FIELD_ON,
       POPUP_TITLE(),
       SPARK_FIELD("A small line of the room temperature over the last 24 hours."),
+      { key: "hide_cooling", label: "Hide cooling", type: "bool", advanced: true,
+        hint: "For a heating that reports cooling modes it does not have." },
     ] },
   { id: "media", label: "Media player", template: "casora_media",
     domains: ["media_player"], fields: [
@@ -4793,7 +4805,7 @@ const TILE_TYPES = [
     domains: ["fan"], fields: [ICON_FIELD, TOGGLE_FIELD, POPUP_TITLE()] },
   { id: "cover", label: "Cover", template: "casora_cover",
     domains: ["cover"], fields: [ICON_OPEN_FIELD, ICON_CLOSED_FIELD, POPUP_TITLE_NAME,
-      ...COVER_AUTOMATION_FIELDS] },
+      ...COVER_BUTTON_FIELDS, ...COVER_AUTOMATION_FIELDS] },
   { id: "lock", 
     label: "Lock", template: "casora_lock",
     domains: ["lock"], fields: [TOGGLE_FIELD_ON, ICON_LOCKED_FIELD, ICON_UNLOCKED_FIELD, POPUP_TITLE_NAME] },
@@ -5006,7 +5018,7 @@ const TILE_TYPES = [
         boolDefault: true, advanced: true },
       ICON_OPEN_FIELD, ICON_CLOSED_FIELD,
       { key: "room_name", label: "Popup title", type: "text", advanced: true },
-      ...COVER_AUTOMATION_FIELDS,
+      ...COVER_BUTTON_FIELDS, ...COVER_AUTOMATION_FIELDS,
     ] },
   { id: "entity_actions",
     label: "Entity with buttons", template: "casora_entity_actions",
@@ -22267,7 +22279,11 @@ class CasoraPanel extends HTMLElement {
     const pretty = (v) => {
       if (iconMode) return v ? iconName(v, lang) : "";
       const nm = this._prettyEntity(v);
-      if (entityish && nm !== v) return this._entMeta(v).short;
+      if (entityish && nm !== v) {
+        // opts.withRoom: several sensors share a name („Fenster“), the room tells them apart (#141).
+        const m = this._entMeta(v);
+        return opts && opts.withRoom && m.area ? m.short + " \u00b7 " + m.area : m.short;
+      }
       return nameSeen.get(nm) > 1 && !isPhone(this) ? nm + " (" + v + ")" : nm;
     };
     const wrap = document.createElement("div");

@@ -117,7 +117,7 @@
           kw: "szenen szene stimmung reihenfolge farbe scenes" },
         { k: "contacts", personal: ["contacts"], title: "Doors and windows",
           plain: "Group, rename or hide doors and windows in the security overview.",
-          kw: "türen tueren fenster kontakte ausblenden umbenennen gruppen" },
+          kw: "türen tueren fenster kontakte ausblenden umbenennen gruppen abwesenheit abwesend lüften lueften zuhause" },
         { k: "security", personal: ["security"], title: "Shutters at night", adv: true,
           plain: "Which shutters count as open when the house is checked at night.",
           kw: "rollo rollos rollladen jalousie jalousien sicherheit abends nachts covers shutters" },
@@ -496,6 +496,13 @@
       const upTo = cs.S && cs.S.security && cs.S.security.closed_up_to;
       if (upTo !== undefined && !(typeof upTo === "number" && Number.isInteger(upTo) && upTo >= 0 && upTo <= 20)) {
         cs.err = t("“Counts as closed up to” must be a whole number from 0 to 20 %.");
+        this._csRepaint();
+        return false;
+      }
+      // The same per cover (security.closed_up_to_by): whole percent 0–99.
+      const upBy = cs.S && cs.S.security && cs.S.security.closed_up_to_by;
+      if (upBy && Object.keys(upBy).some((k) => !(typeof upBy[k] === "number" && Number.isInteger(upBy[k]) && upBy[k] >= 0 && upBy[k] <= 99))) {
+        cs.err = t("“Counts as closed up to” for a single gate or blind must be a whole number from 0 to 99 %.");
         this._csRepaint();
         return false;
       }
