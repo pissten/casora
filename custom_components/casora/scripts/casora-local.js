@@ -252,6 +252,8 @@ const MODULES = [
   '41-display-diag',
   '42-co',
   '43-screensaver',
+  '44-tile-glass',
+  '45-display-names',
 ];
 
 const START_MODULES = MODULES.slice(0, 5);
