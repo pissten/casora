@@ -51,6 +51,7 @@ assert.ok(!/weather\.[a-z0-9_]+/.test(read('custom_components/casora/scripts/loc
 assert.ok(read('custom_components/casora/panel/casora-panel.js').includes('Live wallpapers'), 'live or local is a setting');
 assert.ok(!/unsplash\.com/.test(read('custom_components/casora/scripts/local/43-screensaver.js')), 'no second photo source');
 assert.equal(S.wallQuery, '(hover: none) and (pointer: coarse) and (min-width: 600px)');
+assert.equal(S.deskQuery, '(hover: hover), (pointer: fine)');
 assert.ok(read('custom_components/casora/scripts/local/43-screensaver.js').includes('mousemove'), 'mouse counts as activity');
 assert.ok(read('custom_components/casora/scripts/local/43-screensaver.js').includes('overflow-y:auto'), 'columns can scroll');
 assert.ok(read('custom_components/casora/scripts/local/43-screensaver.js').includes('--primary-text-color'), 'colours follow the theme');

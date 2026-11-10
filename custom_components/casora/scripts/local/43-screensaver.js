@@ -1,4 +1,4 @@
-// Wall-panel screensaver. A dashboard turns it on under Settings › Tapping & tablet › Wall tablet
+// Screensaver for a computer or a wall tablet. A dashboard turns it on under Settings › Tapping & tablet › Wall tablet
 // (casora_screensaver on the room hero, same place as casora_idle_home). After that many minutes
 // without a tap the dashboard is covered by a large clock, a photo and, when configured, the
 // weather forecast and one calendar. A tap or a key brings the dashboard back. The background
@@ -9,8 +9,10 @@
 
   var ROTATE_MS = 15 * 60 * 1000;
   var FLIP_MS = 10 * 60 * 1000;
-  // Same test as "Return to Home when idle": a touch screen, at least 600px wide, no mouse hover.
+  // A wall tablet, same test as "Return to Home when idle". A computer is a fine pointer or a mouse.
+  // A phone is neither, so the cover stays off there.
   var WALL = '(hover: none) and (pointer: coarse) and (min-width: 600px)';
+  var DESK = '(hover: hover), (pointer: fine)';
   var ICONS = {
     sunny: 'mdi:weather-sunny',
     'clear-night': 'mdi:weather-night',
@@ -69,6 +71,7 @@
   api.photo = photo;
   api.upcoming = upcoming;
   api.wallQuery = WALL;
+  api.deskQuery = DESK;
   window._casoraScreensaver = api;
   if (!window.document || window.document.nodeType !== 9) return;
   if (api._booted) return;
@@ -448,7 +451,11 @@
   var idleT = 0;
   var pace = 0;
   var tabletQ = window.matchMedia ? window.matchMedia(WALL) : null;
-  function wall() { return !!(tabletQ && tabletQ.matches); }
+  var deskQ = window.matchMedia ? window.matchMedia(DESK) : null;
+  function screenOk() {
+    if (document.hidden) return false;
+    return !!((deskQ && deskQ.matches) || (tabletQ && tabletQ.matches));
+  }
   function onEntity(ev) {
     var path = (ev.composedPath && ev.composedPath()) || [];
     for (var i = 0; i < path.length; i++) {
@@ -501,7 +508,7 @@
     idleT = setInterval(tick, ms);
   }
   function tick() {
-    if (!wall()) { stop(); return; }
+    if (!screenOk()) { stop(); return; }
     var view = dash();
     if (!view) { listen(false); if (shown) hide(); return; }
     var vars = readVars(view.config);
@@ -525,11 +532,14 @@
     if (idleT) { clearInterval(idleT); idleT = 0; pace = 0; }
     if (shown) hide();
   }
-  function boot() { if (wall()) setPace(10000); else stop(); }
+  function boot() { if (screenOk()) setPace(10000); else stop(); }
   if (tabletQ && tabletQ.addEventListener) tabletQ.addEventListener('change', boot);
+  if (deskQ && deskQ.addEventListener) deskQ.addEventListener('change', boot);
   boot();
 
   document.addEventListener('visibilitychange', function () {
-    if (!document.hidden) bump();
+    if (document.hidden) { if (shown) hide(); return; }
+    bump();
+    boot();
   });
 })();
