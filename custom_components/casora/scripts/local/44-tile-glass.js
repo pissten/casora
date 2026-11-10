@@ -132,7 +132,11 @@
       // Inside the tile's shadow root. A style on the page never reaches in here,
       // and an unstyled SVG path is black.
       style.textContent = [
-        '.cs-glass{position:absolute;inset:0;z-index:-1;pointer-events:none;overflow:hidden;border-radius:inherit;',
+        // Clip to the card's own rounded corners. A negative layer without this
+        // paints a square over the curve at the bottom.
+        'ha-card:has(> .cs-glass){overflow:hidden;isolation:isolate;}',
+        '.cs-glass{position:absolute;inset:0;z-index:-1;pointer-events:none;overflow:hidden;',
+        'border-radius:var(--ha-card-border-radius,28px);',
         'color:var(--casora-icon-color-current,var(--casora-tone-general,var(--casora-color-teal,var(--accent-color))));}',
         '.cs-glass .cs-fill{fill:currentColor;fill-opacity:.34;}',
         '.cs-glass .cs-line{fill:none;stroke:color-mix(in srgb,currentColor 68%,#000);stroke-width:1.75;',

@@ -44,3 +44,4 @@ assert.ok(read('../../custom_components/casora/scripts/casora-local.js').include
 assert.ok(read('../../custom_components/casora/panel/casora-panel.js').includes('history_bg'), 'studio setting');
 assert.ok(!read('../../custom_components/casora/scripts/local/44-tile-glass.js').includes('setInterval(pass'), 'no dashboard scan on a timer');
 assert.ok(!read('../../custom_components/casora/scripts/local/44-tile-glass.js').includes('ha-card > :not'), 'tile parts keep their own position');
+assert.ok(read('../../custom_components/casora/scripts/local/44-tile-glass.js').includes('overflow:hidden;isolation:isolate'), 'the graph is clipped to the card');
