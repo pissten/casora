@@ -24,8 +24,9 @@
     windy: 'mdi:weather-windy',
     'windy-variant': 'mdi:weather-windy-variant',
   };
-  // Landscape photos, one set per weather. A missing image leaves the dark ground.
-  var PHOTOS = {
+  // Online pictures are opt-in (mode "unsplash"). Otherwise the clock sits on a
+  // dark ground, or on photos already stored in this Home Assistant.
+  var UNSPLASH = {
     sunny: [
       'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1920&q=80',
       'https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&w=1920&q=80',
@@ -51,7 +52,6 @@
       'https://images.unsplash.com/photo-1507400492013-162706c8c05e?auto=format&fit=crop&w=1920&q=80',
     ],
   };
-  var ROTATING = PHOTOS.sunny.concat(PHOTOS.cloudy, PHOTOS.night, PHOTOS.fog);
 
   function minutes(v) {
     var n = parseFloat(v);
@@ -69,8 +69,9 @@
     return 'cloudy';
   }
 
-  function photo(kind, seed, mode) {
-    var list = mode === 'photo' ? ROTATING : (PHOTOS[kind] || PHOTOS.cloudy);
+  function photo(kind, seed, mode, localList) {
+    var list = mode === 'unsplash' ? (UNSPLASH[kind] || UNSPLASH.cloudy) : localList;
+    if (!list || !list.length) return '';
     var n = Math.abs(Number(seed) || 0) % list.length;
     return list[n];
   }
@@ -103,21 +104,9 @@
       return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
     });
   };
-  var WORDS = {
-    none: { nb: 'Ingen avtaler', de: 'Keine Termine', en: 'No events' },
-    allday: { nb: 'Hele dagen', de: 'Ganztägig', en: 'All day' },
-  };
-
-  function langOf(hass) {
-    var l = (hass && (hass.language || (hass.locale && hass.locale.language))) || '';
-    l = String(l || (typeof navigator !== 'undefined' ? navigator.language : '') || 'en').toLowerCase();
-    if (l.indexOf('nb') === 0 || l.indexOf('no') === 0 || l.indexOf('nn') === 0) return 'nb';
-    if (l.indexOf('de') === 0) return 'de';
-    return 'en';
-  }
-  function word(hass, key) {
-    var pack = WORDS[key] || {};
-    return pack[langOf(hass)] || pack.en || '';
+  function word(key) {
+    var de = key === 'allday' ? 'Ganztägig' : 'Keine Termine';
+    return (typeof window.casoraTr === 'function' && window.casoraTr(de)) || de;
   }
   function use24(hass) {
     var fmt = hass && hass.locale && hass.locale.time_format;
@@ -320,7 +309,7 @@
     if (!rows.length) {
       var empty = document.createElement('div');
       empty.className = 'cs-ss-empty';
-      empty.textContent = word(hass, 'none');
+      empty.textContent = word('none');
       col.appendChild(empty);
       return;
     }
@@ -338,7 +327,7 @@
       title.textContent = ev.summary || '—';
       var span = document.createElement('div');
       span.className = 'cs-ss-span';
-      if (ev.allDay) span.textContent = word(hass, 'allday');
+      if (ev.allDay) span.textContent = word('allday');
       else {
         var a = new Intl.DateTimeFormat(loc, hour).format(ev.start);
         span.textContent = ev.end ? a + ' – ' + new Intl.DateTimeFormat(loc, hour).format(ev.end) : a;
@@ -351,9 +340,26 @@
     });
   }
 
+  var localPhotos = [];
+  var photosAt = 0;
+  function loadPhotos(hass) {
+    if (!hass || !hass.callWS || Date.now() - photosAt < 300000) return;
+    photosAt = Date.now();
+    hass.callWS({ type: 'casora/photos' }).then(function (msg) {
+      var map = (msg && msg.photos) || {};
+      localPhotos = Object.keys(map).map(function (k) { return map[k]; }).filter(function (u) {
+        return typeof u === 'string' && u.indexOf('/api/casora/photo/') === 0;
+      });
+    }).catch(function () { localPhotos = []; });
+  }
   function paintPhoto(state, mode) {
     var img = layer.querySelector('.cs-ss-photo');
-    var url = photo(bucket(state), Math.floor(Date.now() / ROTATE_MS), mode);
+    var url = '';
+    if (mode === 'unsplash' || mode === 'photo') {
+      url = photo(bucket(state), Math.floor(Date.now() / ROTATE_MS), mode, localPhotos);
+    }
+    if (!url) { img.removeAttribute('src'); img.hidden = true; return; }
+    img.hidden = false;
     if (img.getAttribute('src') !== url) img.setAttribute('src', url);
   }
 
@@ -422,6 +428,7 @@
     shown = true;
     var wx = vars.weather_entity || '';
     paintClock(view.hass);
+    if ((vars.casora_screensaver_bg || '') === 'photo') loadPhotos(view.hass);
     paintPhoto(view.hass.states[wx] && view.hass.states[wx].state, vars.casora_screensaver_bg || '');
     paintWeather(view.hass, wx);
     paintCalendar(view.hass);
@@ -486,6 +493,7 @@
     if (shown) {
       var vars = readVars(view.config);
       var wx = vars.weather_entity || '';
+      if ((vars.casora_screensaver_bg || '') === 'photo') loadPhotos(view.hass);
       paintPhoto(view.hass.states[wx] && view.hass.states[wx].state, vars.casora_screensaver_bg || '');
       paintWeather(view.hass, wx);
       if (Date.now() - eventsAt > 300000) takeEvents(view.hass, vars.casora_screensaver_calendar || '');
