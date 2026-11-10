@@ -3330,7 +3330,6 @@
       },
       "haptic": "light"
     },
-    "name": "Jalousie",
     "show_entity_picture": true,
     "show_icon": false,
     "show_name": true,
@@ -4718,7 +4717,6 @@
       "action": "toggle",
       "haptic": "light"
     },
-    "name": "Ventilator",
     "show_entity_picture": true,
     "show_icon": true,
     "show_name": true,
@@ -16925,7 +16923,6 @@
         "variant": "v3"
       }
     },
-    "name": "Thermostat",
     "show_entity_picture": false,
     "show_icon": false,
     "show_label": false,
@@ -17841,7 +17838,6 @@
       "service_data": "[[[ return { entity_id: entity?.entity_id }; ]]]\n",
       "haptic": "light"
     },
-    "name": "Saugroboter",
     "show_entity_picture": "[[[\n  const s = (entity?.state || '').toLowerCase();\n  return !['unknown', 'unavailable'].includes(s);\n]]]\n",
     "show_icon": false,
     "show_label": false,

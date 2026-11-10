@@ -7,15 +7,15 @@
 
   var ON = { on: 1, open: 1, unlocked: 1, home: 1, heat: 1, cool: 1, heat_cool: 1,
     dry: 1, fan_only: 1, playing: 1, cleaning: 1, active: 1, 'true': 1 };
-  var OFF = { off: 1, closed: 1, locked: 1, not_home: 1, idle: 1, 'false': 1,
-    unavailable: 1, unknown: 1, none: 1 };
+  var OFF = { off: 1, closed: 1, locked: 1, not_home: 1, idle: 1, 'false': 1 };
 
   function sample(state) {
     var s = String(state == null ? '' : state).trim().toLowerCase();
+    if (s === '' || s === 'unavailable' || s === 'unknown' || s === 'none') return null;
     if (Object.prototype.hasOwnProperty.call(ON, s)) return 1;
-    if (s === '' || Object.prototype.hasOwnProperty.call(OFF, s)) return 0;
+    if (Object.prototype.hasOwnProperty.call(OFF, s)) return 0;
     var n = parseFloat(s);
-    return isFinite(n) ? n : 0;
+    return isFinite(n) ? n : null;
   }
 
   // events: [{t, v}] already sampled. Times outside the window only carry the value in.
@@ -24,7 +24,7 @@
     var span = end - start;
     if (!(span > 0)) return [];
     var rows = (events || []).filter(function (e) {
-      return e && isFinite(e.t) && isFinite(e.v);
+      return e && isFinite(e.t) && e.v != null && isFinite(e.v);
     }).sort(function (a, b) { return a.t - b.t; });
     if (!rows.length) return [];
     var binary = rows.every(function (e) { return e.v === 0 || e.v === 1; });
@@ -132,12 +132,11 @@
       // Inside the tile's shadow root. A style on the page never reaches in here,
       // and an unstyled SVG path is black.
       style.textContent = [
-        '.cs-glass{position:absolute;inset:0;z-index:0;pointer-events:none;overflow:hidden;border-radius:inherit;',
+        '.cs-glass{position:absolute;inset:0;z-index:-1;pointer-events:none;overflow:hidden;border-radius:inherit;',
         'color:var(--casora-icon-color-current,var(--casora-tone-general,var(--casora-color-teal,var(--accent-color))));}',
         '.cs-glass .cs-fill{fill:currentColor;fill-opacity:.34;}',
         '.cs-glass .cs-line{fill:none;stroke:color-mix(in srgb,currentColor 68%,#000);stroke-width:1.75;',
         'stroke-linejoin:round;stroke-linecap:round;vector-effect:non-scaling-stroke;}',
-        'ha-card > :not(.cs-glass){position:relative;z-index:1;}',
         '.cs-glass svg{position:absolute;inset:0;width:100%;height:100%;display:block;}',
         '.cs-chips{position:absolute;right:14px;bottom:14px;z-index:3;display:flex;flex-direction:column;',
         'align-items:flex-end;gap:4px;max-width:46%;pointer-events:none;}',
@@ -153,9 +152,18 @@
     if (getComputedStyle(host).position === 'static') host.style.position = 'relative';
     layer = document.createElement('div');
     layer.className = 'cs-glass';
-    layer.innerHTML = '<svg viewBox="0 0 100 48" preserveAspectRatio="none" aria-hidden="true"></svg><div class="cs-chips"></div>';
+    layer.innerHTML = '<svg viewBox="0 0 100 48" preserveAspectRatio="none" aria-hidden="true"></svg>';
     host.insertBefore(layer, host.firstChild);
     return layer;
+  }
+
+  function chipsOf(host) {
+    var box = host.querySelector(':scope > .cs-chips');
+    if (box) return box;
+    box = document.createElement('div');
+    box.className = 'cs-chips';
+    host.appendChild(box);
+    return box;
   }
 
   function paint(layer, pts) {
@@ -169,8 +177,8 @@
       + '<path class="cs-line" d="' + ln + '"/>';
   }
 
-  function paintChips(layer, h, ids) {
-    var box = layer.querySelector('.cs-chips');
+  function paintChips(host, h, ids) {
+    var box = chipsOf(host);
     var html = '';
     (ids || []).forEach(function (id) {
       var text = chip(h && h.states && h.states[id]);
@@ -250,12 +258,14 @@
     if (!spec) {
       var old = host.querySelector(':scope > .cs-glass');
       if (old) old.remove();
+      var oldChips = host.querySelector(':scope > .cs-chips');
+      if (oldChips) oldChips.remove();
       return;
     }
     var layer = ensure(card);
     if (!layer) return;
     var h = hass();
-    paintChips(layer, h, spec.info);
+    paintChips(host, h, spec.info);
     if (!spec.hist || !spec.id) { paint(layer, []); return; }
     var src = sourceOf(card, h);
     var end = Date.now();
@@ -265,8 +275,34 @@
     });
   }
 
+  var watched = [];
+  function remember(card) {
+    if (watched.indexOf(card) === -1) watched.push(card);
+  }
+  function listWants(cards) {
+    for (var i = 0; i < (cards || []).length; i++) {
+      var c = cards[i];
+      if (!c) continue;
+      var v = c.variables || {};
+      if (v.history_bg === true || v.history_bg === 'true') return true;
+      if (Array.isArray(v.tile_info) && v.tile_info.filter(Boolean).length) return true;
+      if (c.card && listWants([c.card])) return true;
+      if (Array.isArray(c.cards) && listWants(c.cards)) return true;
+    }
+    return false;
+  }
+  function anyConfigured() {
+    var ha = document.querySelector('home-assistant');
+    var main = ha && ha.shadowRoot && ha.shadowRoot.querySelector('home-assistant-main');
+    var panel = main && main.shadowRoot && main.shadowRoot.querySelector('ha-panel-lovelace');
+    var views = panel && panel.lovelace && panel.lovelace.config && panel.lovelace.config.views;
+    if (!views) return false;
+    for (var i = 0; i < views.length; i++) if (listWants(views[i].cards)) return true;
+    return false;
+  }
   function pass() {
     if (/^\/casora-studio/.test(location.pathname)) return;
+    if (!anyConfigured()) return;
     var seen = [];
     var walk = function (root, d) {
       if (!root || d > 12 || !root.querySelectorAll) return;
@@ -276,15 +312,33 @@
         if (seen.indexOf(card) !== -1) continue;
         seen.push(card);
         var tpl = [].concat((card._config && card._config.template) || []);
-        if (tpl.some(function (t) { return String(t).indexOf('casora_') === 0; })) apply(card);
+        if (tpl.some(function (t) { return String(t).indexOf('casora_') === 0; })) {
+          if (wants(card)) remember(card);
+          apply(card);
+        }
       }
       var all = root.querySelectorAll('*');
       for (var j = 0; j < all.length; j++) if (all[j].shadowRoot) walk(all[j].shadowRoot, d + 1);
     };
     walk(document, 0);
   }
-
-  setInterval(pass, 3000);
-  window.addEventListener('location-changed', function () { setTimeout(pass, 400); });
-  setTimeout(pass, 800);
+  function refreshWatched() {
+    watched = watched.filter(function (c) { return c.isConnected; });
+    watched.forEach(apply);
+  }
+  var armed = false;
+  var tries = 0;
+  function arm() {
+    if (/^\/casora-studio/.test(location.pathname)) return;
+    if (!anyConfigured()) {
+      if (tries++ < 8) setTimeout(arm, 1000);
+      return;
+    }
+    if (armed) { pass(); return; }
+    armed = true;
+    [400, 1500, 4000].forEach(function (ms) { setTimeout(pass, ms); });
+    setInterval(refreshWatched, 30000);
+  }
+  window.addEventListener('location-changed', function () { tries = 0; setTimeout(arm, 400); });
+  setTimeout(arm, 800);
 })();

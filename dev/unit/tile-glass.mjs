@@ -16,7 +16,11 @@ assert.equal(G._booted, undefined, 'does not mount without a document');
 assert.equal(G.sample('on'), 1);
 assert.equal(G.sample('off'), 0);
 assert.equal(G.sample('22.5'), 22.5);
-assert.equal(G.sample('unavailable'), 0);
+assert.equal(G.sample('unavailable'), null, 'a missing reading is not zero');
+assert.equal(G.shape([{ t: 10, v: null }], 0, 100).length, 0);
+const temps = G.shape([{ t: 0, v: 20 }, { t: 100, v: 22 }], 0, 100);
+assert.equal(temps[0].v, 0);
+assert.equal(temps[temps.length - 1].v, 1);
 
 const start = 0, end = 100;
 const pts = G.shape([
@@ -38,3 +42,5 @@ assert.equal(G.chip({ state: 'unavailable', attributes: {} }), '');
 
 assert.ok(read('../../custom_components/casora/scripts/casora-local.js').includes("'44-tile-glass'"), 'module in MODULES');
 assert.ok(read('../../custom_components/casora/panel/casora-panel.js').includes('history_bg'), 'studio setting');
+assert.ok(!read('../../custom_components/casora/scripts/local/44-tile-glass.js').includes('setInterval(pass'), 'no dashboard scan on a timer');
+assert.ok(!read('../../custom_components/casora/scripts/local/44-tile-glass.js').includes('ha-card > :not'), 'tile parts keep their own position');

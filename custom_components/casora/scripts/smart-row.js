@@ -8,6 +8,50 @@ const filterCategories = () => window.CASORA_FILTER_CATEGORIES || {};
 // for an ha-card that never comes, three times per tile (~250k calls while a phone dashboard loads).
 const NO_CARD_INSIDE = new Set(['ha-card', 'ha-ripple', 'ha-svg-icon', 'ha-state-icon', 'ha-icon']);
 
+// How many fixed phone rows a card needs. Shared, so the home row and the room grid
+// measure the same way. 0 means the card is not ready yet.
+function casoraGrowSpan(height, row, gap) {
+  if (!(height >= 40)) return 0;
+  var step = (row > 0 ? row : 66) + (gap >= 0 ? gap : 8);
+  return Math.min(16, Math.max(2, Math.ceil((height + 2) / step)));
+}
+window.casoraGrowSpan = casoraGrowSpan;
+
+const PHONE_GRID = '(max-width: 767px) and (orientation: portrait), (max-height: 500px) and (orientation: portrait), (max-height: 500px) and (orientation: landscape), (max-height: 600px) and (orientation: landscape) and (hover: hover)';
+
+// Grow the row to the card's own height. The card keeps its column: a half-width
+// card stays half width. A ResizeObserver refits when the content arrives later.
+window.casoraFitGrow = function (el, opts) {
+  if (!el || !el.isConnected) return;
+  var phone = window.matchMedia(PHONE_GRID).matches;
+  if (!phone) { el.style.removeProperty('grid-row'); return; }
+  var grid = (opts && opts.grid) || el.parentElement;
+  var row = parseFloat(getComputedStyle(grid || document.documentElement).getPropertyValue('--casora-tile-row-h-current')) || 66;
+  var gap = grid ? (parseFloat(getComputedStyle(grid).rowGap) || 8) : 8;
+  var card = opts && opts.inner ? el.firstElementChild : el;
+  if (!card) return;
+  if (el.style.gridRow !== 'span 16') {
+    el.style.alignSelf = 'start';
+    el.style.overflow = 'visible';
+    el.style.gridRow = 'span 16';
+    requestAnimationFrame(function () { window.casoraFitGrow(el, opts); });
+    return;
+  }
+  var span = casoraGrowSpan(Math.ceil(card.getBoundingClientRect().height), row, gap);
+  if (!span) return;
+  var next = 'span ' + span;
+  if (el.style.gridRow !== next) el.style.gridRow = next;
+};
+window.casoraWatchGrow = function (el, opts) {
+  window.casoraFitGrow(el, opts);
+  if (!el || el._casoraGrowWatch || typeof ResizeObserver !== 'function') return;
+  var card = opts && opts.inner ? el.firstElementChild : el;
+  if (!card) return;
+  var ro = new ResizeObserver(function () { window.casoraFitGrow(el, opts); });
+  ro.observe(card);
+  el._casoraGrowWatch = ro;
+};
+
 (function measureSafeArea() {
   function measure() {
     const probe = document.createElement('div');
@@ -1054,36 +1098,9 @@ class CasoraSmartRow extends HTMLElement {
   }
 
   // Phone and portrait-tablet grids use fixed 66px rows. A pasted card spans as
-  // many of those rows as its own lines need, across the full width.
-  _phoneGrid() {
-    return window.matchMedia(
-      '(max-width: 767px) and (orientation: portrait), (max-height: 500px) and (orientation: portrait), (max-height: 500px) and (orientation: landscape), (max-height: 600px) and (orientation: landscape) and (hover: hover)'
-    ).matches;
-  }
-
+  // many of those rows as its own lines need, and keeps the width it was given.
   _scheduleGrow(wrapper) {
-    const run = () => this._fitGrow(wrapper);
-    requestAnimationFrame(run);
-    setTimeout(run, 400);
-    setTimeout(run, 1200);
-  }
-
-  _fitGrow(wrapper) {
-    if (!wrapper || wrapper.dataset.grow !== '1' || !wrapper.isConnected) return;
-    if (!this._phoneGrid()) { wrapper.style.removeProperty('grid-row'); return; }
-    const card = wrapper.firstElementChild;
-    if (!card) return;
-    const row = parseFloat(getComputedStyle(this).getPropertyValue('--casora-tile-row-h-current')) || 66;
-    const gap = this._container ? (parseFloat(getComputedStyle(this._container).rowGap) || 8) : 8;
-    if (wrapper.style.gridRow !== 'span 16') {
-      wrapper.style.gridRow = 'span 16';
-      requestAnimationFrame(() => this._fitGrow(wrapper));
-      return;
-    }
-    const h = Math.ceil(card.getBoundingClientRect().height);
-    if (h < 40) return;
-    const span = Math.min(16, Math.max(2, Math.ceil((h + 2) / (row + gap))));
-    wrapper.style.gridRow = 'span ' + span;
+    window.casoraWatchGrow(wrapper, { grid: this, inner: true });
   }
 
   _scheduleLargeFill(wrapper) {
