@@ -25,10 +25,7 @@ Settings where you need them, a new Tasks tile, and new events right from the ca
 
 ## 26.11.24 – 08.11.2026
 
-A fix for scenes showing up in the wrong room, and a wall-panel screensaver.
-
-### New
-- **Screensaver:** under Settings, Tapping & tablet, Wall tablet. After 1, 2, 5 or 10 idle minutes a large clock covers the dashboard, over a photo that follows the weather. The forecast and one calendar sit along the bottom. A tap brings the dashboard back.
+A fix for scenes showing up in the wrong room.
 
 ### Fixed
 - **Scene in a room it does not belong to (#142):** a room without a Home Assistant area of the same name, such as a "Maintenance" room, took on the area of a few of its tiles and showed that area's scenes. Now an area counts only if more than half of the room's tiles are in it.

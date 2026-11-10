@@ -25,10 +25,7 @@ Einstellungen dort, wo du sie brauchst, eine neue Aufgaben-Kachel und neue Termi
 
 ## 26.11.24 – 08.11.2026
 
-Ein Fix für Szenen im falschen Raum, und ein Bildschirmschoner fürs Wand-Tablet.
-
-### Neu
-- **Bildschirmschoner:** unter Einstellungen, Tippen & Tablet, Wand-Tablet. Nach 1, 2, 5 oder 10 Minuten ohne Nutzung legt sich eine große Uhr über das Dashboard. Das Foto folgt dem Wetter. Wettervorhersage und ein Kalender stehen unten. Ein Tippen holt das Dashboard zurück.
+Ein Fix für Szenen im falschen Raum.
 
 ### Behoben
 - **Szene in einem fremden Raum (#142):** Ein Raum ohne gleichnamigen Bereich in Home Assistant, etwa „Wartung“, übernahm den Bereich einzelner Kacheln und zeigte dessen Szenen. Jetzt zählt ein Bereich nur, wenn mehr als die Hälfte der Kacheln des Raums darin liegt.
