@@ -2398,7 +2398,7 @@ const SECTIONS = [
         options: ["", "1", "2", "5", "10"],
         optionLabels: { "": "Off", "1": "After 1 minute", "2": "After 2 minutes",
           "5": "After 5 minutes", "10": "After 10 minutes" },
-        hint: "A large clock, with the weather and one calendar along the bottom. A tap outside those brings the dashboard back. For a wall panel." },
+        hint: "Only on a wall tablet. A large clock, with the weather and one calendar along the bottom. A tap outside those brings the dashboard back." },
       { ...E("casora_screensaver_calendar", "Calendar", ["calendar"]), sub: "chrome",
         auto: true, scope: "dashboard", noAdd: true, placeholder: "None",
         when: (v) => v.casora_screensaver != null && v.casora_screensaver !== "",

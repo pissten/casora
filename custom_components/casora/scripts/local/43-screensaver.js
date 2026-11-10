@@ -8,6 +8,9 @@
   if (window._casoraScreensaver && window._casoraScreensaver._booted) return;
 
   var ROTATE_MS = 15 * 60 * 1000;
+  var FLIP_MS = 10 * 60 * 1000;
+  // Same test as "Return to Home when idle": a touch screen, at least 600px wide, no mouse hover.
+  var WALL = '(hover: none) and (pointer: coarse) and (min-width: 600px)';
   var ICONS = {
     sunny: 'mdi:weather-sunny',
     'clear-night': 'mdi:weather-night',
@@ -65,6 +68,7 @@
   api.bucket = bucket;
   api.photo = photo;
   api.upcoming = upcoming;
+  api.wallQuery = WALL;
   window._casoraScreensaver = api;
   if (!window.document || window.document.nodeType !== 9) return;
   if (api._booted) return;
@@ -149,38 +153,43 @@
     if (layer) return layer;
     var style = document.createElement('style');
     style.textContent = [
-      '.cs-ss{position:fixed;inset:0;z-index:2147483000;background:#101010;color:#FFF4C4;',
+      '.cs-ss{position:fixed;inset:0;z-index:2147483000;',
+      'background:var(--ha-card-background,var(--card-background-color,#111));',
+      'color:var(--primary-text-color);',
       'font-family:var(--primary-font-family,var(--ha-font-family,system-ui,sans-serif));',
       'display:none !important;flex-direction:column;cursor:pointer;touch-action:none;',
       '-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;}',
       '.cs-ss.cs-ss-on{display:flex !important;}',
       '.cs-ss-photo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none;}',
-      '.cs-ss-scrim{position:absolute;inset:0;background:rgba(0,0,0,.28);pointer-events:none;}',
+      '.cs-ss-scrim{position:absolute;inset:0;pointer-events:none;',
+      'background:color-mix(in srgb,var(--ha-card-background,var(--card-background-color,#111)) 46%,transparent);}',
       '.cs-ss-clock{position:relative;z-index:1;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;',
-      'text-shadow:0 8px 24px rgba(0,0,0,.55);font-variant-numeric:tabular-nums;}',
+      'text-shadow:0 8px 24px color-mix(in srgb,var(--ha-card-background,#000) 70%,transparent);',
+      'font-variant-numeric:tabular-nums;transition:transform 1.8s ease;}',
       '.cs-ss-time{font-weight:300;font-size:min(26vw,34vh);letter-spacing:-.03em;line-height:.9;}',
       '.cs-ss-sec{font-size:.28em;margin-left:.12em;font-weight:300;vertical-align:super;}',
       '.cs-ss-date{margin-top:10px;font-size:min(3.4vw,28px);font-weight:600;}',
       '.cs-ss-bar{position:relative;z-index:1;display:flex;gap:18px;min-height:26vh;max-height:42vh;',
       'padding:16px 28px calc(22px + env(safe-area-inset-bottom,0px));box-sizing:border-box;',
-      'background:linear-gradient(to bottom,transparent,rgba(18,18,18,.82) 30%,rgba(18,18,18,.88));}',
-      '.cs-ss-col{flex:1;min-width:0;display:flex;flex-direction:column;gap:10px;}',
+      'background:linear-gradient(to bottom,transparent,color-mix(in srgb,var(--ha-card-background,var(--card-background-color,#111)) 82%,transparent) 30%,color-mix(in srgb,var(--ha-card-background,var(--card-background-color,#111)) 90%,transparent));}',
+      '.cs-ss-col{flex:1;min-width:0;min-height:0;display:flex;flex-direction:column;gap:10px;',
+      'overflow-y:auto;touch-action:pan-y;overscroll-behavior:contain;}',
       '.cs-ss-cal{flex:1.6;}',
       '.cs-ss-rule{width:1px;align-self:stretch;background:rgba(255,255,255,.18);}',
       '.cs-ss-now{display:flex;align-items:center;gap:12px;}',
-      '.cs-ss-now ha-icon{--mdc-icon-size:42px;color:#FFF4C4;}',
+      '.cs-ss-now ha-icon{--mdc-icon-size:42px;color:var(--casora-icon-color-current,var(--primary-color));}',
       '.cs-ss-temp{font-size:28px;font-weight:600;line-height:1;}',
-      '.cs-ss-cond{font-size:13px;color:rgba(255,244,196,.8);}',
+      '.cs-ss-cond{font-size:13px;color:color-mix(in srgb,var(--primary-text-color) 72%,transparent);}',
       '.cs-ss-hours{display:flex;gap:8px;}',
-      '.cs-ss-hour{flex:1;min-width:0;text-align:center;font-size:11px;color:rgba(255,244,196,.8);}',
-      '.cs-ss-hour ha-icon{--mdc-icon-size:22px;color:#FFF4C4;}',
-      '.cs-ss-hour b{display:block;color:#FFF4C4;font-weight:500;font-size:12px;}',
+      '.cs-ss-hour{flex:1;min-width:0;text-align:center;font-size:11px;color:color-mix(in srgb,var(--primary-text-color) 72%,transparent);}',
+      '.cs-ss-hour ha-icon{--mdc-icon-size:22px;color:var(--casora-icon-color-current,var(--primary-color));}',
+      '.cs-ss-hour b{display:block;color:var(--primary-text-color);font-weight:500;font-size:12px;}',
       '.cs-ss-ev{display:flex;gap:10px;font-size:14px;}',
-      '.cs-ss-when{width:88px;flex:none;font-size:12px;color:rgba(255,244,196,.8);}',
+      '.cs-ss-when{width:88px;flex:none;font-size:12px;color:color-mix(in srgb,var(--primary-text-color) 72%,transparent);}',
       '.cs-ss-what{min-width:0;}',
       '.cs-ss-what b{display:block;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}',
-      '.cs-ss-span{font-size:12px;color:rgba(255,244,196,.8);}',
-      '.cs-ss-empty{color:rgba(255,244,196,.8);font-size:14px;}',
+      '.cs-ss-span{font-size:12px;color:color-mix(in srgb,var(--primary-text-color) 72%,transparent);}',
+      '.cs-ss-empty{color:color-mix(in srgb,var(--primary-text-color) 72%,transparent);font-size:14px;}',
     ].join('');
     document.head.appendChild(style);
     layer = document.createElement('div');
@@ -218,6 +227,13 @@
     time.appendChild(sec);
     var date = new Intl.DateTimeFormat(localeOf(hass), { weekday: 'long', day: 'numeric', month: 'long' }).format(now);
     layer.querySelector('.cs-ss-date').textContent = date.charAt(0).toUpperCase() + date.slice(1);
+    var clock = layer.querySelector('.cs-ss-clock');
+    var step = Math.floor(now.getTime() / 60000);
+    var x = ((step * 17) % 9) - 4;
+    var y = ((step * 13) % 7) - 3;
+    clock.style.transform = 'translate(' + x + 'vw,' + y + 'vh)';
+    var bar = layer.querySelector('.cs-ss-bar');
+    bar.style.flexDirection = (Math.floor(now.getTime() / FLIP_MS) % 2) ? 'row-reverse' : 'row';
   }
 
   function paintWeather(hass, entityId) {
@@ -424,10 +440,15 @@
     bump();
   }
 
-  // A tap on the weather or the calendar stays. Anywhere else on the cover (clock, photo)
-  // closes it at once. The whole gesture is swallowed, so the dashboard underneath never
-  // sees it and does not navigate or reload.
+  // A tap on the weather or the calendar stays, and those columns scroll. Anywhere else
+  // on the cover closes it at once. The gesture is swallowed, so the dashboard underneath
+  // never sees it and does not navigate or reload.
   var eatUntil = 0;
+  var listening = false;
+  var idleT = 0;
+  var pace = 0;
+  var tabletQ = window.matchMedia ? window.matchMedia(WALL) : null;
+  function wall() { return !!(tabletQ && tabletQ.matches); }
   function onEntity(ev) {
     var path = (ev.composedPath && ev.composedPath()) || [];
     for (var i = 0; i < path.length; i++) {
@@ -441,30 +462,55 @@
     ev.stopPropagation();
     if (ev.cancelable) ev.preventDefault();
   }
+  function onMove() { if (!shown) bump(); }
   function onGesture(ev) {
     if (shown) {
-      if (onEntity(ev)) { block(ev); return; }
+      if (onEntity(ev)) { ev.stopPropagation(); return; }
+      if (ev.type === 'wheel' || ev.type === 'touchmove' || ev.type === 'mousemove') { block(ev); return; }
+      if (ev.type !== 'pointerdown' && ev.type !== 'touchstart' && ev.type !== 'click' && ev.type !== 'keydown') return;
       hide();
       eatUntil = Date.now() + 900;
       block(ev);
       return;
     }
     if (Date.now() < eatUntil) { block(ev); return; }
-    if (ev.type === 'pointerdown' || ev.type === 'touchstart' || ev.type === 'keydown') bump();
+    if (ev.type === 'pointerdown' || ev.type === 'touchstart' || ev.type === 'keydown' || ev.type === 'wheel') bump();
   }
-  ['pointerdown', 'pointerup', 'pointercancel', 'touchstart', 'touchend', 'touchcancel', 'click', 'auxclick', 'contextmenu'].forEach(function (t) {
-    window.addEventListener(t, onGesture, true);
-  });
-  window.addEventListener('keydown', onGesture, true);
-
-  setInterval(function () {
+  var gestureTypes = ['pointerdown', 'pointerup', 'pointercancel', 'touchstart', 'touchend', 'touchcancel', 'click', 'auxclick', 'contextmenu'];
+  function listen(on) {
+    if (on === listening) return;
+    listening = on;
+    gestureTypes.forEach(function (t) {
+      if (on) window.addEventListener(t, onGesture, true);
+      else window.removeEventListener(t, onGesture, true);
+    });
+    if (on) {
+      window.addEventListener('keydown', onGesture, true);
+      window.addEventListener('wheel', onGesture, { capture: true, passive: false });
+      window.addEventListener('mousemove', onMove, { capture: true, passive: true });
+    } else {
+      window.removeEventListener('keydown', onGesture, true);
+      window.removeEventListener('wheel', onGesture, { capture: true });
+      window.removeEventListener('mousemove', onMove, { capture: true });
+    }
+  }
+  function setPace(ms) {
+    if (pace === ms && idleT) return;
+    if (idleT) clearInterval(idleT);
+    pace = ms;
+    idleT = setInterval(tick, ms);
+  }
+  function tick() {
+    if (!wall()) { stop(); return; }
     var view = dash();
-    if (!view) { if (shown) hide(); return; }
-    var mins = minutes(readVars(view.config).casora_screensaver);
-    if (!mins) { if (shown) hide(); bump(); return; }
+    if (!view) { listen(false); if (shown) hide(); return; }
+    var vars = readVars(view.config);
+    var mins = minutes(vars.casora_screensaver);
+    if (!mins) { listen(false); if (shown) hide(); setPace(10000); return; }
+    listen(true);
+    setPace(1000);
     if (window.casoraPopup && window.casoraPopup.surface) { bump(); if (shown) hide(); return; }
     if (shown) {
-      var vars = readVars(view.config);
       var wx = vars.weather_entity || '';
       if ((vars.casora_screensaver_bg || '') === 'photo') loadPhotos(view.hass);
       paintPhoto(view.hass.states[wx] && view.hass.states[wx].state, vars.casora_screensaver_bg || '');
@@ -473,7 +519,15 @@
       return;
     }
     if (Date.now() - lastAct >= mins * 60000) show(view);
-  }, 1000);
+  }
+  function stop() {
+    listen(false);
+    if (idleT) { clearInterval(idleT); idleT = 0; pace = 0; }
+    if (shown) hide();
+  }
+  function boot() { if (wall()) setPace(10000); else stop(); }
+  if (tabletQ && tabletQ.addEventListener) tabletQ.addEventListener('change', boot);
+  boot();
 
   document.addEventListener('visibilitychange', function () {
     if (!document.hidden) bump();
