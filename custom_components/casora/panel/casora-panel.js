@@ -437,8 +437,14 @@ function camStatusMap(rooms) {
   }));
   return out;
 }
-const camOffline = (id, states, map) => !!(window.casoraCamOffline
-  && window.casoraCamOffline(id, states, { casora_camera_status: map || {} }));
+// Same rule as casoraCamOffline (casora-core.js), which a freshly opened Studio has not loaded.
+const camOffline = (id, states, map) => {
+  const sid = (map || {})[id];
+  const e = sid && states && states[sid];
+  if (!e) return false;
+  const s = String(e.state == null ? "" : e.state).toLowerCase();
+  return !s || s === "unavailable" || s === "unknown" || (sid.indexOf("binary_sensor.") === 0 && s === "off");
+};
 
 // Eigener Kachelname je Entität mit Rückfrage (note4 Frage 4): Der Dialog im Popup nennt dann
 // „Garage“ wie die Kachel statt des Gerätenamens. Nur feste Namen (keine [[[ … ]]]-Ausdrücke).
@@ -724,6 +730,7 @@ const FILTER_CATEGORIES = {
   casora_coffee: "unfiltered",
   casora_pet: "unfiltered",
   casora_shopping: "unfiltered",
+  casora_tasks: "unfiltered",
   casora_kettle: "unfiltered",
   casora_co: "security",
   casora_plant: "unfiltered",
@@ -3904,7 +3911,7 @@ const autoRoomGlyph = (name) => {
 // Tile types about the whole home: a room's own device (a dishwasher's plug in the
 // kitchen) is no reason to offer them as "Fits <room>".
 const HOUSE_WIDE_TILES = new Set(["energy_tile", "network", "battery", "updates", "casora_alarm",
-  "casora_weather_warning", "casora_solar_tip", "casora_trash", "casora_recipe", "casora_pulse", "casora_calendar",
+  "casora_weather_warning", "casora_solar_tip", "casora_trash", "casora_recipe", "casora_pulse", "casora_calendar", "casora_tasks",
   "casora_entity_list", "casora_more"]);
 
 // The automatic icon follows the name. A new name it doesn't know ("Küche" →
@@ -6507,6 +6514,10 @@ const tileStateWord = (kind, tile, ent, states, hass) => {
     const cal = Object.keys(S).sort().find((id) => id.startsWith("calendar.") && S[id].attributes && S[id].attributes.message);
     return cal ? String(S[cal].attributes.message) : "No events";
   }
+  if (kind === "casora_tasks") {
+    const T = typeof window !== "undefined" && window._casoraTasks;
+    return T && T.tile ? T.tile(states || {}, V) : "Tasks";
+  }
   if (!ent) return tile && tile.entity ? "—" : "Not set";
   const cap = (x) => (x ? x.charAt(0).toUpperCase() + x.slice(1).replace(/_/g, " ") : "");
   switch (kind) {
@@ -7012,12 +7023,15 @@ class CasoraPanel extends HTMLElement {
       tile = has(rooms[i]);
     }
     const key = this._tileKey(tile);
+    // The gear in a popup opens the tile on its Popup tab (?tab=popup).
+    try { const tab = new URLSearchParams(window.location.search).get("tab"); if (tab) this._tileTab = tab; } catch (e) { /* first tab */ }
     this._select({ group: "tiles", key });
     this._tileRouteReveal(["t:" + key, "t:" + this._tileKey(inner(tile, 0))]);
     // Einmal gewählt: ?tile aus der Adresse nehmen, damit ein späterer Aufruf dieselbe Kachel wieder wählt.
     try {
       const u = new URL(window.location.href);
       u.searchParams.delete("tile");
+      u.searchParams.delete("tab");
       window.history.replaceState(window.history.state, "", u.pathname + u.search + u.hash);
       this._tileRouteUsed = "";
     } catch (e) { /* Adresse bleibt */ }
@@ -16485,6 +16499,7 @@ class CasoraPanel extends HTMLElement {
       this._renderForm();
       requestAnimationFrame(() => this._playEntrance());
       this._tileFromRoute();
+      if (this._settingsFromRoute) this._settingsFromRoute();
       if (!this._saveBlocked) setTimeout(() => this._offerDraft(), 400);
       if (this._sizeNote) {
         const n = this._sizeNote;
@@ -29624,7 +29639,7 @@ class CasoraPanel extends HTMLElement {
         put(f.label, this._chipPicker(cur, doms, (items) => {
           if (items.length) { if (!tile.variables) tile.variables = {}; tile.variables[f.key] = items; }
           else if (tile.variables) delete tile.variables[f.key];
-          if (type.noEntity && !tile.entity && items.length) {
+          if (type.noEntity && !f.noAnchor && !tile.entity && items.length) {
             tile.entity = items[0];
             return this._renderForm();
           }
@@ -30010,6 +30025,7 @@ class CasoraPanel extends HTMLElement {
     this._groupTileBody(box, body);
 
     box.appendChild(body);
+    if (this._tileTabs) this._tileTabs(box, body, tile, type, advLabel === "Popup" ? advDet : null);
     return box;
   }
 }

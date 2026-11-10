@@ -105,5 +105,16 @@ langs.forEach((l) => {
   texts.forEach((s) => assert.ok(tab[s], l + ' missing: ' + s));
 });
 texts.forEach((s) => assert.ok(src.includes(JSON.stringify(s).slice(1, -1)) || src.includes(s), 'text in source: ' + s));
+// Home & devices (settings rework): one section per kind of device, nothing folded away under "Advanced", and the
+// jump from a tile or the old battery list lands in the right section.
+const house = NEU.find((tl) => tl.id === 'house');
+assert.ok(house.fold && house.blocks.every((b) => !b.adv), 'Home & devices: sections, no Advanced');
+assert.deepEqual(house.blocks.map((b) => b.k), ['security', 'contacts', 'battery', 'scenes', 'media', 'waste', 'calendars', 'devices'], 'Home & devices: order');
+assert.deepEqual(route('home', 'battery'), ['n-house', 'nb-battery'], 'batteries → Home & devices');
+assert.deepEqual(route('home', 'notify_exclude'), ['n-bell', 'nb-notify'], '"Do not notify" stays with the bell');
+// Side panel tabs: every kind with shared settings points at a block that exists; kinds without any have no entry.
+const shared = win.casoraSettingsMap.tileShared;
+Object.entries(shared).forEach(([kind, [tl, k]]) => assert.ok(NEU.find((x) => x.id === tl)?.blocks.some((b) => b.k === k), 'shared tab of ' + kind));
+['light', 'thermostat', 'casora_switch'].forEach((kind) => assert.ok(!shared[kind], kind + ' has no shared tab'));
 console.log('ok settings_map: ' + NEU.length + ' tiles, ' + blocks.length + ' blocks, ' + blocks.filter((b) => b.adv).length + ' advanced, '
   + fields + ' dashboard fields covered');

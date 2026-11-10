@@ -2843,9 +2843,40 @@
     "Zutaten": "Ingrédients",
     "Zubereitung": "Préparation",
     "1 Portion": "1 portion",
-    "Zählt nur bei Abwesenheit": "Compte seulement en absence"
+    "Zählt nur bei Abwesenheit": "Compte seulement en absence",
+    "Teilweise geschlossen": "Partiellement fermé",
+    "Termin hinzufügen": "Ajouter un événement",
+    "Neuer Termin": "Nouvel événement",
+    "Titel": "Titre",
+    "Ort (optional)": "Lieu (facultatif)",
+    "Beschreibung (optional)": "Description (facultatif)",
+    "Ganztägig": "Toute la journée",
+    "Ende": "Fin",
+    "Bitte gib einen Titel ein.": "Saisis un titre.",
+    "Bitte gib Beginn und Ende an.": "Indique le début et la fin.",
+    "Das Ende muss nach dem Beginn liegen.": "La fin doit être après le début.",
+    "Der Termin konnte nicht gespeichert werden.": "L'événement n'a pas pu être enregistré.",
+    "Neue Aufgabe": "Nouvelle tâche",
+    "Aufgaben": "Tâches",
+    "Notiz (optional)": "Note (facultatif)",
+    "Fällig (optional)": "Échéance (facultatif)",
+    "Keine Listen": "Aucune liste",
+    "Keine To-do-Listen gefunden": "Aucune liste de tâches trouvée",
+    "Bitte gib eine Aufgabe ein.": "Saisis une tâche.",
+    "Die Aufgabe konnte nicht gespeichert werden.": "La tâche n'a pas pu être enregistrée.",
+    "Abhaken": "Cocher",
+    "Wieder öffnen": "Rouvrir",
+    "Eintrag löschen?": "Supprimer cette entrée ?"
   },
   "patterns": [
+    [
+      "^Teilweise geschlossen · Ø (\\d+) %$",
+      "Partiellement fermé · Ø {1} %"
+    ],
+    [
+      "^(\\d+) % geschlossen$",
+      "Fermé à {1} %"
+    ],
     [
       "^Beschatten (\\d+) %$",
       "Ombrager {1} %"

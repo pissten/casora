@@ -26,8 +26,8 @@
     live: ["n-phone", "nb-live"], fuel: ["n-wx", "nb-fuel"], home: ["n-house"],
   };
   // A focus inside an earlier page (a group of casora-panel-personal.js) → its block.
-  const FOCUS_BLOCK = { waste: "waste", contacts: "contacts", security: "security", scenes: "hscenes", media: "media",
-    devices: "devices", calendars: "calendars", notify: "notify", notify_exclude: "notify", basis: "basis", umzug: "umzug" };
+  const FOCUS_BLOCK = { waste: "waste", contacts: "contacts", security: "security", scenes: "scenes", media: "media",
+    devices: "devices", calendars: "calendars", notify: "notify", notify_exclude: "notify", battery: "battery", basis: "basis", umzug: "umzug" };
   const route = (pageId, focus) => {
     const id = String(pageId || "n-start");
     if (/^n-/.test(id)) return [id, focus];
@@ -100,34 +100,35 @@
           plain: "A push to your phone when a new Casora version is out.",
           kw: "push update version neue version handy" },
         { k: "notify", personal: ["notify"], title: "Wording and exceptions", adv: true,
-          plain: "How the bell words places, mailbox, batteries it should leave out, device care.",
-          kw: "zonen wortlaut briefkasten post akku batterie ausnahmen nicht melden kombi kontakt gerätepflege filter" },
+          plain: "How the bell words places, mailbox, combined contacts and device care.",
+          kw: "zonen wortlaut briefkasten post ausnahmen kombi kontakt gerätepflege filter" },
       ] },
-    { id: "house", label: "Home & devices", icon: "home", tone: "set-home",
-      sub: "Waste days, doors and windows, scenes, music and calendars.",
+    // fold: every block is a section that opens on its heading; a jump from a tile or the search opens the right one.
+    { id: "house", label: "Home & devices", icon: "home", tone: "set-home", fold: true,
+      sub: "Blinds, doors and windows, batteries, scenes, music, waste and calendars.",
       blocks: [
+        { k: "security", personal: ["security"], title: "Blinds and gates",
+          plain: "Which blinds and gates count as open when the house is checked at night.",
+          kw: "rollo rollos rollladen jalousie jalousien tor tore garage garagentor sicherheit abends nachts geschlossen covers shutters gates" },
+        { k: "contacts", personal: ["contacts"], title: "Doors and windows",
+          plain: "Group, rename or hide doors and windows in the security overview.",
+          kw: "türen tueren fenster kontakte ausblenden umbenennen gruppen abwesenheit abwesend lüften lueften zuhause" },
+        { k: "battery", personal: ["battery"], title: "Batteries",
+          plain: "Batteries the bell should not warn about.",
+          kw: "batterie batterien akku ausnahme ausnahmen warnung nicht melden battery" },
+        { k: "scenes", sec: "Scenes", personal: ["scenes"], title: "Scenes",
+          plain: "Which scene buttons appear here, and scenes Casora should never offer.",
+          kw: "szenen szene stimmung reihenfolge farbe ausblenden verstecken scenes" },
+        { k: "media", personal: ["media"], title: "Music and players",
+          plain: "Which players the Now Playing bar shows and how they are named.",
+          kw: "player medien musik wiedergabe now playing lautsprecher" },
         { k: "waste", personal: ["waste"], title: "Waste collection",
           plain: "Which bins are collected when, so tiles and the bell remind you.",
           kw: "abfall müll muell tonne abholung restmüll papier gelber sack bio" },
         { k: "calendars", personal: ["calendars"], title: "Calendars",
           plain: "Which calendars the calendar tiles show, with name and color.",
           kw: "kalender termine farbe calendar" },
-        { k: "scenes", sec: "Scenes", title: "Scenes on this dashboard",
-          plain: "Which scene buttons appear, in which order and color.",
-          kw: "szenen szene stimmung reihenfolge farbe scenes" },
-        { k: "contacts", personal: ["contacts"], title: "Doors and windows",
-          plain: "Group, rename or hide doors and windows in the security overview.",
-          kw: "türen tueren fenster kontakte ausblenden umbenennen gruppen abwesenheit abwesend lüften lueften zuhause" },
-        { k: "security", personal: ["security"], title: "Shutters at night", adv: true,
-          plain: "Which shutters count as open when the house is checked at night.",
-          kw: "rollo rollos rollladen jalousie jalousien sicherheit abends nachts covers shutters" },
-        { k: "hscenes", personal: ["scenes"], title: "Hidden scenes", adv: true,
-          plain: "Scenes Casora should never offer.",
-          kw: "szenen ausblenden verstecken" },
-        { k: "media", personal: ["media"], title: "Music and players", adv: true,
-          plain: "Which players the Now Playing bar shows and how they are named.",
-          kw: "player medien musik wiedergabe now playing lautsprecher" },
-        { k: "devices", personal: ["devices"], title: "Other devices", adv: true,
+        { k: "devices", personal: ["devices"], title: "Other devices",
           plain: "Devices Casora found that have no place of their own, e.g. an e-bike.",
           kw: "geräte ebike e-bike fahrrad" },
       ] },
@@ -177,7 +178,19 @@
   };
   // The dashboard sections the tiles show (scope "dashboard" in casora-panel.js SECTIONS).
   const DASH_SECS = ["General", "Weather", "Time", "Notifications", "Scenes"];
-  window.casoraSettingsMap = { tiles: NEU, dashSections: DASH_SECS, route };
+  // The third tab of a tile's side panel: what is set for every device of this kind, [tile, block, tab label].
+  // Kinds without shared settings (light, thermostat, switch …) have no entry and show Tile and Popup only.
+  const LIVE_TAB = ["phone", "live", "Lock screen"];
+  const COVERS_TAB = ["house", "security", "All blinds"];
+  const TILE_SHARED = {
+    cover: COVERS_TAB, cover_group: COVERS_TAB,
+    media: ["house", "media", "All players"], battery: ["house", "battery", "All batteries"],
+    casora_alarm: ["house", "contacts", "All doors and windows"],
+    casora_trash: ["house", "waste", "Waste collection"], casora_calendar: ["house", "calendars", "All calendars"],
+    casora_ebike: ["house", "devices", "Other devices"], casora_weather_warning: ["wx", "weather", "Weather"],
+    casora_washer: LIVE_TAB, casora_dryer: LIVE_TAB, casora_dishwasher: LIVE_TAB, casora_3d_printer: LIVE_TAB, vacuum: LIVE_TAB,
+  };
+  window.casoraSettingsMap = { tiles: NEU, dashSections: DASH_SECS, route, tileShared: TILE_SHARED };
   const pageOf = (id) => neuPage(route(id)[0]) || NEU_START;
 
   const CSS = ".cs-wrap{padding:4px 0 28px}"
@@ -200,6 +213,25 @@
     // The page's content starts on the edge of its title (desktop and tablet: 10 px in; phone sheet: 2 px out).
     + ":host(:not(.phone)) .cs-wrap{padding-left:10px;padding-right:10px}:host(.phone) .cs-wrap{margin-left:-2px;margin-right:-2px}"
     + ".cn-block{margin:0 0 28px}"
+    // Sections that open on their heading (Home & devices).
+    + ".cn-fold{margin:0 0 8px}.cn-fold.open{margin-bottom:20px}.cn-fold:not(.open)>:not(.cn-bhead){display:none!important}"
+    + ".cn-fold>.cn-bhead{position:relative;cursor:pointer;margin:0;min-height:44px;box-sizing:border-box;padding:11px 34px 11px 10px;justify-content:center;"
+    +   "border-radius:var(--r-group);background:var(--casora-popup-row-fill,rgba(255,255,255,.10))}"
+    + ".cn-fold.open>.cn-bhead{margin-bottom:10px}"
+    + ".cn-fold>.cn-bhead::after{content:'›';position:absolute;right:13px;top:50%;transform:translateY(-50%);font-size:20px;color:var(--ink-3)}"
+    + ".cn-fold.open>.cn-bhead::after{transform:translateY(-50%) rotate(90deg)}"
+    + ".cn-fold>.cn-bhead:focus-visible{outline:2px solid var(--accent);outline-offset:2px}"
+    // Tabs of a tile's side panel.
+    + ".tiletabs{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:2px;padding:3px;margin:0 0 12px;border-radius:var(--r-m);background:var(--casora-studio-chip,rgba(118,118,128,.18))}"
+    + ".tiletabs button{all:unset;box-sizing:border-box;cursor:pointer;min-height:36px;padding:0 4px;display:flex;align-items:center;justify-content:center;text-align:center;border-radius:calc(var(--r-m) - 3px);font-size:var(--t-foot);font-weight:500;line-height:20px;color:var(--ink)}"
+    + ".tiletabs button[aria-selected=true]{font-weight:650;background:var(--casora-studio-field,rgba(255,255,255,.14));box-shadow:var(--casora-shadow-rest)}"
+    + ":host(.is-light) .tiletabs button[aria-selected=true]{background:#fff}"
+    + ".tiletabs button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}"
+    + ":host(.phone) .tiletabs button{min-height:44px}"
+    + ".tilepane>.adv{margin-top:0}.tilepane>.adv>.advsum{display:none}"
+    + ".tilepane .cs-wrap{padding:0!important;margin:0!important}.tilepane .cn-block{margin-bottom:12px}"
+    + ".tilepane .cs-bar{margin:12px 0 0}.tilelink{all:unset;cursor:pointer;display:block;min-height:44px;line-height:44px;font-size:var(--t-callout);font-weight:600;color:var(--accent)}"
+    + ".tilelink:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:8px}"
     + ".cn-bhead{display:flex;flex-direction:column;gap:3px;margin:0 0 10px;padding:0}"
     + ".cn-bhead b{display:flex;flex-wrap:wrap;align-items:center;column-gap:8px;row-gap:4px;font-size:var(--t-body);font-weight:650;line-height:1.3;color:var(--ink)}"
     + ".cn-bhead span{font-size:var(--t-foot);line-height:1.4;color:var(--ink-2)}"
@@ -1061,6 +1093,7 @@
     };
     P._csNeuGo = function (tile, b) {
       if (b && b.adv) (this._nAdv = this._nAdv || new Set()).add(tile.id);
+      if (b && tile.fold) (this._nOpen = this._nOpen || new Set()).add(b.k);
       return this._csShow("n-" + tile.id, b ? "nb-" + b.k : undefined);
     };
     // Updates are a page of their own (install, versions); ‹ leads back to the tile.
@@ -1174,12 +1207,14 @@
         return;
       }
       if (b.sec) {
-        // Applies only here: said on the block, where the eye already is.
-        head.querySelector("b").appendChild(el("span", "rdetail cs-dash cn-only", t("Only this dashboard")));
+        // Applies only here: said on the block, where the eye already is. A block that also holds settings for every
+        // dashboard says it on its first part instead.
+        if (b.personal) box.appendChild(el("div", "fhead", t("On this dashboard")));
+        else head.querySelector("b").appendChild(el("span", "rdetail cs-dash cn-only", t("Only this dashboard")));
         const card = this._csDashCard(b.sec);
-        if (!card) { box.appendChild(el("p", "cs-lede", t("Open a dashboard in the Studio to change this."))); return; }
-        trimCard(this, card, b);
-        box.appendChild(card);
+        if (card) { trimCard(this, card, b); box.appendChild(card); }
+        else box.appendChild(el("p", "cs-lede", t("Open a dashboard in the Studio to change this.")));
+        if (b.personal && cs && cs.loaded && typeof this._casoraPersonalGroups === "function") this._casoraPersonalGroups(box, cs.S, b.personal, rerender);
         return;
       }
       if (b.page === "design") {
@@ -1199,6 +1234,121 @@
       if (b.opt) this._csFillOptions(box, b.opt);
       dedupe(box);
     };
+    // A block of a fold tile: its heading opens and closes it. Drawn right away, closed by CSS, so the open state
+    // survives the redraw after every change (this._nOpen) and an empty block has already removed itself.
+    const foldBlock = (self, box, b) => {
+      if (!box || box.dataset.pkey !== "nb-" + b.k) return;
+      self._nOpen = self._nOpen || new Set();
+      const head = box.querySelector(":scope > .cn-bhead");
+      const set = (on) => {
+        box.classList.toggle("open", on);
+        head.setAttribute("aria-expanded", on ? "true" : "false");
+        if (on) self._nOpen.add(b.k); else self._nOpen.delete(b.k);
+      };
+      box.classList.add("cn-fold");
+      head.tabIndex = 0;
+      head.setAttribute("role", "button");
+      set(self._nOpen.has(b.k));
+      head.addEventListener("click", () => set(!box.classList.contains("open")));
+      head.addEventListener("keydown", (e) => {
+        if (e.key !== "Enter" && e.key !== " ") return;
+        e.preventDefault();
+        set(!box.classList.contains("open"));
+      });
+    };
+    // A tile's side panel in tabs (settings rework): Tile (the form as it is), Popup (its popup fields, no longer behind
+    // a fold), and, for kinds with shared settings, one block of the settings drawn in place. That block uses the same
+    // draft as the settings pages, so it takes effect only with "Save settings".
+    P._tileTabs = function (box, body, tile, type, popupDet) {
+      const shared = TILE_SHARED[type.id];
+      const home = shared && NEU.find((x) => x.id === shared[0]);
+      const block = home && home.blocks.find((b) => b.k === shared[1]);
+      if (!popupDet && !block) return;
+      css(this);
+      if (block) watch(this);
+      const tabs = [["tile", t("Tile"), body]];
+      if (popupDet) {
+        const pane = el("div", "tilepane");
+        popupDet.classList.add("open");
+        const sum = popupDet.querySelector(":scope > .advsum");
+        if (sum) sum.setAttribute("aria-expanded", "true");
+        pane.appendChild(popupDet);
+        tabs.push(["popup", t("Popup"), pane]);
+      }
+      let drawShared = null;
+      if (block) {
+        const pane = el("div", "tilepane");
+        tabs.push(["all", t(shared[2]), pane]);
+        drawShared = async () => {
+          if (pane.dataset.drawn) return;
+          pane.dataset.drawn = "1";
+          try { await this._csLoad(); } catch (e) { /* the block says what is missing */ }
+          if (!pane.isConnected) return;
+          const inner = el("div", "cs-wrap");
+          const draw = () => {
+            inner.replaceChildren();
+            this._csNeuBlock(inner, home, block, draw);
+            // Drawing a dashboard section ran the Studio's after-render steps for the home room.
+            if (this._csHarvested) {
+              this._csHarvested = false;
+              if (typeof this._bApply === "function") this._bApply();
+              if (typeof this._bRoomsPaint === "function") this._bRoomsPaint();
+            }
+            // A row redraws only this block, so the save bar is told here.
+            this._csBar();
+          };
+          const link = el("button", "tilelink", t("Open in Settings") + " ›");
+          link.type = "button";
+          link.onclick = () => this._csNeuGo(home, block);
+          const bar = el("div", "cs-bar" + (this._csDirty() ? "" : " cs-clean"));
+          const save = btn(t("Save settings"), () => this._csSave());
+          save.className = "cs-save";
+          bar.append(el("span", "cs-state"), save);
+          pane.append(inner, link, bar);
+          draw();
+        };
+      }
+      const strip = el("div", "tiletabs");
+      strip.setAttribute("role", "tablist");
+      const show = (id) => {
+        this._tileTab = id;
+        tabs.forEach(([k, , pane], i) => {
+          pane.style.display = k === id ? "" : "none";
+          strip.children[i].setAttribute("aria-selected", k === id ? "true" : "false");
+        });
+        if (id === "all" && drawShared) drawShared();
+      };
+      tabs.forEach(([id, label]) => {
+        const b = el("button", "", label);
+        b.type = "button";
+        b.dataset.tab = id;
+        b.setAttribute("role", "tab");
+        b.onclick = () => {
+          show(id);
+          // The popup preview follows the tab (_cpSync alone keeps one that is already open).
+          if (id === "popup" && this._cpSync) { this._cpDismissed = null; this._cpSync(); }
+          else if (id !== "popup" && this._cpLayer && this._cpClose) this._cpClose();
+        };
+        strip.appendChild(b);
+      });
+      box.insertBefore(strip, body);
+      tabs.slice(1).forEach(([, , pane]) => box.appendChild(pane));
+      show(tabs.some(([k]) => k === this._tileTab) ? this._tileTab : "tile");
+    };
+    // The gear of a popup without a tile (?settings=<block> or start): opens that section once.
+    P._settingsFromRoute = function () {
+      let want = "";
+      try { want = new URLSearchParams(window.location.search).get("settings") || ""; } catch (e) { want = ""; }
+      if (!want) return;
+      try {
+        const u = new URL(window.location.href);
+        u.searchParams.delete("settings");
+        window.history.replaceState(window.history.state, "", u.pathname + u.search + u.hash);
+      } catch (e) { /* the address stays */ }
+      const tile = NEU.find((x) => x.blocks.some((b) => b.k === want));
+      if (tile) return this._csNeuGo(tile, tile.blocks.find((b) => b.k === want));
+      return this._csShow("n-start");
+    };
     P._csFillNeu = function (host, page) {
       if (page.tile) {
         const back = el("button", "cs-hubback", "‹ " + t("Settings"));
@@ -1215,7 +1365,10 @@
         if (cs && cs.fromFile && page.tile.id === "house") {
           host.appendChild(el("div", "cs-note", t("Taken over from einstellungen.js. Save once to manage these settings here; the file is no longer needed afterwards.")));
         }
-        page.tile.blocks.filter((b) => !b.adv).forEach((b) => this._csNeuBlock(host, page.tile, b, rerender));
+        page.tile.blocks.filter((b) => !b.adv).forEach((b) => {
+          this._csNeuBlock(host, page.tile, b, rerender);
+          if (page.tile.fold) foldBlock(this, host.lastElementChild, b);
+        });
         const adv = page.tile.blocks.filter((b) => b.adv);
         if (!adv.length) return;
         this._nAdv = this._nAdv || new Set();
@@ -1467,7 +1620,7 @@
     // Every change on the page (also in the entity picker menu) → check the bar.
     const watch = (self) => {
       if (self._csWatch) return;
-      self._csWatch = () => { if (self._csOpen || self._csSheetPage !== undefined) setTimeout(() => self._csBar(), 0); };
+      self._csWatch = () => { if (self._csOpen || self._csSheetPage !== undefined || self.shadowRoot.querySelector(".tilepane .cs-bar")) setTimeout(() => self._csBar(), 0); };
       ["input", "change", "click", "keyup"].forEach((ev) => self.shadowRoot.addEventListener(ev, self._csWatch, true));
     };
 
@@ -2032,6 +2185,7 @@
       const tile = NEU.find((x) => "n-" + x.id === r[0]);
       const blk = tile && r[1] && tile.blocks.find((b) => "nb-" + b.k === r[1]);
       if (blk && blk.adv) (this._nAdv = this._nAdv || new Set()).add(tile.id);
+      if (blk && tile.fold) (this._nOpen = this._nOpen || new Set()).add(blk.k);
       return r;
     };
     P._csShow = function (pageId, focus) {

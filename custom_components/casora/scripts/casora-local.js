@@ -251,6 +251,7 @@ const MODULES = [
   '40-swipe-rooms',
   '41-display-diag',
   '42-co',
+  '43-aufgaben',
   '43-screensaver',
   '44-tile-glass',
   '45-display-names',

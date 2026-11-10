@@ -671,7 +671,7 @@ window.casoraHaptic = window.casoraHaptic || function (kind) {
     if (spec && spec.confirm) {
       var cIds = [].concat((spec.target && spec.target.entity_id) || (spec.data && spec.data.entity_id) || []);
       var cw = word({ action: 'perform-action', perform_action: spec.domain + '.' + spec.service, target: { entity_id: cIds[0] }, data: spec.data || {} }, { entity: cIds[0] });
-      return ask(Object.assign(several(cIds, cw), typeof spec.confirm === 'string' ? { text: T(spec.confirm) } : {}, { withPopup: true }));
+      return ask(Object.assign(several(cIds, cw), typeof spec.confirm === 'string' ? { text: T(spec.confirm) } : {}, spec.confirmYes ? { yes: T(spec.confirmYes) } : {}, { withPopup: true }));
     }
     if (!spec || !spec.domain || !SWITCH_SVC.test(String(spec.service || ''))) return Promise.resolve(true);
     var ids = [].concat((spec.target && spec.target.entity_id) || (spec.data && spec.data.entity_id) || []);
@@ -6710,6 +6710,12 @@ window.casoraMenuGlass = {
       -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
     }
     .header-close[hidden] { display: none; }
+    .header-gear { appearance: none; -webkit-appearance: none; border: 0; margin: 0; padding: 0; width: 38px; height: 38px; flex: none; display: flex; align-items: center; justify-content: center;
+      border-radius: 50%; cursor: pointer; background: var(--casora-soft-control-fill, rgba(140, 115, 90, 0.10)); color: var(--casora-soft-close-ink, var(--secondary-text-color)); -webkit-tap-highlight-color: rgba(0, 0, 0, 0); }
+    .header-gear[hidden] { display: none; }
+    .header-gear svg { width: 18px; height: 18px; fill: currentColor; }
+    .header-gear:focus-visible { outline: 2px solid var(--primary-color, currentColor); outline-offset: 2px; }
+    :host([soft][data-casora-pv="v3"]) .header-gear { width: 40px; height: 40px; }
     .header-back {
       appearance: none; -webkit-appearance: none; border: 0; margin: 0 8px 0 0; padding: 0;
       width: 40px; height: 40px; flex: none; display: flex; align-items: center; justify-content: center;
@@ -7814,6 +7820,13 @@ window.casoraMenuGlass = {
     paintLive(cache.nodes, hass);
   }
 
+  // attr 'x|closed' reads the percentage the other way round (issue 145).
+  var casoraLiveNum = function (st, attr) {
+    var closed = /\|closed$/.test(attr), k = closed ? attr.slice(0, -7) : attr;
+    var raw = (st.attributes || {})[k];
+    if (closed && raw == null) return NaN;
+    return closed ? 100 - Number(raw) : Number(raw);
+  };
   function paintLive(nodes, hass) {
     for (var i = 0; i < nodes.length; i++) {
       var el = nodes[i];
@@ -7825,7 +7838,7 @@ window.casoraMenuGlass = {
         var gAttr = el.dataset.casoraAttr || 'current_position', gSum = 0, gN = 0;
         for (var gi = 0; gi < gIds.length; gi++) {
           var gSt = hass.states[gIds[gi]];
-          var gv = gSt ? Number((gSt.attributes || {})[gAttr]) : NaN;
+          var gv = gSt ? casoraLiveNum(gSt, gAttr) : NaN;
           if (!isNaN(gv)) { gSum += gv; gN++; }
         }
         if (!gN) continue;
@@ -7853,7 +7866,7 @@ window.casoraMenuGlass = {
         var dAttr = el.dataset.casoraAttr || 'current_position', dSum = 0, dCnt = 0;
         for (var di = 0; di < dIds.length; di++) {
           var dSt = hass.states[dIds[di]];
-          var dv = dSt ? Number((dSt.attributes || {})[dAttr]) : NaN;
+          var dv = dSt ? casoraLiveNum(dSt, dAttr) : NaN;
           if (!isNaN(dv)) { dSum += dv; dCnt++; }
         }
         if (dCnt && window._casoraDialSet) window._casoraDialSet(el, Math.max(0, Math.min(100, Math.round(dSum / dCnt))));
@@ -7867,7 +7880,7 @@ window.casoraMenuGlass = {
         for (var f = 0; f < fIds.length; f++) {
           var fSt = hass.states[fIds[f]];
           if (!fSt) continue;
-          var fv = Number((fSt.attributes || {})[fAttr]);
+          var fv = casoraLiveNum(fSt, fAttr);
           if (!isNaN(fv)) fVals.push(fv);
         }
         if (!fVals.length) continue;
@@ -7940,7 +7953,7 @@ window.casoraMenuGlass = {
         try { spec = JSON.parse(el.dataset.casoraWords || '{}'); } catch (e) { continue; }
         var sw = spec.state && spec.state[st.state];
         if (sw) { el.textContent = sw; continue; }
-        var av = Number((st.attributes || {})[spec.attr]);
+        var av = casoraLiveNum(st, spec.attr);
         if (isNaN(av)) {
           var fw = spec.fallbackState && spec.fallbackState[st.state];
           if (fw) el.textContent = fw;
@@ -8029,6 +8042,10 @@ window.casoraMenuGlass = {
             '<div class="header" hidden>' +
               '<div class="header-bar">' +
                 '<section class="header-nav">' +
+                  // Settings rework: admins jump to this tile in the Studio (hidden on sub pages, in the Studio's own preview).
+                  '<button class="header-gear" type="button" hidden>' +
+                    '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.34 19.43,11L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.96 19.05,5.05L16.56,6.05C16.04,5.66 15.5,5.32 14.87,5.07L14.5,2.42C14.46,2.18 14.25,2 14,2H10C9.75,2 9.54,2.18 9.5,2.42L9.13,5.07C8.5,5.32 7.96,5.66 7.44,6.05L4.95,5.05C4.73,4.96 4.46,5.05 4.34,5.27L2.34,8.73C2.21,8.95 2.27,9.22 2.46,9.37L4.57,11C4.53,11.34 4.5,11.67 4.5,12C4.5,12.33 4.53,12.65 4.57,12.97L2.46,14.63C2.27,14.78 2.21,15.05 2.34,15.27L4.34,18.73C4.46,18.95 4.73,19.03 4.95,18.95L7.44,17.94C7.96,18.34 8.5,18.68 9.13,18.93L9.5,21.58C9.54,21.82 9.75,22 10,22H14C14.25,22 14.46,21.82 14.5,21.58L14.87,18.93C15.5,18.67 16.04,18.34 16.56,17.94L19.05,18.95C19.27,19.03 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.97Z"></path></svg>' +
+                  '</button>' +
                   '<button class="header-close" type="button" aria-label="Schließen">' +
                     '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">' +
                       '<path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z"></path>' +
@@ -8082,6 +8099,8 @@ window.casoraMenuGlass = {
       this._headerEyebrow = root.querySelector('.header-eyebrow');
       this._headerActions = root.querySelector('.header-actions');
       this._headerClose = root.querySelector('.header-close');
+      this._headerGear = root.querySelector('.header-gear');
+      this._headerGear.addEventListener('click', () => window.casoraPopupGear(this));
       this._headerBack = root.querySelector('.header-back');
       this._headerBack.addEventListener('click', (e) => {
         e.preventDefault(); e.stopPropagation();
@@ -8282,6 +8301,8 @@ window.casoraMenuGlass = {
       this._headerBack.hidden = !this._backFn;
       this._subEyebrow = this._backFn && prevTitle && !this._headFixed ? prevTitle : null;
       this._headerBack.setAttribute('aria-label', window.casoraTr ? window.casoraTr('Zurück') : 'Zurück');
+      this._headerGear.setAttribute('aria-label', window.casoraTr ? window.casoraTr('Einstellungen') : 'Einstellungen');
+      this._headerGear.hidden = !!this._backFn || cfg.close === false || /^\/casora-studio/.test(location.pathname) || !window.casoraIsAdmin();
       this.toggleAttribute('has-back', !!this._backFn);
       this._cfgCurrent = data || {};
       if (this._rowTitle && this._cfgCurrent.title !== this._cfgTitle) {
@@ -9458,6 +9479,25 @@ window.casoraMenuGlass = {
     return { title: title, cards: cards };
   };
 
+  // The popup's gear (settings rework): a popup opened from a tile goes to that tile's Popup tab in the Studio, the way
+  // the hold menu's "Edit tile" does (?tile=); one without a tile goes to its section of the settings, else their start.
+  var GEAR_BLOCK = [[/casora_popup_(cover|security_covers)/, 'security'], [/casora_popup_contacts/, 'contacts'], [/casora_popup_battery/, 'battery'],
+    [/casora_popup_scenes/, 'scenes'], [/casora_popup_media/, 'media'], [/casora_popup_calendar/, 'calendars'], [/casora_popup_trash/, 'waste']];
+  window.casoraPopupGear = function (el) {
+    var seg = (location.pathname || '').split('/').filter(Boolean);
+    var phone = /[-_]mobile$/i.test(seg[0] || '');
+    var dash = (seg[0] || '').replace(/[-_]mobile$/i, '');
+    var id = el._casoraEntity, kind = 'start', text = '';
+    if (!id) {
+      try { text = JSON.stringify((el._cfgCurrent || {}).content || {}); } catch (e) { text = ''; }
+      GEAR_BLOCK.some(function (g) { if (g[0].test(text)) { kind = g[1]; return true; } return false; });
+    }
+    var url = '/casora-studio' + (seg[1] && !phone ? '/' + encodeURIComponent(seg[1]) : '') + '?dash=' + encodeURIComponent(dash)
+      + (id ? '&tile=' + encodeURIComponent(id) + '&tab=popup' : '&settings=' + kind);
+    if (window.casoraPopup) window.casoraPopup.close();
+    window.history.pushState(null, '', url);
+    window.dispatchEvent(new CustomEvent('location-changed', { bubbles: true, composed: true }));
+  };
   window.casoraPopup = {
     // src (optional): auslösende Kachel für den Weich-Ring, auch wenn das Popup-Element erst jetzt entsteht.
     open: function (data) {
@@ -10514,7 +10554,7 @@ window.casoraMenuGlass = {
         + '<div style="flex:1;min-width:0;pointer-events:none;white-space:normal;">'
         + '<div style="font-size:var(--casora-soft-row-fs, 14.5px);font-weight:700;letter-spacing:-0.01em;line-height:1.3;color:'
         + esc(tone(r.labelTone) || T.ink) + ';overflow:hidden;'
-        + 'text-overflow:ellipsis;white-space:nowrap;">' + lit(r.label, r.labelLit) + '</div>';
+        + (r.labelWrap ? 'white-space:normal;overflow-wrap:anywhere;' : 'text-overflow:ellipsis;white-space:nowrap;') + (r.strike ? 'text-decoration:line-through;opacity:.6;' : '') + '">' + lit(r.label, r.labelLit) + '</div>';
 
       if (r.sub) {
         var subs = Array.isArray(r.sub) ? r.sub : [r.sub];
@@ -10813,7 +10853,7 @@ window.casoraMenuGlass = {
         + 'font-weight:var(--casora-popup-row-label-weight, 400);'
         + 'letter-spacing:-0.022em;color:'
         + esc(tone(r.labelTone) || T.ink) + ';overflow:hidden;'
-        + 'text-overflow:ellipsis;white-space:nowrap;">' + lit(r.label, r.labelLit) + '</div>';
+        + (r.labelWrap ? 'white-space:normal;overflow-wrap:anywhere;' : 'text-overflow:ellipsis;white-space:nowrap;') + (r.strike ? 'text-decoration:line-through;opacity:.6;' : '') + '">' + lit(r.label, r.labelLit) + '</div>';
 
       if (r.sub) {
         var subs = Array.isArray(r.sub) ? r.sub : [r.sub];
@@ -11632,6 +11672,7 @@ window.casoraMenuGlass = {
             arr[spec.channel] = Math.round(d.pct * 2.55);
             val = arr;
           }
+          if (spec.flip) val = 100 - val; // issue 145: shown as closed, sent as HA's position
           data[spec.field || 'position'] = val;
           var go = function () { ha.hass.callService(spec.domain, spec.service, data, spec.target || undefined); };
           // Mit Rückfrage: erst nach „Öffnen“/„Schließen“ fahren, sonst zurück auf den alten Stand.
@@ -12559,6 +12600,30 @@ window.casoraMenuGlass = {
   // sent: the first button is always position 100, the last 0. v.shade_position 1–99 is the middle button (default 50),
   // v.shade_hide takes it away. scope: said when the buttons move more than one cover.
   var COVER_WORDS = { open: ['Auf', 'Zu'], raise: ['Heben', 'Senken'], extend: ['Ausfahren', 'Einfahren'] };
+  // Issue 145: covers shown as "percent closed" (security.percent_closed, Studio › Blinds and gates). Only display and
+  // input turn around, plus the tile's active state and an awning's words: what goes to HA and every count stay on HA's own position.
+  window.casoraCoverClosedView = function (ids) {
+    var sec = ((window.CASORA_SETTINGS || {}).security) || {}, on = sec.percent_closed;
+    var L = Array.isArray(ids) ? ids : [ids];
+    return Array.isArray(on) && L.length > 0 && L.every(function (id) { return on.indexOf(id) >= 0; });
+  };
+  // A cover shown as closed rests at HA's 100: it is active while it is out, also at 0, where HA says "closed".
+  window.casoraCoverActive = function (st, id) {
+    var open = !!st && ['open', 'opening', 'stopping'].indexOf(st.state) >= 0;
+    var p = st && st.attributes && st.attributes.current_position;
+    return typeof p === 'number' && window.casoraCoverClosedView(id) ? p < 100 : open;
+  };
+  // For a tile: true/false when all its covers are shown as closed, null to leave it to the tile's default rule.
+  window.casoraCoverActiveOverride = function (states, ids) {
+    var L = (window.casoraCoverSummary(states, ids) || {}).ids || [];
+    if (!L.length || !window.casoraCoverClosedView(L)) return null;
+    return L.some(function (id) { return window.casoraCoverActive(states[id], id); });
+  };
+  // The live words of one row: the same object, or a copy that reads the closed percentage.
+  window.casoraCoverRowWords = function (W, id) {
+    if (!W || !window.casoraCoverClosedView(id)) return W;
+    return Object.assign({}, W, { attr: 'current_position|closed', exact: { '0': W.exact['100'], '100': W.exact['0'] }, tpl: '{n} % geschlossen' });
+  };
   window.casoraCoverControls = function (states, ids, v) {
     var S = states || {}, L = Array.isArray(ids) ? ids : [], o = v || {};
     var isKind = function (id) {
@@ -12569,11 +12634,18 @@ window.casoraMenuGlass = {
     var kind = COVER_WORDS[o.cover_words] ? o.cover_words : 'open';
     if (!COVER_WORDS[o.cover_words] && L.length && L.every(function (id) { return isKind(id) === isKind(L[0]); })) kind = isKind(L[0]);
     var p = Number(o.shade_position), pos = Math.floor(p) === p && p >= 1 && p <= 99 ? p : 50;
-    return { open: COVER_WORDS[kind][0], close: COVER_WORDS[kind][1], shade: o.shade_hide ? null : pos,
-      shadeText: 'Beschatten ' + pos + ' %', scope: L.length > 1 ? 'Gilt für alle ' + L.length : null };
+    var flip = window.casoraCoverClosedView(L);
+    // A device shown as closed reports 100 at rest: on an awning the first button (100) retracts. Raise/lower already fit.
+    var words = flip && kind === 'extend' ? [COVER_WORDS[kind][1], COVER_WORDS[kind][0]] : COVER_WORDS[kind];
+    return { open: words[0], close: words[1], shade: o.shade_hide ? null : pos,
+      shadeText: 'Beschatten ' + pos + ' %', scope: L.length > 1 ? 'Gilt für alle ' + L.length : null,
+      // shown() turns a position either way: HA → display and display → HA.
+      flip: flip, attr: flip ? 'current_position|closed' : 'current_position', closedWord: flip ? 'geschlossen' : '',
+      shown: function (p) { return flip && p != null ? 100 - p : p; } };
   };
-  window.casoraCoverSummaryText = function (sum) {
+  window.casoraCoverSummaryText = function (sum, ids) {
     var s = sum || { total: 0 };
+    var cv = !!(ids && window.casoraCoverClosedView(ids)), av = cv && s.avg != null ? 100 - s.avg : s.avg;
     var one = s.total === 1;
     var avgPart = s.avg != null && s.positions ? 'Ø ' + s.avg + ' %' : '';
     var full;
@@ -12584,12 +12656,13 @@ window.casoraMenuGlass = {
     else if (s.open === s.total) {
       var part = s.positions && s.avg != null && s.avg < 100;
       if (!part) full = one ? 'Geöffnet' : 'Alle geöffnet';
-      else if (one) full = s.avg + ' % geöffnet';
+      else if (one) full = cv ? av + ' % geschlossen' : s.avg + ' % geöffnet';
       // Issue 145: not at the top is not „open“ without a qualifier.
+      else if (cv) { full = 'Teilweise geschlossen · Ø ' + av + ' %'; short = 'Teilweise geschlossen'; }
       else { full = 'Teilweise geöffnet · ' + avgPart; short = 'Teilweise geöffnet'; }
     } else {
       short = s.open + ' von ' + s.total + ' geöffnet';
-      full = avgPart ? short + ' · ' + avgPart : short;
+      full = avgPart && !cv ? short + ' · ' + avgPart : short;
     }
     return { full: full, short: short || full };
   };
@@ -14796,7 +14869,7 @@ window.casoraSecurityIcon = window.casoraSecurityIcon || function (id, s, attrs)
     var own = PN_OWN[k], admin = isAdmin(hassOf());
     var html = '<div class="cpn">'
       // Long file names and entity ids wrap instead of running out of the popup (fam-06).
-      + '<style>.cpn{font-size:15px;line-height:1.5;color:var(--casora-popup-tiles-text-primary,var(--primary-text-color));text-align:left;overflow-wrap:anywhere;min-width:0}'
+      + '<style>.cpn{font-size:15px;line-height:1.5;color:var(--casora-popup-tiles-text-primary,var(--primary-text-color));text-align:left;white-space:normal;overflow-wrap:anywhere;min-width:0}'
       + '.cpn code{word-break:break-all}'
       + '.cpn p{margin:0 0 10px}.cpn ul{margin:0 0 10px;padding-left:20px}.cpn a{color:var(--casora-accent,var(--primary-color));word-break:break-word}'
       + '.cpn code{font-size:.92em;padding:1px 5px;border-radius:6px;background:var(--casora-popup-row-fill,rgba(127,127,127,.14))}'

@@ -4,6 +4,25 @@ Casora ist aus [Hemma](https://github.com/willsanderson/Hemma) 2.1.2 (MIT) entst
 dem 26.09.2026 eigenständig weiterentwickelt. Hemmas frühere Einträge stehen in der Git-Historie.
 Die englische Fassung steht in [CHANGELOG.md](CHANGELOG.md).
 
+## 26.11.25 – 08.11.2026
+
+Einstellungen dort, wo du sie brauchst, eine neue Aufgaben-Kachel und neue Termine direkt aus dem Kalender.
+
+### Neu
+- **Kachel Aufgaben:** alle To-do-Listen in einer Kachel. Das Popup filtert nach Liste, sortiert nach Fälligkeit, hakt ab und legt neue Einträge an, mit Notiz und Fälligkeit, wo die Liste das kann. Der Filter gilt pro Browser.
+- **Termin hinzufügen (#146):** Das Kalender-Popup legt Termine mit Ort und Beschreibung an, in jedem Kalender, der das erlaubt.
+- **Seitenleiste der Kachel in Reitern:** Ein Klick auf eine Kachel im Studio zeigt Kachel, Popup und, wo es gemeinsame Einstellungen gibt, einen Reiter wie „Alle Jalousien“. Popup-Felder sind einen Klick entfernt, gemeinsame Werte wirken mit „Einstellungen speichern“.
+- **Zahnrad in jedem Popup:** Admins springen direkt auf den Reiter „Popup“ dieser Kachel im Studio. Popups ohne Kachel öffnen ihre Stelle in den Einstellungen.
+- **Prozent als geschlossen (#145):** Unter Einstellungen › Haus & Geräte › Jalousien und Tore lässt sich jede Jalousie als Prozent geschlossen anzeigen. Stellrad, Knöpfe, Zeilen, Kachel und Halten-Menü folgen. Bei Markisen tauschen Ausfahren und Einfahren, und die Kachel leuchtet nur, solange sie nicht ganz offen ist. Home Assistant bekommt weiter seine eigene Position. Auf, Zu und die Zählungen bleiben gleich.
+
+### Geändert
+- **Handy-Leiste:** Zuhause, Räume und Szenen sind ein Segment mit gleitender Markierung, die Werkzeuge dahinter flache Symbole, und der Punkt an der Glocke hat die Warnfarbe.
+- **Haus & Geräte:** ein Abschnitt pro Geräteart, der sich an seiner Überschrift öffnet, nichts mehr unter „Erweitert“. Die Batterie-Ausnahmen sind aus der Glocke hierher umgezogen, gespeicherte Werte bleiben.
+- **Kachelreihe:** Bei „Sofort“ hält ein ruhender Mauszeiger das Sortieren nicht mehr endlos auf.
+
+### Behoben
+- **Lange Benachrichtigungen (#147):** Der Text bricht im Popup um, statt rechts herauszulaufen.
+
 ## 26.11.24 – 08.11.2026
 
 Ein Fix für Szenen im falschen Raum, und ein Bildschirmschoner fürs Wand-Tablet.

@@ -2983,7 +2983,25 @@
     "Casora's AI features wait for your assistant: ask it to do Casora's open AI jobs. Casora Studio's own AI steps still need an AI task.": "As funções de IA do Casora esperam pelo teu assistente: pede-lhe que faça os trabalhos de IA pendentes do Casora. Os passos de IA do próprio Casora Studio continuam a precisar de uma tarefa de IA.",
     "Only when away": "Só na ausência",
     "This door or window only counts for security when nobody is home or the alarm is armed away.": "Esta porta ou janela só conta para a segurança quando não há ninguém em casa ou o alarme está armado em modo ausente.",
-    "Count a door or window only when away": "Contar uma porta ou janela só na ausência"
+    "Count a door or window only when away": "Contar uma porta ou janela só na ausência",
+    "Blinds, doors and windows, batteries, scenes, music, waste and calendars.": "Estores, portas e janelas, baterias, cenas, música, lixo e calendários.",
+    "Blinds and gates": "Estores e portões",
+    "Which blinds and gates count as open when the house is checked at night.": "Que estores e portões contam como abertos quando a casa é verificada à noite.",
+    "Batteries the bell should not warn about.": "Baterias sobre as quais o sino não deve avisar.",
+    "Which scene buttons appear here, and scenes Casora should never offer.": "Que botões de cena aparecem aqui e que cenas o Casora nunca deve oferecer.",
+    "On this dashboard": "Neste painel",
+    "How the bell words places, mailbox, combined contacts and device care.": "Como o sino nomeia locais, caixa de correio, contactos combinados e cuidado de aparelhos.",
+    "All blinds": "Todos os estores",
+    "All players": "Todos os leitores",
+    "All batteries": "Todas as baterias",
+    "All doors and windows": "Todas as portas e janelas",
+    "Lock screen": "Ecrã de bloqueio",
+    "Open in Settings": "Abrir nas definições",
+    "Show percent as closed": "Mostrar percentagem como fechado",
+    "60 % then means 60 % closed and the tile lights up only while it is not fully open. On an awning, Extend and Retract swap. Everything Casora counts stays the same.": "60 % significa então 60 % fechado e o mosaico só se acende enquanto o dispositivo não estiver totalmente aberto. Num toldo, Estender e Recolher trocam. Tudo o que o Casora conta mantém-se.",
+    "Tasks": "Tarefas",
+    "Add list …": "Adicionar lista …",
+    "Empty: every to-do list in your home.": "Vazio: todas as listas da casa."
   },
   "patterns": [
     [

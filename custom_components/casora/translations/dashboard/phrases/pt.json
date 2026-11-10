@@ -2843,9 +2843,40 @@
     "Zutaten": "Ingredientes",
     "Zubereitung": "Preparação",
     "1 Portion": "1 porção",
-    "Zählt nur bei Abwesenheit": "Só conta na ausência"
+    "Zählt nur bei Abwesenheit": "Só conta na ausência",
+    "Teilweise geschlossen": "Parcialmente fechado",
+    "Termin hinzufügen": "Adicionar evento",
+    "Neuer Termin": "Novo evento",
+    "Titel": "Título",
+    "Ort (optional)": "Local (opcional)",
+    "Beschreibung (optional)": "Descrição (opcional)",
+    "Ganztägig": "Dia inteiro",
+    "Ende": "Fim",
+    "Bitte gib einen Titel ein.": "Introduz um título.",
+    "Bitte gib Beginn und Ende an.": "Indica o início e o fim.",
+    "Das Ende muss nach dem Beginn liegen.": "O fim tem de ser depois do início.",
+    "Der Termin konnte nicht gespeichert werden.": "Não foi possível guardar o evento.",
+    "Neue Aufgabe": "Nova tarefa",
+    "Aufgaben": "Tarefas",
+    "Notiz (optional)": "Nota (opcional)",
+    "Fällig (optional)": "Prazo (opcional)",
+    "Keine Listen": "Sem listas",
+    "Keine To-do-Listen gefunden": "Nenhuma lista encontrada",
+    "Bitte gib eine Aufgabe ein.": "Introduz uma tarefa.",
+    "Die Aufgabe konnte nicht gespeichert werden.": "Não foi possível guardar a tarefa.",
+    "Abhaken": "Marcar",
+    "Wieder öffnen": "Reabrir",
+    "Eintrag löschen?": "Eliminar esta entrada?"
   },
   "patterns": [
+    [
+      "^Teilweise geschlossen · Ø (\\d+) %$",
+      "Parcialmente fechado · Ø {1}%"
+    ],
+    [
+      "^(\\d+) % geschlossen$",
+      "{1}% fechado"
+    ],
     [
       "^Beschatten (\\d+) %$",
       "Sombrear {1} %"

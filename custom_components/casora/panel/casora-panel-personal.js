@@ -521,6 +521,24 @@
           if (e && (e.hidden || e.entity_category)) return false;
           return GATE.includes(String((hass.states[id].attributes || {}).device_class || "").toLowerCase());
         }).sort((a, b) => String(meta(a).name).localeCompare(String(meta(b).name)));
+        // Issue 145: covers shown as "percent closed", one by one (security.percent_closed). Only the display turns around.
+        const coverIds = Object.keys(hass.states).filter((id) => id.startsWith("cover."))
+          .sort((a, b) => String(hass.states[a].attributes.friendly_name || a).localeCompare(String(hass.states[b].attributes.friendly_name || b)));
+        if (coverIds.length) {
+          const pc = self._flowGroup(host, { header: "Show percent as closed",
+            footer: "60 % then means 60 % closed and the tile lights up only while it is not fully open. On an awning, Extend and Retract swap. Everything Casora counts stays the same." });
+          pc.parentElement.dataset.pkey = "percent_closed";
+          coverIds.forEach((id) => {
+            const on = Array.isArray(sec.percent_closed) && sec.percent_closed.includes(id);
+            const name = hass.states[id].attributes.friendly_name || id;
+            const r = self._flowRow(pc, { title: name, raw: true });
+            r.row.appendChild(self._boolSwitch(on, false, (v) => {
+              const list = (Array.isArray(sec.percent_closed) ? sec.percent_closed : []).filter((x) => x !== id);
+              if (v) list.push(id);
+              if (list.length) sec.percent_closed = list; else delete sec.percent_closed;
+            }, name));
+          });
+        }
         if (gates.length) {
           const list = self._flowGroup(host, { header: "Gates: counts as closed up to" });
           list.parentElement.classList.add("casora-psec-gates");
@@ -631,6 +649,18 @@
           detail: bike ? "Detected" : "Not detected" });
       }
 
+      if (want("battery")) {
+        // The bell reads this list; it sits with the devices (settings rework).
+        g = group("battery", { header: "Batteries" });
+        S.notify.battery_exclude.forEach((id, i) => {
+          row(g, i ? "" : "No battery warning", [
+            ent(id, ["sensor"], (v) => { S.notify.battery_exclude[i] = v; }, null, ["battery"]),
+            del(() => { S.notify.battery_exclude.splice(i, 1); }),
+          ], i ? undefined : "The bell never warns about this battery.");
+        });
+        addRow(g, "Add battery exception", () => { S.notify.battery_exclude.push(""); });
+      }
+
       if (want("notify")) {
         // Bell
         g = group("notify", { header: "Notifications",
@@ -646,13 +676,6 @@
         row(g, "Mailbox", [ent(S.notify.mail, ["binary_sensor", "input_boolean"], (v) => { S.notify.mail = v; }, null,
           { binary_sensor: ["door", "window", "opening", "garage_door", "motion", "occupancy", "presence", "vibration", "moving", "tamper"] })],
           "Shows a hint when new mail arrives");
-        S.notify.battery_exclude.forEach((id, i) => {
-          row(g, i ? "" : "No battery warning", [
-            ent(id, ["sensor"], (v) => { S.notify.battery_exclude[i] = v; }, null, ["battery"]),
-            del(() => { S.notify.battery_exclude.splice(i, 1); }),
-          ], i ? undefined : "The bell never warns about this battery.");
-        });
-        addRow(g, "Add battery exception", () => { S.notify.battery_exclude.push(""); });
         mapRows(S.notify.contact_merged).forEach(([combo, members]) => {
           const m = Array.isArray(members) ? members : [];
           const setM = (j, v) => { m[j] = v; S.notify.contact_merged[combo] = m.filter(Boolean); };

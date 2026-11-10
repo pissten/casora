@@ -2825,9 +2825,40 @@
     "Zutaten": "Ingredients",
     "Zubereitung": "Preparation",
     "1 Portion": "1 serving",
-    "Zählt nur bei Abwesenheit": "Counts only when away"
+    "Zählt nur bei Abwesenheit": "Counts only when away",
+    "Teilweise geschlossen": "Partly closed",
+    "Termin hinzufügen": "Add event",
+    "Neuer Termin": "New event",
+    "Titel": "Title",
+    "Ort (optional)": "Location (optional)",
+    "Beschreibung (optional)": "Description (optional)",
+    "Ganztägig": "All day",
+    "Ende": "End",
+    "Bitte gib einen Titel ein.": "Please enter a title.",
+    "Bitte gib Beginn und Ende an.": "Please enter a start and an end.",
+    "Das Ende muss nach dem Beginn liegen.": "The end has to be after the start.",
+    "Der Termin konnte nicht gespeichert werden.": "The event could not be saved.",
+    "Neue Aufgabe": "New task",
+    "Aufgaben": "Tasks",
+    "Notiz (optional)": "Note (optional)",
+    "Fällig (optional)": "Due (optional)",
+    "Keine Listen": "No lists",
+    "Keine To-do-Listen gefunden": "No to-do lists found",
+    "Bitte gib eine Aufgabe ein.": "Please enter a task.",
+    "Die Aufgabe konnte nicht gespeichert werden.": "The task could not be saved.",
+    "Abhaken": "Tick off",
+    "Wieder öffnen": "Reopen",
+    "Eintrag löschen?": "Delete this item?"
   },
   "patterns": [
+    [
+      "^Teilweise geschlossen · Ø (\\d+) %$",
+      "Partly closed · Ø {1}%"
+    ],
+    [
+      "^(\\d+) % geschlossen$",
+      "{1}% closed"
+    ],
     [
       "^Beschatten (\\d+) %$",
       "Shade {1}%"

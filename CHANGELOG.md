@@ -4,6 +4,25 @@ Casora grew out of [Hemma](https://github.com/willsanderson/Hemma) 2.1.2 (MIT) a
 developed independently since 26.09.2026. Hemma's earlier entries are in the Git history.
 The German version is in [CHANGELOG.de.md](CHANGELOG.de.md).
 
+## 26.11.25 – 08.11.2026
+
+Settings where you need them, a new Tasks tile, and new events right from the calendar.
+
+### New
+- **Tasks tile:** all your to-do lists on one tile. The popup filters by list, sorts by due date, ticks items off and adds new ones with a note and a due date where the list supports them. The filter is per browser.
+- **Add an event (#146):** the calendar popup can create events with location and description, in any calendar that accepts them.
+- **Tile side panel in tabs:** clicking a tile in the Studio shows Tile, Popup and, where there are shared settings, a tab such as "All blinds". Popup fields are one click away, shared values take effect with "Save settings".
+- **Gear in every popup:** admins jump straight to that tile's Popup tab in the Studio. Popups without a tile open their section of the settings.
+- **Percent as closed (#145):** under Settings › Home & Devices › Blinds and gates each blind can read as percent closed. Dial, buttons, rows, tile and the hold menu follow. An awning's Extend and Retract swap, and the tile lights up only while it is not fully open. Home Assistant still gets its own position. Open, close and the counts stay as they were.
+
+### Changed
+- **Phone bar:** Home, Rooms and Scenes are one segment with a sliding marker, the tools behind it are flat symbols, and the bell's dot uses the alert colour.
+- **Home & Devices:** one section per kind of device that opens on its heading, nothing hidden under Advanced. The battery exceptions moved here from the bell, saved values stay.
+- **Tile row:** with "Right away" a pointer resting on the row no longer holds the sorting back for good.
+
+### Fixed
+- **Long notifications (#147):** the text wraps inside its popup instead of running out on the right.
+
 ## 26.11.24 – 08.11.2026
 
 A fix for scenes showing up in the wrong room, and a wall-panel screensaver.
