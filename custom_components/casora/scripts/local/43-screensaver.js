@@ -468,7 +468,11 @@
     ev.stopPropagation();
     if (ev.cancelable) ev.preventDefault();
   }
-  function onMove() { if (!shown) bump(); }
+  function onMove(ev) {
+    if (ev && ev.pointerType && ev.pointerType !== 'mouse') return;
+    if (shown) { hide(); return; }
+    bump();
+  }
   function onGesture(ev) {
     if (shown) {
       if (onEntity(ev)) { ev.stopPropagation(); return; }
@@ -494,10 +498,12 @@
       window.addEventListener('keydown', onGesture, true);
       window.addEventListener('wheel', onGesture, { capture: true, passive: false });
       window.addEventListener('mousemove', onMove, { capture: true, passive: true });
+      window.addEventListener('pointermove', onMove, { capture: true, passive: true });
     } else {
       window.removeEventListener('keydown', onGesture, true);
       window.removeEventListener('wheel', onGesture, { capture: true });
       window.removeEventListener('mousemove', onMove, { capture: true });
+      window.removeEventListener('pointermove', onMove, { capture: true });
     }
   }
   function setPace(ms) {
