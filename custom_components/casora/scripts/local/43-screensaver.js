@@ -468,9 +468,11 @@
     ev.stopPropagation();
     if (ev.cancelable) ev.preventDefault();
   }
+  // Movement is activity, so the cover does not come up while the mouse is in use.
+  // Once the cover is up, only a click outside the weather and calendar closes it.
   function onMove(ev) {
+    if (shown) return;
     if (ev && ev.pointerType && ev.pointerType !== 'mouse') return;
-    if (shown) { hide(); return; }
     bump();
   }
   function onGesture(ev) {
