@@ -53,6 +53,7 @@ const MIGRIERT = [
   { popup: 'Fahrzeug', vorlagen: ['casora_popup_car'], file: '03-popups.js', from: '  var C = window._casoraCar = {};', to: '  var B = window._casoraBike = {};', stages: 1 },
   // S2 on the cooling zone, S7 when no zone has a setpoint (or the fridge is unavailable).
   { popup: 'Kühlschrank', vorlagen: ['casora_popup_fridge'], file: '30-fridge.js', from: '  F.popup = function', to: null, stages: 2 },
+  { popup: 'Wärmepumpe', vorlagen: ['casora_popup_heat_pump'], file: '44-waermepumpe.js', from: '  H.sec = function', to: "  // The popup's cards", stages: 2 },
   { popup: 'Haustier', vorlagen: ['casora_popup_pet'], file: '26-haustier.js', from: '  P.popup = function', to: null, stages: 1 },
   { popup: 'Kaffeevollautomat', vorlagen: ['casora_popup_coffee'], file: '25-coffee.js', from: '  K.popup = function', to: null, stages: 2 },
   { popup: 'Saugroboter', vorlagen: ['casora_vacuum'], file: '02-devices.js', from: '  var V = window._casoraVac = ', to: '// ── Notifications: line wrapping', stages: 1 },
@@ -124,6 +125,8 @@ const MIGRIERT = [
   // Built for v3 (issue 124): S6 with a range (0–150 ppm in the colour of the level, thresholds as marks), the Verlauf
   // 24 Std. · 7 Tage in the stage.
   { popup: 'Aufgaben', vorlagen: ['casora_popup_tasks'], file: '43-aufgaben.js', from: '  T.innerHtml = function', to: '  T.box = function', stages: 1 },
+  // S5: HA's own map card mounted into UI.stage('image'), across the wide popup (issue 159).
+  { popup: 'Landkarte', vorlagen: ['casora_popup_map'], file: '44-landkarte.js', from: '  M.sec = function', to: '  M.popup = function', stages: 2 },
   { popup: 'CO-Melder', vorlagen: ['casora_popup_co'], file: '42-co.js', from: '  C.sec = function', to: "  // The popup's cards: v3", stages: 1 },
 ];
 

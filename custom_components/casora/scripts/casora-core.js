@@ -2522,12 +2522,14 @@ window.casoraMenuGlass = {
       casora_3d_printer: 2, casora_vacuum: 2, casora_lawn_mower: 2, casora_coffee: 2, casora_pet: 1, casora_media: 1, casora_football: 1, casora_trash: 1,
       casora_weather_warning: 3, casora_alarm: 3, casora_pulse: 3,
     };
-    var AUTO_ALWAYS = { casora_camera: 1, casora_cameras: 1, casora_frigate: 1, casora_reolink_doorbell: 1 };
+    var AUTO_ALWAYS = { casora_camera: 1, casora_cameras: 1, casora_frigate: 1, casora_reolink_doorbell: 1, casora_map: 1 };
     window.casoraAutoLarge = function (cfg, hass, active) {
       if (!cfg) return 0;
       if (/swipe|carousel/.test(String(cfg.type || '')) && Array.isArray(cfg.cards)) return 2;
       var tmpl = cfg.template;
       var list = Array.isArray(tmpl) ? tmpl : (tmpl ? [tmpl] : []);
+      // The map tile is large for its map; with „Map on the tile“ off it is an ordinary small tile.
+      if (list.indexOf('casora_map') !== -1 && cfg.variables && cfg.variables.map_tile === false) return 0;
       if (list.some(function (t) { return AUTO_ALWAYS[t]; })) return 2;
       var S = (hass && hass.states) || {};
       // Schloss: klein mit Schalter; groß nur bei Störung oder entriegelt, während niemand zuhause ist.
@@ -2919,6 +2921,41 @@ window.casoraMenuGlass = {
       return em;
     };
 
+    /* The top bar clock without sensor.time (#172): Home Assistant no longer adds the Time & Date integration, and
+       the clock stayed empty. The device's own time stands in, in Home Assistant's time zone when the user's
+       profile says "server" (hass.locale.time_zone), and an element ticks it at every full minute. */
+    window.casoraClockText = function (hass, use12, now) {
+      const d = now || new Date();
+      const tz = hass && hass.locale && hass.locale.time_zone === 'server' && hass.config && hass.config.time_zone;
+      let h = d.getHours(), m = d.getMinutes();
+      if (tz) {
+        try {
+          const p = new Intl.DateTimeFormat('en-GB', { timeZone: tz, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).formatToParts(d);
+          h = Number((p.find((x) => x.type === 'hour') || {}).value); m = Number((p.find((x) => x.type === 'minute') || {}).value);
+        } catch (e) { /* the device's zone */ }
+      }
+      const mm = String(m).padStart(2, '0');
+      if (!use12) return String(h).padStart(2, '0') + ':' + mm;
+      return ((h % 12) || 12) + ':' + mm + ' ' + (h >= 12 ? 'PM' : 'AM');
+    };
+    window.casoraClockHtml = function (use12, suffix) {
+      const esc = window.casoraEsc || ((x) => String(x == null ? '' : x).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])));
+      return '<casora-clock data-h12="' + (use12 ? '1' : '') + '" data-suffix="' + esc(suffix || '') + '">' + esc(window.casoraClockText(rootHass(), use12)) + '</casora-clock>';
+    };
+    const rootHass = () => { try { const ha = document.querySelector('home-assistant'); return (ha && ha.hass) || null; } catch (e) { return null; } };
+    if (!customElements.get('casora-clock')) {
+      customElements.define('casora-clock', class extends HTMLElement {
+        connectedCallback() { this._tick(); }
+        disconnectedCallback() { clearTimeout(this._t); }
+        _tick() {
+          clearTimeout(this._t);
+          const sx = this.dataset.suffix;
+          const t = window.casoraClockText(rootHass(), this.dataset.h12 === '1');
+          this.textContent = (sx ? t + ' ' + sx : t).toUpperCase();
+          this._t = setTimeout(() => this._tick(), 60050 - (Date.now() % 60000));
+        }
+      });
+    }
     /* alt: the tile's own short form for narrow tiles ("22,2° · Heizt" instead of "22,2° +1"); without it the
        first part and a counter as below. alt equal to text: no counter, the text itself ends with "…" (thermostat). */
     window.casoraStateFit = function (text, weight, alt) {
@@ -3121,6 +3158,7 @@ window.casoraMenuGlass = {
     window.CASORA_FILTER_CATEGORIES = {
       casora_thermostat:    'climate',
       casora_velair:        'climate',
+      casora_heat_pump:     'climate',
       casora_air_purifier:  'climate',
       // Jalousien sind kein Klima-Gerät: kein Badge-Filter, im Raum-Popup unter „Sonstiges“.
       casora_cover:         'unfiltered',
@@ -3142,6 +3180,7 @@ window.casoraMenuGlass = {
       casora_shopping:      'unfiltered',
       casora_kettle:        'unfiltered',
       casora_co:            'security',
+      casora_map:           'unfiltered',
       casora_plant:         'unfiltered',
     };
   }
@@ -3313,12 +3352,14 @@ window.casoraMenuGlass = {
 
       const pauseTimeout = Number(V.pause_timeout_minutes ?? 10);
       const out = [];
+      // Taken out of Now Playing for every dashboard in the Studio's player list (#151).
+      const npOff = ((window.CASORA_SETTINGS || {}).media || {}).hidden || [];
 
       for (let i = 1; i <= 10; i++) {
         if (!V['show_media_player_' + i]) continue;
         const eid = V['media_player_' + i];
         const s = eid && states[eid];
-        if (!s) continue;
+        if (!s || npOff.includes(eid)) continue;
 
         const st = low(s.state);
         const a  = s.attributes || {};
@@ -3615,7 +3656,7 @@ window.casoraMenuGlass = {
       // Echter Pausen-Beginn (sensor.casora_media_paused): verschiebt die Ausblende-Frist, gehört
       // also in die Signatur – und wird so auch von button-card mitverfolgt.
       const pausedMap = states['sensor.casora_media_paused']?.attributes?.players || null;
-      parts.push('pt:' + String(V.pause_timeout_minutes ?? ''));
+      parts.push('pt:' + String(V.pause_timeout_minutes ?? '') + '|' + (((window.CASORA_SETTINGS || {}).media || {}).hidden || []).join());
       for (let i = 1; i <= 10; i++) {
         const e = V['show_media_player_' + i] && V['media_player_' + i];
         if (e) {
@@ -4469,6 +4510,13 @@ window.casoraMenuGlass = {
   const SAFE = 'env(safe-area-inset-top, 0px)';
   const off = (v) => `calc(${v} + ${SAFE})`;
 
+  // Until the theme defines the photo (a moment after the first paint) a demo photo stands in: the one of the
+  // colour scheme, or dark mode downloads the day photo it never shows (gate r453, 11.11.2026).
+  function heroFallback() {
+    const dark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    return 'url("/casora_assets/rooms/home-demo' + (dark ? '-night' : '') + '.jpg")';
+  }
+
   const BG = {
     image:
       'linear-gradient(to bottom,'
@@ -4498,8 +4546,7 @@ window.casoraMenuGlass = {
       + ' var(--casora-mobile-hero-c-lower, #51473d)'
       + ` ${off('var(--casora-mobile-hero-p-lower, 83%)')},`
       + ' var(--casora-mobile-hero-c-base, #3b352e)'
-      + ` ${off('var(--casora-mobile-hero-p-base, 100%)')}),`
-      + ' var(--casora-mobile-hero-img, url("/casora_assets/rooms/home-demo.jpg"))',
+      + ` ${off('var(--casora-mobile-hero-p-base, 100%)')}),`,
     sizePortrait: '100% 100%, 100% 100%, 100% 100%, 100% 100%, auto '
       + off('var(--casora-mobile-hero-height, 36.5%)'),
     sizeLandscape: '100% 100%, 100% 100%, 100% 100%, 100% 100%, 100% auto',
@@ -4558,7 +4605,7 @@ window.casoraMenuGlass = {
       h.style.backgroundColor = 'var(--primary-background-color, #0d1117)';
       return;
     }
-    h.style.backgroundImage    = BG.image;
+    h.style.backgroundImage    = BG.image + ' var(--casora-mobile-hero-img, ' + heroFallback() + ')';
     h.style.backgroundSize     = LANDSCAPE_MQ.matches ? BG.sizeLandscape : sizePortraitPx(); // casora-local-patch
     h.style.backgroundPosition = BG.position;
     h.style.backgroundRepeat   = 'no-repeat';
@@ -8302,7 +8349,8 @@ window.casoraMenuGlass = {
       this._subEyebrow = this._backFn && prevTitle && !this._headFixed ? prevTitle : null;
       this._headerBack.setAttribute('aria-label', window.casoraTr ? window.casoraTr('Zurück') : 'Zurück');
       this._headerGear.setAttribute('aria-label', window.casoraTr ? window.casoraTr('Einstellungen') : 'Einstellungen');
-      this._headerGear.hidden = !!this._backFn || cfg.close === false || /^\/casora-studio/.test(location.pathname) || !window.casoraIsAdmin();
+      // A sub page has no gear, unless it names its own settings section (cfg.gear, the chargers page).
+      this._headerGear.hidden = (!!this._backFn && !cfg.gear) || cfg.close === false || /^\/casora-studio/.test(location.pathname) || !window.casoraIsAdmin();
       this.toggleAttribute('has-back', !!this._backFn);
       this._cfgCurrent = data || {};
       if (this._rowTitle && this._cfgCurrent.title !== this._cfgTitle) {
@@ -9351,7 +9399,10 @@ window.casoraMenuGlass = {
         y0 = t.clientY;
         dy = 0;
         dragging = false;
-        var onGrab = e.composedPath && e.composedPath().indexOf(grab) !== -1;
+        var path = e.composedPath ? e.composedPath() : [];
+        // Issue 159: a touch that starts on a map moves the map (down too), it never drags the sheet.
+        if (path.some(isMapNode) || (onMap && onMap.id === t.identifier && onMap.x === t.clientX && onMap.y === t.clientY)) return;
+        var onGrab = path.indexOf(grab) !== -1;
         tracking = onGrab || content.scrollTop <= 0;
       };
 
@@ -9392,6 +9443,18 @@ window.casoraMenuGlass = {
           surface.style.removeProperty('transition');
         }, 260);
       };
+
+      // HA's map (ha-map) and the map libraries of other cards (MapLibre, Leaflet) pan with one finger.
+      var isMapNode = (n) => !!n && (n.localName === 'ha-map' || (n.classList
+        && (n.classList.contains('maplibregl-map') || n.classList.contains('leaflet-container'))));
+      // Noted on the way in: button-card stops a touchstart inside a card with actions and sends its own from the
+      // card, so the one that arrives here no longer names the map it began on.
+      var onMap = null;
+      surface.addEventListener('touchstart', (e) => {
+        var t = e.touches && e.touches.length === 1 && e.touches[0];
+        if (onMap && t && onMap.id === t.identifier && onMap.x === t.clientX && onMap.y === t.clientY) return;
+        onMap = t && e.composedPath && e.composedPath().some(isMapNode) ? { id: t.identifier, x: t.clientX, y: t.clientY } : null;
+      }, { capture: true, passive: true });
 
       surface.addEventListener('touchstart', start, { passive: true });
       surface.addEventListener('touchmove', move, { passive: false });
@@ -9487,8 +9550,9 @@ window.casoraMenuGlass = {
     var seg = (location.pathname || '').split('/').filter(Boolean);
     var phone = /[-_]mobile$/i.test(seg[0] || '');
     var dash = (seg[0] || '').replace(/[-_]mobile$/i, '');
-    var id = el._casoraEntity, kind = 'start', text = '';
-    if (!id) {
+    var gear = (el._cfgCurrent || {}).gear;
+    var id = gear ? null : el._casoraEntity, kind = typeof gear === 'string' ? gear : 'start', text = '';
+    if (!id && !gear) {
       try { text = JSON.stringify((el._cfgCurrent || {}).content || {}); } catch (e) { text = ''; }
       GEAR_BLOCK.some(function (g) { if (g[0].test(text)) { kind = g[1]; return true; } return false; });
     }
@@ -12586,7 +12650,10 @@ window.casoraMenuGlass = {
       var p = posOf(id);
       if (s === 'opening') opening = true;
       if (s === 'closing') closing = true;
-      if (p != null ? p > 0 : (s === 'open' || s === 'opening' || s === 'stopping')) open++;
+      // Within its „Gilt als geschlossen bis“ value a cover at rest is closed, as for security (#177, casoraCoverOpen).
+      var upTo = window.casoraCoverClosedUpTo ? window.casoraCoverClosedUpTo(id) : 0;
+      var closedHere = upTo > 0 && (s === 'open' || s === 'closed') && p != null && p <= upTo;
+      if (!closedHere && (p != null ? p > 0 : (s === 'open' || s === 'opening' || s === 'stopping'))) open++;
       if (p != null) { sum += p; n++; }
     });
     var avg = n ? Math.round(sum / n) : (list.length ? Math.round(open * 100 / list.length) : null);
@@ -17137,6 +17204,24 @@ window.casoraSecurityIcon = window.casoraSecurityIcon || function (id, s, attrs)
     try { configureFrom(window._casoraNotifyCfg); } catch (e) {}
   }
 
+  // A phone dashboard has no casora_room: its bell takes the switches from the desktop twin (#156).
+  var phoneCfgFor = null;
+  function phoneSwitches(tries) {
+    var url = (((window.location || {}).pathname || '').split('/')[1] || '');
+    if (!/[-_]mobile$/i.test(url) || phoneCfgFor === url) return;
+    var h = document.querySelector('home-assistant');
+    if (!h || !h.hass || !window._casoraPartnerInfo) {
+      if (tries < 40) setTimeout(function () { phoneSwitches(tries + 1); }, 500);
+      return;
+    }
+    phoneCfgFor = url;
+    window._casoraPartnerInfo(h.hass, url.replace(/[-_]mobile$/i, '')).then(function (r) {
+      if (r && r.notify) { configureFrom(r.notify); collect(); }
+    }, function () { phoneCfgFor = null; });
+  }
+  phoneSwitches(0);
+  if (window.addEventListener) window.addEventListener('location-changed', function () { phoneSwitches(0); });
+
   window._casoraNotify = {
     open: open,
     close: function () { if (_menu) _menu._close(); },
@@ -17634,6 +17719,14 @@ window.casoraSecurityIcon = window.casoraSecurityIcon || function (id, s, attrs)
         || (typeof b.template === 'string' && !!b.template.trim())) && (!CB || !CB.sees || CB.sees(b, hassUserOf()));
     });
   }
+
+  // A room's motion sensors (#150), the first under its old key: on while any is on, entity is the one to show.
+  window.casoraMotionOf = function (o, states) {
+    var ids = ['motion_entity', 'motion_entity_2', 'motion_entity_3', 'motion_entity_4'].map(function (k) { return o && o[k]; }).filter(Boolean);
+    var st = function (id) { return ((states || {})[id] || {}).state; };
+    var on = ids.filter(function (id) { return st(id) === 'on'; })[0];
+    return { ids: ids, entity: on || ids[0] || null, state: on ? 'on' : ids.some(function (id) { return st(id) === 'off'; }) ? 'off' : 'unavailable' };
+  };
 
   // desk: Variablen des Desktop-Raums (oder null), chip: room_chips[<raum>], name: Raumname.
   function merge(desk, chip, name) {

@@ -19,7 +19,7 @@ function translator(lang) {
 // The strings the tile builds for days 0 and 1 (casora_trash state_display).
 const T = JSON.parse(fs.readFileSync(new URL('../../dashboards/casora/button_card_templates.json', import.meta.url), 'utf8'));
 const sd = T.casora_trash.state_display;
-assert.ok(sd.includes('`Heute ${label}`') && sd.includes('`Morgen ${label}`'), 'tile still builds "Heute/Morgen <bin>"');
+assert.ok(sd.includes("dayAnd('Heute')") && sd.includes("dayAnd('Morgen')"), 'tile still builds "Heute/Morgen <bin>" (#175: through dayAnd)');
 
 const en = translator('en');
 assert.equal(en('Heute Restmüll'), 'General waste today');
@@ -31,7 +31,7 @@ assert.equal(en('Heute 3'), '3 today');
 assert.equal(en('Heute 14:05'), 'Today 14:05');
 
 const DAY = /\b(Heute|Morgen)\b/;
-for (const lang of ['es', 'fr', 'it', 'nl', 'pl', 'pt']) {
+for (const lang of ['es', 'fr', 'it', 'nl', 'pl', 'pt', 'nb']) {
   const tr = translator(lang);
   for (const de of ['Heute Restmüll', 'Morgen Restmüll', 'Heute Bio', 'Morgen Papier']) {
     const out = tr(de);

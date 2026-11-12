@@ -2476,6 +2476,8 @@
       rangeU: du('reichweite_kombiniert'), kmU: du('kilometerstand'), inspU: du('inspektionsdistanz'), scrU: du('scr_reichweite'),
       inspKmKm: dk('inspektionsdistanz'), scrKm: dk('scr_reichweite'), known: known,
       range: val('reichweite_kombiniert'), tank: fuel != null ? fuel : soc, ev: fuel == null && soc != null, km: val('kilometerstand'),
+      /* A battery to charge: a level sensor, also on a plug-in hybrid and while the car sleeps (unavailable) (#174). */
+      plug: soc != null || !!(function () { var id = C.id(p, 'akku', 'sensor'); return id && states[id]; })(),
       tankL: val('tankmenge'), tankLU: /^l$/i.test(unit('tankmenge') || 'l') ? 'l' : unit('tankmenge'),
       scr: val('scr_reichweite'), oil: val('olstand'), v12: val('12v_batteriespannung'),
       out: val('aussentemperatur'), outUnit: unit('aussentemperatur') || '°C', open: openDoors.concat(openWins), openDoors: openDoors, openWins: openWins, locked: locked,
@@ -2633,6 +2635,11 @@
       var rowsT = [];
       var itT = tank() && tank().item ? tank().item(p, states) : null;
       if (itT) rowsT.push(itT);
+      /* Chargers nearby for a car with a battery to charge, plug-in hybrids too (45-charging.js, #168, #174); no row
+         without a key. */
+      var CH = window._casoraCharge;
+      var itC = r.plug && CH && CH.item ? CH.item(p, states) : null;
+      if (itC) rowsT.push(itC);
       return rowsT.length ? UI.group(rowsT, r.ev ? 'Akku' : 'Tank') : '';
     }
     if (name === 'state_s' || name === 'state_s3') {
@@ -4006,6 +4013,17 @@
   X.kindOf = function (id, hass) {
     var e = hass && hass.entities && hass.entities[id], p = e && e.platform;
     return p === 'hassio' ? 'ha' : p === 'marketplace' || p === 'hacs' ? 'mp' : 'dev';
+  };
+  // Updates on offer, sorted: every update entity that is on, also one installing right now, so the Updates badge
+  // (#167) counts what the popup counts ("4 Updates verfügbar, 1 wird installiert"); nothing at 0. The id is checked before the state is read: through button-card's state proxy every read
+  // subscribes the card, and reading all states made the badge watch the whole house.
+  X.pending = function (states) {
+    states = states || {};
+    return Object.keys(states).filter(function (id) {
+      if (id.indexOf('update.') !== 0) return false;
+      var e = states[id];
+      return !!e && e.state === 'on';
+    }).sort();
   };
   // ids (already sorted) → [{ key, label, ids }] in the order of X.KINDS, empty kinds left out; the order inside a kind
   // stays. label is null when only one kind has entries (no headings then).

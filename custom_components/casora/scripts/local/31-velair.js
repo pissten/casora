@@ -6,7 +6,7 @@
 // (00-finder.js), which also holds the source table. Without data (Velair not loaded) the popup is a plain climate popup.
 //   window._casoraVelair.zone(data, id)            → the climate's schedule as Casora reads it (pure)
 //   window._casoraVelair.daySegments(sched, wd)    → [{ from, to, block, i, carried }] for one weekday, minutes 0…1440
-//   window._casoraVelair.at(sched, date)           → { now, next: { block, wd, start, days } } (pure)
+//   window._casoraVelair.at(sched, date)           → { now, next: { block, wd, start, days } } (pure); next = the next real change
 //   window._casoraVelair.change(blocks, i, patch)  → { blocks } | { error } – edit/add (i = -1)/remove (patch null)
 //   window._casoraVelair.svc.*                     → service specs (day, pause, resume, resumeAuto)
 //   window._casoraVelair.popup(entity, states, hass, variables) – popup casora_popup_velair
@@ -61,25 +61,35 @@
   // ── The climate's schedule in Velair's response ───────────────────────────
   // Effective week: an active Profile that owns the zone wins (behavior schedule → its week, pause → none),
   // otherwise the zone's default week. Only the default week is what set_daily_schedule writes.
+  // Room groups (Velair 1.9, issue 170): several climates share one zone. The zone then hangs on the group's id
+  // (group.<hex>, no entity of Home Assistant) and member_to_unit names the owner of each climate.
+  V.unit = function (data, id) {
+    var own = data && data.member_to_unit && data.member_to_unit[id];
+    return typeof own === 'string' && own ? own : id;
+  };
   V.zone = function (data, id) {
-    if (!data || !data.zones || !id || !data.zones[id]) return null;
-    var z = data.zones[id] || {}, g = data.global || {};
+    if (!data || !data.zones || !id || !/^climate\./.test(String(id))) return null;
+    var unit = V.unit(data, id);
+    if (!data.zones[unit]) return null;
+    var z = data.zones[unit] || {}, g = data.global || {};
+    var grp = unit !== id ? ((data.room_groups || {})[unit] || {}) : null;
     var active = Array.isArray(data.active_profile_ids) ? data.active_profile_ids : (g.active_profile_ids || []);
     var profs = Array.isArray(data.profiles) ? data.profiles : [];
     var prof = null;
     active.some(function (k) {
       var p = profs.filter(function (x) { return x && x.key === k; })[0];
-      if (p && p.zones && p.zones[id]) { prof = p; return true; }
+      if (p && p.zones && p.zones[unit]) { prof = p; return true; }
       return false;
     });
-    var beh = prof ? String(prof.zones[id].behavior || 'normal') : 'normal';
-    var sched = beh === 'schedule' ? (prof.zones[id].schedule || {}) : beh === 'pause' ? {} : (z.schedule || {});
-    var rt = (data.zone_runtime || {})[id] || {};
+    var beh = prof ? String(prof.zones[unit].behavior || 'normal') : 'normal';
+    var sched = beh === 'schedule' ? (prof.zones[unit].schedule || {}) : beh === 'pause' ? {} : (z.schedule || {});
+    var rt = (data.zone_runtime || {})[id] || (data.zone_runtime || {})[unit] || {};
     var mig = !!(data.temperature_migration && data.temperature_migration.required);
-    var ext = ((data.external_execution || {}).zones || {})[id];
+    var exz = (data.external_execution || {}).zones || {}, ext = exz[id] || exz[unit];
     var st = data.settings || {};
     return {
-      id: id, enabled: z.enabled !== false, schedule: sched,
+      id: id, owner: unit, group: grp ? String(grp.name || '') : null, members: grp && Array.isArray(grp.members) ? grp.members.slice() : null,
+      enabled: z.enabled !== false, schedule: sched,
       source: beh === 'schedule' ? 'profile' : beh === 'pause' ? 'profile_pause' : 'default',
       profile: prof ? String(prof.name || prof.key || '') : null,
       editable: !mig && !data.operation_recovery && beh === 'normal',
@@ -120,17 +130,28 @@
     });
     return out;
   };
+  // What a block sets, without its start: two blocks that set the same are no change (issue 170).
+  var effect = function (b) {
+    var o = {};
+    Object.keys(b || {}).sort().forEach(function (k) { if (k !== 'start' && k !== 'id' && b[k] != null && b[k] !== '') o[k] = b[k]; });
+    if (!o.action) o.action = 'set_temperature';
+    return JSON.stringify(o);
+  };
+  // now: the block that runs. next: the next block that changes something – a block that sets what already runs
+  // (every day starting with its own 16° at 00:00 after an evening on 16°) is skipped; null when nothing changes all week.
   V.at = function (sched, date) {
     date = date || new Date();
     var wd = V.weekday(date), m = date.getHours() * 60 + date.getMinutes();
     var segs = V.daySegments(sched, wd);
     var now = segs.filter(function (s) { return s.from <= m && m < s.to; })[0] || null;
-    var next = null;
-    segs.some(function (s) { if (!s.carried && s.from > m) { next = { block: s.block, wd: wd, start: s.from, days: 0 }; return true; } return false; });
-    for (var d = 1; !next && d <= 7; d++) {
-      var w = WD[(WD.indexOf(wd) + d) % 7], l = blocksOf(sched, w);
-      if (l.length) next = { block: l[0].b, wd: w, start: l[0].m, days: d };
+    var coming = [];
+    segs.forEach(function (s) { if (!s.carried && s.from > m) coming.push({ block: s.block, wd: wd, start: s.from, days: 0 }); });
+    for (var d = 1; d <= 7; d++) {
+      var w = WD[(WD.indexOf(wd) + d) % 7];
+      blocksOf(sched, w).forEach(function (x) { if (d < 7 || x.m <= m) coming.push({ block: x.b, wd: w, start: x.m, days: d }); });
     }
+    var run = now ? effect(now.block) : null, next = null;
+    coming.some(function (c) { if (effect(c.block) !== run) { next = c; return true; } return false; });
     return { now: now ? now.block : null, next: next };
   };
 

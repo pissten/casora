@@ -1,6 +1,7 @@
 {
   "exact": {
     "Alle Änderungen": "All changes",
+    "Nebel": "Fog",
     "Tankinhalt": "Fuel in tank",
     "Staubbeutel oder Filter fehlt": "Dust bag or filter missing",
     "Absauggebläse gestört": "Emptying fan fault",
@@ -2848,7 +2849,91 @@
     "Die Aufgabe konnte nicht gespeichert werden.": "The task could not be saved.",
     "Abhaken": "Tick off",
     "Wieder öffnen": "Reopen",
-    "Eintrag löschen?": "Delete this item?"
+    "Eintrag löschen?": "Delete this item?",
+    "Wärmepumpe": "Heat pump",
+    "Warmwasser": "Hot water",
+    "Vorlauf": "Supply",
+    "Rücklauf": "Return",
+    "Außen": "Outdoor",
+    "Leistungszahl": "COP",
+    "Verdichterleistung": "Compressor power",
+    "Verdichter": "Compressor",
+    "Verdichter läuft": "Compressor running",
+    "Verdichter aus": "Compressor off",
+    "Einmal aufheizen": "Heat up once",
+    "Aufheizen gestartet": "Heating up started",
+    "Taut ab": "Defrosting",
+    "Landkarte": "Map",
+    "Nichts auf der Karte": "Nothing on the map",
+    "Soll": "Target",
+    "Ist": "Actual",
+    "Solltemperatur": "Target temperature",
+    "Heizkreispumpe": "Heating circuit pump",
+    "Zirkulationspumpe": "Circulation pump",
+    "Frostschutz": "Frost protection",
+    "Vorlauftemperatur · 24 Std.": "Supply temperature · 24 h",
+    "Außentemperatur · 24 Std.": "Outdoor temperature · 24 h",
+    "1 Ladepunkt": "1 charging point",
+    "Ladepunkte": "charging points",
+    "Daten: Open Charge Map, CC BY 4.0": "Data: Open Charge Map, CC BY 4.0",
+    "Gleich noch einmal versuchen": "Try again in a moment",
+    "Keine Ladesäule in diesem Umkreis": "No charger within this radius",
+    "Keine Ladesäule passt zum Filter": "No charger matches the filter",
+    "Kostenlos": "Free",
+    "kostenlos": "free",
+    "Ladesäule": "Charger",
+    "Ladesäulen": "Chargers",
+    "Ladesäulen werden geladen": "Loading chargers",
+    "Open Charge Map antwortet gerade nicht": "Open Charge Map is not answering right now",
+    "Open Charge Map nimmt den Schlüssel nicht an": "Open Charge Map does not accept the key",
+    "Zu viele Abfragen, später noch einmal": "Too many requests, try again later",
+    "Rund um Zuhause": "Around home",
+    "Rund um das Auto": "Around the car",
+    "Schnellste": "Fastest",
+    "Leistung unbekannt": "Power unknown",
+    "1 Ladesäule": "1 charger",
+    "Beste Wahl": "Best choice",
+    "Jetzt laden": "Charge now",
+    "Bald laden": "Charge soon",
+    "Laden nicht nötig": "No need to charge",
+    "Keine Ladesäule": "No charger",
+    "Keine kostenlose Ladesäule": "No free charger",
+    "Ladeleistung": "Charging power",
+    "Ladesäulen gerade nicht abrufbar": "Chargers not available right now",
+    "Ladesäulen in der Nähe": "Chargers nearby",
+    "im Umkreis": "within the radius",
+    "leer": "empty",
+    "voll": "full",
+    "Der Akku ist gut gefüllt.": "The battery is well charged.",
+    "Abend am Meer": "Evening by the sea",
+    "Alpenglühen": "Alpenglow",
+    "Aufgang": "Sunrise",
+    "Bergsee": "Mountain lake",
+    "Dünen": "Dunes",
+    "Fjord am Morgen": "Fjord in the morning",
+    "Landschaften": "Landscapes",
+    "Nebelwald": "Misty forest",
+    "Polarlicht": "Northern lights",
+    "Sanfte Hügel": "Rolling hills",
+    "Untergang": "Sunset",
+    "Winternacht": "Winter night",
+    "Canyon": "Canyon",
+    "1 Abholung": "1 pickup",
+    "Eigener Strom": "Own power",
+    "Eine Sache braucht dich": "One thing needs you",
+    "Erzeugung jetzt": "Generation now",
+    "Fast alles ruhig": "Almost all quiet",
+    "Haus verbraucht": "House uses",
+    "Heute nichts mehr": "Nothing more today",
+    "Nichts braucht dich": "Nothing needs you",
+    "Sonne": "Sun",
+    "Verbrauch jetzt": "Use now",
+    "Zur Kenntnis": "For your information",
+    "aus dem Netz": "from the grid",
+    "ins Netz": "to the grid",
+    "Akku gibt ab": "Battery discharging",
+    "Arzttermin": "Doctor",
+    "Lamellenstellung": "Slats"
   },
   "patterns": [
     [
@@ -5118,6 +5203,70 @@
     [
       "^(\\d+(?:,\\d+)?) Portionen$",
       "{1} servings"
+    ],
+    [
+      "^(\\d+) von (\\d+) zu Hause$",
+      "{1} of {2} at home"
+    ],
+    [
+      "^(\\d+) Ladepunkte$",
+      "{1} charging points"
+    ],
+    [
+      "^ab (\\d[\\d.,]*) km$",
+      "from {1} km"
+    ],
+    [
+      "^(\\d+) Ladesäulen$",
+      "{1} chargers"
+    ],
+    [
+      "^Nächste (\\d[\\d.,]*) km$",
+      "Nearest {1} km"
+    ],
+    [
+      "^Nächster Schnelllader: (.+), (.+)\\.$",
+      "Nearest fast charger: {1}, {2}."
+    ],
+    [
+      "^Nächste Ladesäule: (.+), (.+)\\.$",
+      "Nearest charger: {1}, {2}."
+    ],
+    [
+      "^Der Akku reicht noch etwa (\\S+) (\\S+)\\.$",
+      "The battery lasts about another {1} {2}."
+    ],
+    [
+      "^Schnellste, (.+)$",
+      "Fastest, {1}"
+    ],
+    [
+      "^Noch (\\d+) Std\\. (\\d+) Min\\. Tageslicht$",
+      "{1} h {2} min of daylight left"
+    ],
+    [
+      "^Noch (\\d+) Min\\. Tageslicht$",
+      "{1} min of daylight left"
+    ],
+    [
+      "^(\\d+) Abholungen$",
+      "{1} pickups"
+    ],
+    [
+      "^in (\\d+) Std\\. (\\d+) Min\\.$",
+      "in {1} h {2} min"
+    ],
+    [
+      "^(\\d+) Dinge brauchen dich$",
+      "{1} things need you"
+    ],
+    [
+      "^(.+) aus$",
+      "{1} off"
+    ],
+    [
+      "^(.+) aktiv$",
+      "{1} active"
     ]
   ]
 }

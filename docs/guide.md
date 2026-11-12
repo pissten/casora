@@ -106,7 +106,7 @@ The washer and dryer popup shows progress, finish time, program and phase. When 
 
 A new dashboard sorts devices into their rooms (lights, then heating, air, blinds, media and appliances), groups a room once it has two or more lights, blinds or locks, and puts your favourites on Home.
 
-Casora ships room photos for 31 room types, by day and by night, for rooms without photos of their own. It follows Home Assistant's language: English, German, Spanish, French, Italian, Dutch, Polish and Portuguese.
+Casora ships room photos for 31 room types, by day and by night, for rooms without photos of their own. It follows Home Assistant's language: English, German, Spanish, French, Italian, Dutch, Polish, Portuguese and Norwegian.
 
 **Known limits.** The e-bike tile is for bikes with the Bosch Smart System and reads the Bosch eBike integration (Marketplace: Xunil99/ha-bosch-ebike); other e-bikes show no values. The aquarium tile is not found automatically: add it in the Studio and pick the light, light profile, dosing pump buttons and sensors in its advanced fields.
 
@@ -158,7 +158,7 @@ Cards for devices that not every home has ship with Casora but stay out of **Add
 
 - **Add a card.** Every card has a preview of its tile and popup; tap it to see both large. Once added, the card appears in **Add a tile** for all your dashboards. Removing a card asks whether tiles that use it stay or go.
 - **Request a card.** Choose **Request a card…**, describe the device and what the tile and popup should show, and pick a few example entities. Casora prepares a GitHub issue with the kind of device, units, device classes and attribute names, but without entity names, rooms or places, and shows you the exact text first. You submit it on GitHub yourself. **Your requests** shows where each one stands: Open, Question (with the answer), In progress, Built or Declined.
-- **Available now:** Frigate camera, Reolink doorbell, Velair thermostat, chart and pet tracker (Tractive). The robot lawn mower and the coffee machine started as community cards and are regular tiles now. Nothing is downloaded from outside your Home Assistant: new cards come with a Casora release. If a card is ever retired, it disappears from **Add a tile** first while existing tiles keep working.
+- **Available now:** Frigate camera, Reolink doorbell, Velair thermostat, chart, pet tracker (Tractive) and a large map of persons and zones. The robot lawn mower and the coffee machine started as community cards and are regular tiles now. Nothing is downloaded from outside your Home Assistant: new cards come with a Casora release. If a card is ever retired, it disappears from **Add a tile** first while existing tiles keep working.
 - **Talking at the Reolink doorbell** is an experiment: turn on **Talk (experiment)** in the tile's settings. It needs HTTPS and the doorbell connected in your network (RTSP), and not every doorbell accepts it. With Home Assistant 2026.11 and its two-way audio (a Labs preview), Casora talks through Home Assistant's own player.
 
 ## When a device is missing
@@ -351,6 +351,7 @@ Casora runs entirely inside your Home Assistant. It has no cloud service, no acc
 - **New releases** are looked up on GitHub (`api.github.com`) so they can show under Settings › Updates & setup › Updates. Nothing about your home is sent.
 - **Community card requests:** the status under **Your requests** is looked up on GitHub by the request's number. You submit the request yourself on GitHub.
 - **Fuel prices**, if you enter your own Tankerkönig key: Casora asks Tankerkönig for the stations within your radius around the car or your home. With Home Assistant's Tankerkönig integration instead, Casora only reads its sensors. The browser loads the station logos from the brands' websites, Wikimedia or Google's favicon service.
+- **Chargers nearby**, if you enter your own Open Charge Map key: Casora asks Open Charge Map for the public chargers within your radius around the car or your home, only when a car window asks for them and at most every 30 minutes per place. A tap on a charger opens its place in Apple Maps on iPhone and iPad, in Google Maps everywhere else.
 - **Football tile:** the popup loads the league table and form from ESPN, the same source the Team Tracker integration uses.
 
 Updates come through the Marketplace or the GitHub release page. Ventilation push notifications and pushes about new Casora versions go only to the devices you select. Your own room photos are stored in `/config/casora_photos` and are served only to logged-in users. Dashboards, versions (`/config/casora_versionen/`), backups (`/config/casora_sicherungen/`) and your settings stay on your Home Assistant instance and are included in its regular backups.

@@ -37,8 +37,13 @@ const GEO = `const R = p.shadowRoot;
     // Hidden by opacity or clipped to nothing (a scene's drag handle outside edit mode) is not seen, so not checked.
     const seen = (e) => { for (let x = e; x && x !== b; x = x.parentElement) { const cs = getComputedStyle(x); if (cs.opacity === '0') return false;
       if (x !== e && /hidden|clip/.test(cs.overflow) && (x.getBoundingClientRect().width < 1 || x.getBoundingClientRect().height < 1)) return false; } return true; };
+    // What is seen of an element: its box cut by every ancestor that clips (a photo zoomed inside its rounded frame).
+    const shown = (e) => { const r = e.getBoundingClientRect(); let l = r.left, rt = r.right;
+      for (let x = e.parentElement; x && x !== b; x = x.parentElement) if (/hidden|clip/.test(getComputedStyle(x).overflowX)) {
+        const c = x.getBoundingClientRect(); l = Math.max(l, c.left); rt = Math.min(rt, c.right); }
+      return { left: l, right: Math.max(l, rt) }; };
     const wide = [...b.querySelectorAll('*')].filter((e) => vis(e) && mine(e) && seen(e) && getComputedStyle(e).position !== 'fixed' && !e.closest('.combo-menu, .mrow, [popover]'))
-      .map((e) => ({ e, r: e.getBoundingClientRect() })).filter(({ r }) => r.left < br.left - 1 || r.right > br.right + 1)
+      .map((e) => ({ e, r: shown(e) })).filter(({ r }) => r.left < br.left - 1 || r.right > br.right + 1)
       .map(({ e, r }) => (e.className || e.tagName).toString().slice(0, 40) + ' ' + Math.round(r.left - br.left) + '/' + Math.round(br.right - r.right));
     const plates = [...b.querySelectorAll(PLATE)].filter((e) => vis(e) && mine(e));
     const nested = plates.filter((x) => plates.some((y) => y !== x && y.contains(x))).length;
@@ -64,7 +69,7 @@ for (const [tag, opts] of SIZES) {
   await studio(page, dash);
   const P = (src, a) => page.evaluate(([src, a]) => new Function('p', 'arg', 'return (async () => {' + src + '})()')(window.__panel(), a), [src, a]);
   const tiles = await P('return window.casoraSettingsMap.tiles.map((t) => t.id);');
-  await need(tag + ': acht Kacheln', tiles.length === 8, tiles);
+  await need(tag + ': neun Kacheln', tiles.length === 9, tiles);
   for (const t of tiles) {
     await P(`p._bOpen = true; await p._csShow('n-${t}');`);
     await page.waitForTimeout(1300);

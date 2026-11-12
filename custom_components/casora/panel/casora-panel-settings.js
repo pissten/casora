@@ -77,6 +77,13 @@
           plain: "Plain panels instead of frosted glass, so slow devices keep up.",
           kw: "leistung performance schnell langsam glas unschärfe" },
       ] },
+    { id: "saver", label: "Screensaver", icon: "clock", tone: "set-saver",
+      sub: "What a wall tablet shows when nobody touches it.",
+      blocks: [
+        { k: "saver", sec: "General", sub: "chrome", keys: ["casora_screensaver", "casora_screensaver_kind", "casora_screensaver_photos"], saver: true,
+          title: "Screensaver", plain: "Pick a screensaver and after how long it starts. The picture shows what it looks like.",
+          kw: "bildschirmschoner screensaver wandtablet tablet uhr wortuhr himmel landschaft fotos leerlauf idle ruhe" },
+      ] },
     { id: "phone", label: "Phone", icon: "iphone", tone: "set-live",
       sub: "The dashboard on the phone, and progress on the lock screen.",
       blocks: [
@@ -144,6 +151,9 @@
         { k: "fuel", fuel: true, title: "Fuel prices",
           plain: "Gas stations nearby in the car window: price, distance, open or closed.",
           kw: "tanken benzin diesel e5 e10 tankstelle tankerkönig umkreis auto" },
+        { k: "charging", charging: true, title: "Chargers nearby",
+          plain: "Public chargers nearby in the car window: distance, power, AC or DC.",
+          kw: "laden ladesäule ladestation ladepunkt elektroauto e-auto wallbox openchargemap open charge map ac dc hpc umkreis auto" },
       ] },
     { id: "ai", label: "AI", icon: "assist", tone: "set-ai",
       sub: "What the AI checks for you, how often, and which AI does it.",
@@ -414,13 +424,15 @@
     const optionsDirty = (cs) => !!cs.opt && JSON.stringify(cleanOpts(cs.O)) !== cs.O0;
     // Fuel prices: draft without the key; F.key is only there when a new one was typed (or "" = remove).
     const tankenDirty = (cs) => !!cs.tk && JSON.stringify(cs.F) !== cs.F0;
+    // Chargers nearby (charging.py): draft without the key, like fuel prices.
+    const chargingDirty = (cs) => !!cs.ch && JSON.stringify(cs.C) !== cs.C0;
     const liveDirty = (self) => typeof self._csLiveDirty === "function" && self._csLiveDirty();
     // Issue 129: the design's scope ("all" / "casora") is a draft like the rest; the switch sits on the design page.
     const scopeDirty = (cs) => cs.scope !== undefined && cs.scope !== cs.scope0;
     // Settings for all dashboards (drafts above).
     P._csOwnDirty = function () {
       const cs = this._cs;
-      return !!cs && (settingsDirty(cs) || optionsDirty(cs) || tankenDirty(cs) || scopeDirty(cs) || liveDirty(this));
+      return !!cs && (settingsDirty(cs) || optionsDirty(cs) || tankenDirty(cs) || chargingDirty(cs) || scopeDirty(cs) || liveDirty(this));
     };
     // New structure: this dashboard's settings belong to the same bar – when they were changed on one of its pages
     // (_csDashTouched, set in _markDirty below). Edits elsewhere in the Studio keep "Done" as before.
@@ -438,6 +450,12 @@
       (r.cars || []).forEach((c) => { cars[c.device_id] = c.fuel; });
       cs.F = { radius: r.radius, cars };
       cs.F0 = JSON.stringify(cs.F);
+    };
+
+    const takeCharging = (cs, r) => {
+      cs.ch = r;
+      cs.C = { radius: r.radius };
+      cs.C0 = JSON.stringify(cs.C);
     };
 
     const takeOptions = (cs, r) => {
@@ -507,8 +525,17 @@
         cs.tkErr = e && e.code === "unknown_command" ? "old" : ((e && e.message) || String(e));
       }
       })();
+      const charging = (async () => {
+      try {
+        takeCharging(cs, await hass.callWS({ type: "casora/charging/get" }));
+        cs.chErr = null;
+      } catch (e) {
+        cs.ch = null;
+        cs.chErr = e && e.code === "unknown_command" ? "old" : ((e && e.message) || String(e));
+      }
+      })();
       const live = typeof this._csLiveLoad === "function" ? this._csLiveLoad(cs) : null;
-      await Promise.all([own, opts, fuel, live]);
+      await Promise.all([own, opts, fuel, charging, live]);
       cs.loaded = true;
       cs.at = Date.now();
       return true;
@@ -580,6 +607,13 @@
           takeTanken(cs, await this._hass.callWS(msg));
           cs.tkTest = null;
           done.push(t("Saved. Fuel prices follow within 10 minutes."));
+        }
+        if (chargingDirty(cs)) {
+          const msg = { type: "casora/charging/set", radius: cs.C.radius };
+          if (cs.C.key !== undefined) msg.key = cs.C.key;
+          takeCharging(cs, await this._hass.callWS(msg));
+          cs.chTest = null;
+          done.push(t("Saved. The car window shows chargers nearby now."));
         }
         if (scopeDirty(cs)) {
           const CT = window.casoraTheme;
@@ -935,6 +969,100 @@
       }
     };
 
+    // ── Chargers nearby (charging.py, issue 168) ─────────────────────────────
+    const chargingTestText = (r) => {
+      if (r.ok) {
+        return r.count ? t("Works: {n} chargers within {r} km.").replace("{n}", r.count).replace("{r}", r.radius)
+          : t("Works, but no charger within {r} km.").replace("{r}", r.radius);
+      }
+      const codes = { format: "The key doesn't have the right format.", key: "Open Charge Map doesn't accept this key.",
+        wait: "Asked just now. Please try again in a moment.", timeout: "Open Charge Map doesn't answer right now.",
+        net: "No connection to Open Charge Map.", limit: "Too many requests. Please try again later." };
+      return codes[r.code] ? t(codes[r.code]) : (t("Didn't work:") + " " + (r.message || r.code));
+    };
+    P._csFillCharging = function (host) {
+      const cs = this._cs;
+      if (!cs.ch) {
+        this._flowGroup(host, { footer: cs.chErr === "old"
+          ? t("This page appears after Home Assistant has restarted with the new Casora version.")
+          : t("The settings could not be loaded.") + " " + (cs.chErr || "") });
+        return;
+      }
+      const ch = cs.ch, C = cs.C;
+      if (!ch.key_set) host.appendChild(el("div", "cs-note", t("Not set up yet: the car popup shows no chargers. A free Open Charge Map key below turns them on.")));
+      // 1 · Key
+      const g = this._flowGroup(host, { header: t("1 · Key"),
+        footer: t("The key stays in Home Assistant and never goes to the browser. Casora asks Open Charge Map only when a car window asks for chargers, at most every 30 minutes per place.") });
+      const r1 = this._flowRow(g, { title: t("Free Open Charge Map key"), sub: t("Sign in there, then My Profile, My Apps") });
+      const a = el("a", "cs-tk-link", t("Get one") + " ↗");
+      a.href = "https://openchargemap.org/site/profile/applications";
+      a.target = "_blank";
+      a.rel = "noopener noreferrer";
+      a.style.cssText = "margin-left:auto;font-size:var(--t-callout);font-weight:600;color:var(--accent);text-decoration:none;white-space:nowrap";
+      r1.row.appendChild(a);
+      const r2 = this._flowRow(g, { title: t("Key"), sub: ch.key_set ? (C.key === "" ? t("Removed when you save") : t("Saved")) : t("Paste") });
+      r2.row.classList.add("casora-prow");
+      const box = el("div", "casora-pctl");
+      const inp = el("input", "fin cs-ch-key");
+      // Masked like a password; the stored key never comes back into the form.
+      inp.type = "password";
+      inp.autocomplete = "off";
+      inp.spellcheck = false;
+      inp.setAttribute("autocapitalize", "off");
+      inp.setAttribute("data-no-i18n", "");
+      inp.setAttribute("aria-label", t("Key"));
+      inp.placeholder = ch.key_set ? "••••••••-••••-••••-••••-••••••••••••" : "00000000-0000-0000-0000-000000000000";
+      inp.value = C.key || "";
+      inp.style.cssText = "flex:1 1 260px;min-width:0;font-family:ui-monospace,SFMono-Regular,Menlo,monospace";
+      inp.oninput = () => {
+        const v = inp.value.trim();
+        if (v) C.key = v; else delete C.key;
+        this._csBar();
+      };
+      box.appendChild(inp);
+      if (ch.key_set) box.appendChild(btn(t("Remove"), () => { C.key = ""; this._csRepaint(); }, true));
+      r2.row.appendChild(box);
+      // Test request: with the typed key, otherwise with the stored one.
+      const r3 = this._flowRow(g, { title: t("Test request"), sub: cs.chTest ? chargingTestText(cs.chTest) : t("Asks Open Charge Map once around your home.") });
+      r3.row.classList.add("casora-prow", "cs-ch-test");
+      const sub3 = r3.row.querySelector(".rtext > span");
+      if (sub3) {
+        sub3.setAttribute("data-no-i18n", "");
+        if (cs.chTest) sub3.style.color = cs.chTest.ok ? "var(--casora-studio-good, #34c759)" : "var(--casora-studio-danger, #ff453a)";
+      }
+      const tb = btn(cs.chBusy ? t("Testing…") : t("Test now"), async () => {
+        const key = C.key || null;
+        if (!key && !ch.key_set) { cs.chTest = { ok: false, code: "format" }; this._csRepaint(); return; }
+        cs.chBusy = true; this._csRepaint();
+        try { cs.chTest = await this._hass.callWS(key ? { type: "casora/charging/test", key } : { type: "casora/charging/test" }); }
+        catch (e) { cs.chTest = { ok: false, code: "error", message: (e && e.message) || String(e) }; }
+        cs.chBusy = false;
+        this._csRepaint();
+      }, true);
+      tb.disabled = !!cs.chBusy;
+      const c3 = el("div", "casora-pctl");
+      c3.appendChild(tb);
+      r3.row.appendChild(c3);
+      // 2 · Area
+      const g2 = this._flowGroup(host, { header: t("2 · Area"),
+        footer: t("Around home, or around the car while it is out and about (if it reports its location). Between 1 and 50 km.") });
+      const rr = this._flowRow(g2, { title: t("Radius"), sub: t("Around home") });
+      const wrap = el("div", "cs-num");
+      const rin = el("input", "cs-ch-radius");
+      rin.type = "text";
+      rin.inputMode = "decimal";
+      rin.value = String(C.radius).replace(".", decimalSep(this));
+      rin.setAttribute("aria-label", t("Radius"));
+      rin.oninput = () => {
+        const v = Number(rin.value.trim().replace(",", "."));
+        if (isFinite(v) && v > 0) C.radius = Math.max(1, Math.min(ch.radius_max || 50, Math.round(v * 10) / 10));
+        this._csBar();
+      };
+      wrap.append(rin, el("span", "", "km"));
+      rr.row.appendChild(wrap);
+      host.appendChild(el("p", "cs-lede", t("Data: Open Charge Map and its data providers, CC BY 4.0. No live availability and hardly any prices.")));
+    };
+
     // ── Fuel prices (tanken.py) ──────────────────────────────────────────────
     const FUEL_LABELS = { e5: "Super E5", e10: "Super E10", diesel: "Diesel", off: "Off" };
     const tankenTestText = (self, r) => {
@@ -1212,7 +1340,8 @@
         if (b.personal) box.appendChild(el("div", "fhead", t("On this dashboard")));
         else head.querySelector("b").appendChild(el("span", "rdetail cs-dash cn-only", t("Only this dashboard")));
         const card = this._csDashCard(b.sec);
-        if (card) { trimCard(this, card, b); box.appendChild(card); }
+        // The note is for a missing dashboard only (the screensaver's preview had made it show under every card).
+        if (card) { trimCard(this, card, b); box.appendChild(card); if (b.saver) this._csSaverPreview(box, card); }
         else box.appendChild(el("p", "cs-lede", t("Open a dashboard in the Studio to change this.")));
         if (b.personal && cs && cs.loaded && typeof this._casoraPersonalGroups === "function") this._casoraPersonalGroups(box, cs.S, b.personal, rerender);
         return;
@@ -1224,6 +1353,7 @@
       if (!cs || !cs.loaded) { box.appendChild(el("p", "cs-lede", t("Loading settings…"))); return; }
       if (b.page === "live") { if (typeof this._csFillLive === "function") this._csFillLive(box); dedupe(box); return; }
       if (b.fuel) { this._csFillTanken(box); dedupe(box); return; }
+      if (b.charging) { this._csFillCharging(box); dedupe(box); return; }
       if (b.hemma) { this._csHemmaGroup(box); if (!box.querySelector(".fgroup")) box.remove(); else dedupe(box); return; }
       if (b.personal) {
         if (typeof this._casoraPersonalGroups === "function") this._casoraPersonalGroups(box, cs.S, b.personal, rerender);
@@ -1348,6 +1478,143 @@
       const tile = NEU.find((x) => x.blocks.some((b) => b.k === want));
       if (tile) return this._csNeuGo(tile, tile.blocks.find((b) => b.k === want));
       return this._csShow("n-start");
+    };
+    // Preview of the screensaver (scripts/local/46-screensaver.js draws it, the same code as on the tablet): it shows
+    // the kind picked in the draft right away, nothing is saved by looking. Chips let one look at every kind; where the
+    // house has nothing to show right now (nothing playing, no appointments), the preview shows an example.
+    let saverLoad = null;
+    P._csSaverPreview = function (box, card) {
+      const SV = window._casoraSaver;
+      const wrap = el("div", "cs-saver");
+      wrap.style.cssText = "margin:0 0 14px;";
+      const stage = el("div", "cs-saver-stage");
+      stage.style.cssText = "position:relative;width:100%;aspect-ratio:1180 / 820;max-height:52vh;border-radius:22px;overflow:hidden;background:#101010;";
+      wrap.appendChild(stage);
+      box.insertBefore(wrap, card);
+      if (!SV || typeof SV.mount !== "function") {
+        stage.appendChild(el("p", "cs-lede", t("The preview appears once the dashboard's scripts have loaded.")));
+        stage.firstChild.style.cssText = "position:absolute;inset:0;display:grid;place-items:center;color:#fff;margin:0;padding:16px;text-align:center;";
+        // The Studio does not load the dashboard's modules: fetch what the screensavers need (their texts, the
+        // energy and waste helpers, the module itself) once, then draw the preview in place of this note.
+        if (!saverLoad) {
+          const imp = window.casoraImportScript || ((p) => import("/casora_scripts/" + p));
+          const quiet = (p) => imp(p).catch(() => {});
+          saverLoad = Promise.all([window.casoraTr ? null : quiet("casora-i18n.js"), window.casoraEnergyPrefs ? null : quiet("local/00-finder.js")])
+            .then(() => imp("local/46-screensaver.js"));
+        }
+        saverLoad.then(() => {
+          if (!wrap.isConnected || !window._casoraSaver) return;
+          wrap.remove();
+          this._csSaverPreview(box, card);
+        }, () => { saverLoad = null; });
+        return;
+      }
+      // The kind picked in the draft (the working copy of the dashboard, not yet saved).
+      // The module reads a dashboard config: the Studio's rooms carry the same hero variables.
+      const draft = () => {
+        const rooms = this._state && this._state.compact && Array.isArray(this._state.compact.rooms) ? this._state.compact.rooms : null;
+        // The room's name as the dashboard shows it (Studio rooms carry name, not title: the photo said „badezimmer“).
+        const nameOf = (r) => (typeof this._roomShown === "function" ? this._roomShown(r) : r.name || r.title || "");
+        return rooms ? { views: rooms.map((r) => ({ title: nameOf(r), cards: [{ variables: r.variables || {} }] })) } : null;
+      };
+      const picked = () => String((typeof SV.vars === "function" ? SV.vars(draft()) : {}).casora_screensaver_kind || "");
+      // The chips choose (owner 11.11.2026: they looked like a choice but only changed the picture, and „One after the
+      // other“, the default, had no chip). A tap writes casora_screensaver_kind to the draft like the select below.
+      let show = picked() || "mix", last = picked();
+      // Room photos: the Studio does not run the dashboard's casoraPhotoUrl, so the photos showed none and the preview
+      // drew a landscape. The Studio's own photo list gives the address (shipped examples by their public path).
+      const photoUrl = (ref) => {
+        const name = String(ref || "").replace(/\.(jpe?g|png|webp)$/i, "");
+        const day = name.replace(/-night$/, "");
+        const hit = (this._imgs || []).find((i) => i.name === day);
+        const url = hit ? (/-night$/.test(name) ? hit.night || hit.day : hit.day || hit.night) : "";
+        if (url) return url;
+        if (/-demo(-night)?$/.test(name)) return "/casora_assets/rooms/" + encodeURIComponent(name) + ".jpg";
+        return typeof window.casoraPhotoUrl === "function" ? window.casoraPhotoUrl(ref, this._hass) : "";
+      };
+      const live = SV.mount(stage, null, { kind: () => show, every: 30000, sample: true,
+        context: () => ({ config: draft(), photoUrl, vars: typeof SV.vars === "function" ? SV.vars(draft()) : {} }) });
+      if (typeof this._images === "function") this._images().then(() => { if (stage.isConnected) { live.update(); photos(); } }, () => {});
+      this._csSaverLive = live;
+      const chips = el("div", "cs-saver-chips");
+      chips.style.cssText = "display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 0;";
+      const paint = () => {
+        chips.textContent = "";
+        [{ id: "mix", label: "One after the other" }].concat(SV.KINDS).forEach((k) => {
+          const c = btn(t(k.label), () => {
+            if (show === k.id) return;
+            show = k.id;
+            const rooms = (this._state && this._state.compact && this._state.compact.rooms) || [];
+            const v = k.id === "mix" ? undefined : k.id;
+            rooms.forEach((r) => { r.variables = r.variables || {}; if (v) r.variables.casora_screensaver_kind = v; else delete r.variables.casora_screensaver_kind; });
+            if (typeof this._mirrorToPair === "function") this._mirrorToPair("casora_screensaver_kind", v, rooms);
+            if (typeof this._markDirty === "function") this._markDirty();
+            last = picked();
+            // The select below shows the new choice: the page is drawn again (the preview follows the draft).
+            if (typeof this._csRender === "function") { this._csRender(); return; }
+            live.update(); paint(); photos();
+          }, show !== k.id);
+          c.classList.add("cs-saver-chip");
+          c.dataset.kind = k.id;
+          c.setAttribute("aria-pressed", show === k.id ? "true" : "false");
+          chips.appendChild(c);
+        });
+      };
+      paint();
+      wrap.appendChild(chips);
+      // Which room photos „Fotos“ shows: all of them, or the ones picked here (casora_screensaver_photos, the day
+      // photo's name, on every room like the other screensaver settings). A draft like every setting.
+      const pick = el("div", "cs-saver-photos");
+      pick.style.cssText = "margin:14px 0 0;";
+      wrap.appendChild(pick);
+      const photos = () => {
+        pick.textContent = "";
+        const rooms = (this._state && this._state.compact && this._state.compact.rooms) || [];
+        const seen = new Set(), list = [];
+        rooms.forEach((r) => { const ref = r.variables && r.variables.image; if (ref && !seen.has(String(ref))) { seen.add(String(ref)); list.push({ ref: String(ref), title: typeof this._roomShown === "function" ? this._roomShown(r) : r.name || "" }); } });
+        if (show !== "fotos" || !list.length) return;
+        const cur = (rooms.map((r) => (r.variables || {}).casora_screensaver_photos).find((v) => Array.isArray(v) && v.length) || []).map(String);
+        const on = (ref) => !cur.length || cur.includes(ref);
+        pick.appendChild(el("div", "fhead", t("Photos")));
+        pick.appendChild(el("p", "cs-lede", t(cur.length ? "Only the photos picked here." : "All room photos. Tap a photo to show only the ones you pick.")));
+        const grid = el("div", "cs-saver-grid");
+        grid.style.cssText = "display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:10px;margin:8px 0 0;";
+        list.forEach((p) => {
+          const b = el("button", "cs-saver-photo");
+          b.type = "button";
+          b.dataset.ref = p.ref;
+          b.setAttribute("aria-pressed", on(p.ref) ? "true" : "false");
+          const url = photoUrl(p.ref);
+          b.style.cssText = "position:relative;aspect-ratio:4 / 3;border-radius:14px;overflow:hidden;cursor:pointer;padding:0;font:inherit;"
+            + "border:2px solid " + (on(p.ref) ? "var(--cs-accent, #B5653A)" : "transparent") + ";opacity:" + (on(p.ref) ? "1" : "0.45") + ";"
+            + "background:#2a2a2a center / cover no-repeat" + (url ? " url(\"" + String(url).replace(/["\\]/g, "\\$&") + "\")" : "") + ";";
+          const cap = el("span", "", p.title);
+          cap.style.cssText = "position:absolute;left:0;right:0;bottom:0;padding:14px 8px 6px;font-size:12px;font-weight:600;color:#fff;text-align:left;"
+            + "background:linear-gradient(transparent, rgba(0,0,0,0.55));white-space:nowrap;overflow:hidden;text-overflow:ellipsis;";
+          b.appendChild(cap);
+          b.onclick = () => {
+            // From „all“ the first tap picks that one photo; the last one switched off means all again.
+            let next = cur.length ? (cur.includes(p.ref) ? cur.filter((x) => x !== p.ref) : cur.concat([p.ref])) : [p.ref];
+            next = list.map((x) => x.ref).filter((x) => next.includes(x));
+            const all = rooms;
+            all.forEach((r) => { r.variables = r.variables || {}; if (next.length) r.variables.casora_screensaver_photos = next.slice(); else delete r.variables.casora_screensaver_photos; });
+            if (typeof this._mirrorToPair === "function") this._mirrorToPair("casora_screensaver_photos", next.length ? next.slice() : undefined, all);
+            if (typeof this._markDirty === "function") this._markDirty();
+            live.update(); photos();
+          };
+          grid.appendChild(b);
+        });
+        pick.appendChild(grid);
+      };
+      photos();
+      // The kind of the draft changes: the preview follows it (looked at while the preview is on the page).
+      const watch = setInterval(() => {
+        if (!stage.isConnected) { clearInterval(watch); live.destroy(); return; }
+        const p = picked();
+        if (p === last) return;
+        last = p;
+        show = p || "mix"; live.update(); paint(); photos();
+      }, 700);
     };
     P._csFillNeu = function (host, page) {
       if (page.tile) {

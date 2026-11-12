@@ -153,6 +153,18 @@ st("sensor.a_state", "BSH.Common.EnumType.OperationState.Run"); st("sensor.a_pro
 s = la.snapshot(alt, S.get, NOW, 0)
 check("Home Connect Alt: state as the Home Connect key", s.phase == "run" and s.program == "Eco 50°", s)
 
+# LG ThinQ washer (issue 162): HA core gives it no run time and no progress, only the total time and the time left.
+lg = Found("d-lg", "washer", "lg_thinq", "ungetestet", {"state": "sensor.l_state", "remaining": "sensor.l_rem", "elapsed": None,
+                                                         "total": "sensor.l_total", "count": "sensor.l_count"}, name="W")
+st("sensor.l_state", "spinning"); st("sensor.l_total", "45", unit_of_measurement="min", device_class="duration")
+st("sensor.l_rem", (NOW + timedelta(minutes=9)).isoformat(), device_class="timestamp")
+s = la.snapshot(lg, S.get, NOW, 0)
+check("LG washer: percent from total time and time left", s.phase == "run" and s.pct == 80 and s.message.startswith("Läuft") and "80" in s.message, s)
+st("sensor.l_rem", (NOW + timedelta(minutes=60)).isoformat(), device_class="timestamp")
+check("LG washer: more left than the total gives no percent", la.snapshot(lg, S.get, NOW, 0).pct is None)
+st("sensor.l_rem", (NOW + timedelta(minutes=9)).isoformat(), device_class="timestamp"); st("sensor.l_total", "unknown")
+check("LG washer: no total gives no percent", la.snapshot(lg, S.get, NOW, 0).pct is None)
+
 # Robot vacuum: room as main value, done on docking with area/duration, stays
 st("vacuum.v", "cleaning"); st("sensor.v_status", "segment_cleaning"); st("sensor.v_room", "Küche"); st("sensor.v_pct", "40")
 st("sensor.v_area", "32.4", unit_of_measurement="m²"); st("sensor.v_time", "2700", unit_of_measurement="s"); st("sensor.v_err", "none")
@@ -289,7 +301,7 @@ check("Deutsch: keine englischen Texte in Meldungen/Probe/Phasen/Schritten", not
 # or English leftovers in fr/it/nl/pl/pt), 24 h clock and "42 %" for everyone but English.
 tables = {"T": la.T, "PHASE": la.PHASE, "PROGRAM": la.PROGRAM, "VAC_TEXT": la.VAC_TEXT, "PRINT_STEP": la.PRINT_STEP,
           "TITLE": la.TITLE, "PROBE": la.PROBE}
-check("Sprachen: de, en, es, fr, it, nl, pl, pt", la.LANGS == ("de", "en", "es", "fr", "it", "nl", "pl", "pt"), la.LANGS)
+check("Sprachen: de, en, es, fr, it, nl, pl, pt, nb", la.LANGS == ("de", "en", "es", "fr", "it", "nl", "pl", "pt", "nb"), la.LANGS)
 short = [f"{n}.{k}" for n, t in tables.items() for k, v in t.items() if len(v) != len(la.LANGS)]
 check("jede Tabelle hat alle Sprachen", not short, short)
 lang_of = lambda code: la._lang(SimpleNamespace(config=SimpleNamespace(language=code)))  # noqa: E731
@@ -297,10 +309,10 @@ check("HA-Sprache → Index", [lang_of(c) for c in la.LANGS] == list(range(len(l
       and lang_of("es-ES") == 2 and lang_of("pt-BR") == la.LANGS.index("pt") and lang_of("sv") == lang_of("") == la.EN)
 # Same word in German or English and the new language on purpose (product names, loanwords, real Dutch words).
 SAME_OK = {"Attention", "Auto 45–65°", "Eco 50°", "Homing", "Manual", "Mix", "Pause", "Pause (G-code)", "Reinigen",
-           "Reinigt", "Sensitive", "Test", "{a} m²", "{a} m² in {m} min", ""}
+           "Reinigt", "Sensitive", "Test", "Hygiene", "Intensiv 70°", "Sensitiv", "{a} m²", "{a} m² in {m} min", ""}
 DE_WORDS = {v[0] for t in tables.values() for v in t.values() if v[0] and v[0] not in SAME_OK}
 EN_WORDS = {v[1] for t in tables.values() for v in t.values() if v[1] and v[1] not in SAME_OK and len(v[1]) > 3}
-for code in ("fr", "it", "nl", "pl", "pt"):
+for code in ("fr", "it", "nl", "pl", "pt", "nb"):
     i = la.LANGS.index(code)
     left = sorted(f"{n}.{k}={v[i]!r}" for n, t in tables.items() for k, v in t.items()
                   if (v[i] == v[0] or v[i] == v[1]) and v[i] not in SAME_OK)

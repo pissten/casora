@@ -1,6 +1,7 @@
 {
   "exact": {
     "Alle Änderungen": "Toutes les modifications",
+    "Nebel": "Brouillard",
     "Tankinhalt": "Carburant dans le réservoir",
     "Staubbeutel oder Filter fehlt": "Sac ou filtre manquant",
     "Absauggebläse gestört": "Ventilateur de vidage en panne",
@@ -2866,7 +2867,91 @@
     "Die Aufgabe konnte nicht gespeichert werden.": "La tâche n'a pas pu être enregistrée.",
     "Abhaken": "Cocher",
     "Wieder öffnen": "Rouvrir",
-    "Eintrag löschen?": "Supprimer cette entrée ?"
+    "Eintrag löschen?": "Supprimer cette entrée ?",
+    "Wärmepumpe": "Pompe à chaleur",
+    "Warmwasser": "Eau chaude",
+    "Vorlauf": "Départ",
+    "Rücklauf": "Retour",
+    "Außen": "Extérieur",
+    "Leistungszahl": "COP",
+    "Verdichterleistung": "Puissance du compresseur",
+    "Verdichter": "Compresseur",
+    "Verdichter läuft": "Compresseur en marche",
+    "Verdichter aus": "Compresseur arrêté",
+    "Einmal aufheizen": "Chauffer une fois",
+    "Aufheizen gestartet": "Chauffe lancée",
+    "Taut ab": "Dégivrage",
+    "Landkarte": "Carte",
+    "Nichts auf der Karte": "Rien sur la carte",
+    "Soll": "Consigne",
+    "Ist": "Réelle",
+    "Solltemperatur": "Température de consigne",
+    "Heizkreispumpe": "Pompe du circuit de chauffage",
+    "Zirkulationspumpe": "Pompe de bouclage",
+    "Frostschutz": "Protection antigel",
+    "Vorlauftemperatur · 24 Std.": "Température de départ · 24 h",
+    "Außentemperatur · 24 Std.": "Température extérieure · 24 h",
+    "1 Ladepunkt": "1 point de charge",
+    "Ladepunkte": "points de charge",
+    "Daten: Open Charge Map, CC BY 4.0": "Données : Open Charge Map, CC BY 4.0",
+    "Gleich noch einmal versuchen": "Réessaie dans un instant",
+    "Keine Ladesäule in diesem Umkreis": "Aucune borne dans ce rayon",
+    "Keine Ladesäule passt zum Filter": "Aucune borne ne correspond au filtre",
+    "Kostenlos": "Gratuit",
+    "kostenlos": "gratuit",
+    "Ladesäule": "Borne",
+    "Ladesäulen": "Bornes",
+    "Ladesäulen werden geladen": "Chargement des bornes",
+    "Open Charge Map antwortet gerade nicht": "Open Charge Map ne répond pas pour l'instant",
+    "Open Charge Map nimmt den Schlüssel nicht an": "Open Charge Map n'accepte pas la clé",
+    "Zu viele Abfragen, später noch einmal": "Trop de requêtes, réessaie plus tard",
+    "Rund um Zuhause": "Autour de la maison",
+    "Rund um das Auto": "Autour de la voiture",
+    "Schnellste": "La plus rapide",
+    "Leistung unbekannt": "Puissance inconnue",
+    "1 Ladesäule": "1 borne",
+    "Beste Wahl": "Meilleur choix",
+    "Jetzt laden": "Charger maintenant",
+    "Bald laden": "Charger bientôt",
+    "Laden nicht nötig": "Pas besoin de charger",
+    "Keine Ladesäule": "Aucune borne",
+    "Keine kostenlose Ladesäule": "Aucune borne gratuite",
+    "Ladeleistung": "Puissance de charge",
+    "Ladesäulen gerade nicht abrufbar": "Bornes indisponibles pour le moment",
+    "Ladesäulen in der Nähe": "Bornes à proximité",
+    "im Umkreis": "dans le rayon",
+    "leer": "vide",
+    "voll": "pleine",
+    "Der Akku ist gut gefüllt.": "La batterie est bien chargée.",
+    "Abend am Meer": "Soir au bord de la mer",
+    "Alpenglühen": "Lueur alpine",
+    "Aufgang": "Lever",
+    "Bergsee": "Lac de montagne",
+    "Dünen": "Dunes",
+    "Fjord am Morgen": "Fjord au matin",
+    "Landschaften": "Paysages",
+    "Nebelwald": "Forêt dans la brume",
+    "Polarlicht": "Aurore boréale",
+    "Sanfte Hügel": "Douces collines",
+    "Untergang": "Coucher",
+    "Winternacht": "Nuit d’hiver",
+    "Canyon": "Canyon",
+    "1 Abholung": "1 collecte",
+    "Eigener Strom": "Électricité propre",
+    "Eine Sache braucht dich": "Une chose demande ton attention",
+    "Erzeugung jetzt": "Production actuelle",
+    "Fast alles ruhig": "Presque tout est calme",
+    "Haus verbraucht": "La maison consomme",
+    "Heute nichts mehr": "Plus rien aujourd'hui",
+    "Nichts braucht dich": "Rien ne demande ton attention",
+    "Sonne": "Soleil",
+    "Verbrauch jetzt": "Consommation actuelle",
+    "Zur Kenntnis": "Pour information",
+    "aus dem Netz": "du réseau",
+    "ins Netz": "vers le réseau",
+    "Akku gibt ab": "La batterie se décharge",
+    "Arzttermin": "Médecin",
+    "Lamellenstellung": "Lames"
   },
   "patterns": [
     [
@@ -5136,6 +5221,70 @@
     [
       "^(\\d+(?:,\\d+)?) Portionen$",
       "{1} portions"
+    ],
+    [
+      "^(\\d+) von (\\d+) zu Hause$",
+      "{1} sur {2} à la maison"
+    ],
+    [
+      "^(\\d+) Ladepunkte$",
+      "{1} points de charge"
+    ],
+    [
+      "^ab (\\d[\\d.,]*) km$",
+      "à partir de {1} km"
+    ],
+    [
+      "^(\\d+) Ladesäulen$",
+      "{1} bornes"
+    ],
+    [
+      "^Nächste (\\d[\\d.,]*) km$",
+      "La plus proche à {1} km"
+    ],
+    [
+      "^Nächster Schnelllader: (.+), (.+)\\.$",
+      "Borne rapide la plus proche : {1}, {2}."
+    ],
+    [
+      "^Nächste Ladesäule: (.+), (.+)\\.$",
+      "Borne la plus proche : {1}, {2}."
+    ],
+    [
+      "^Der Akku reicht noch etwa (\\S+) (\\S+)\\.$",
+      "La batterie tient encore environ {1} {2}."
+    ],
+    [
+      "^Schnellste, (.+)$",
+      "La plus rapide, {1}"
+    ],
+    [
+      "^Noch (\\d+) Std\\. (\\d+) Min\\. Tageslicht$",
+      "Encore {1} h {2} min de jour"
+    ],
+    [
+      "^Noch (\\d+) Min\\. Tageslicht$",
+      "Encore {1} min de jour"
+    ],
+    [
+      "^(\\d+) Abholungen$",
+      "{1} collectes"
+    ],
+    [
+      "^in (\\d+) Std\\. (\\d+) Min\\.$",
+      "dans {1} h {2} min"
+    ],
+    [
+      "^(\\d+) Dinge brauchen dich$",
+      "{1} choses demandent ton attention"
+    ],
+    [
+      "^(.+) aus$",
+      "{1} éteint"
+    ],
+    [
+      "^(.+) aktiv$",
+      "{1} actif"
     ]
   ]
 }

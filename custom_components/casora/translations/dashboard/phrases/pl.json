@@ -1,6 +1,7 @@
 {
   "exact": {
     "Alle Änderungen": "Wszystkie zmiany",
+    "Nebel": "Mgła",
     "Tankinhalt": "Paliwo w baku",
     "Staubbeutel oder Filter fehlt": "Brak worka lub filtra",
     "Absauggebläse gestört": "Awaria wentylatora opróżniania",
@@ -2866,7 +2867,91 @@
     "Die Aufgabe konnte nicht gespeichert werden.": "Nie udało się zapisać zadania.",
     "Abhaken": "Odhacz",
     "Wieder öffnen": "Otwórz ponownie",
-    "Eintrag löschen?": "Usunąć ten wpis?"
+    "Eintrag löschen?": "Usunąć ten wpis?",
+    "Wärmepumpe": "Pompa ciepła",
+    "Warmwasser": "Ciepła woda",
+    "Vorlauf": "Zasilanie",
+    "Rücklauf": "Powrót",
+    "Außen": "Na zewnątrz",
+    "Leistungszahl": "COP",
+    "Verdichterleistung": "Moc sprężarki",
+    "Verdichter": "Sprężarka",
+    "Verdichter läuft": "Sprężarka pracuje",
+    "Verdichter aus": "Sprężarka wyłączona",
+    "Einmal aufheizen": "Podgrzej jednorazowo",
+    "Aufheizen gestartet": "Podgrzewanie rozpoczęte",
+    "Taut ab": "Odszranianie",
+    "Landkarte": "Mapa",
+    "Nichts auf der Karte": "Nic na mapie",
+    "Soll": "Zadana",
+    "Ist": "Aktualna",
+    "Solltemperatur": "Temperatura zadana",
+    "Heizkreispumpe": "Pompa obiegu grzewczego",
+    "Zirkulationspumpe": "Pompa cyrkulacyjna",
+    "Frostschutz": "Ochrona przed zamarzaniem",
+    "Vorlauftemperatur · 24 Std.": "Temperatura zasilania · 24 h",
+    "Außentemperatur · 24 Std.": "Temperatura zewnętrzna · 24 h",
+    "1 Ladepunkt": "1 punkt ładowania",
+    "Ladepunkte": "punkty ładowania",
+    "Daten: Open Charge Map, CC BY 4.0": "Dane: Open Charge Map, CC BY 4.0",
+    "Gleich noch einmal versuchen": "Spróbuj ponownie za chwilę",
+    "Keine Ladesäule in diesem Umkreis": "Brak ładowarek w tym promieniu",
+    "Keine Ladesäule passt zum Filter": "Żadna ładowarka nie pasuje do filtra",
+    "Kostenlos": "Bezpłatne",
+    "kostenlos": "bezpłatnie",
+    "Ladesäule": "Ładowarka",
+    "Ladesäulen": "Ładowarki",
+    "Ladesäulen werden geladen": "Wczytywanie ładowarek",
+    "Open Charge Map antwortet gerade nicht": "Open Charge Map teraz nie odpowiada",
+    "Open Charge Map nimmt den Schlüssel nicht an": "Open Charge Map nie akceptuje klucza",
+    "Zu viele Abfragen, später noch einmal": "Zbyt wiele zapytań, spróbuj później",
+    "Rund um Zuhause": "Wokół domu",
+    "Rund um das Auto": "Wokół samochodu",
+    "Schnellste": "Najszybsza",
+    "Leistung unbekannt": "Moc nieznana",
+    "1 Ladesäule": "1 ładowarka",
+    "Beste Wahl": "Najlepszy wybór",
+    "Jetzt laden": "Naładuj teraz",
+    "Bald laden": "Naładuj wkrótce",
+    "Laden nicht nötig": "Ładowanie niepotrzebne",
+    "Keine Ladesäule": "Brak ładowarki",
+    "Keine kostenlose Ladesäule": "Brak bezpłatnej ładowarki",
+    "Ladeleistung": "Moc ładowania",
+    "Ladesäulen gerade nicht abrufbar": "Ładowarki chwilowo niedostępne",
+    "Ladesäulen in der Nähe": "Ładowarki w pobliżu",
+    "im Umkreis": "w promieniu",
+    "leer": "pusty",
+    "voll": "pełny",
+    "Der Akku ist gut gefüllt.": "Akumulator jest dobrze naładowany.",
+    "Abend am Meer": "Wieczór nad morzem",
+    "Alpenglühen": "Alpejska łuna",
+    "Aufgang": "Wschód",
+    "Bergsee": "Górskie jezioro",
+    "Dünen": "Wydmy",
+    "Fjord am Morgen": "Fiord o poranku",
+    "Landschaften": "Krajobrazy",
+    "Nebelwald": "Las we mgle",
+    "Polarlicht": "Zorza polarna",
+    "Sanfte Hügel": "Łagodne wzgórza",
+    "Untergang": "Zachód",
+    "Winternacht": "Zimowa noc",
+    "Canyon": "Kanion",
+    "1 Abholung": "1 odbiór",
+    "Eigener Strom": "Własny prąd",
+    "Eine Sache braucht dich": "Jedna rzecz wymaga uwagi",
+    "Erzeugung jetzt": "Produkcja teraz",
+    "Fast alles ruhig": "Prawie wszystko spokojnie",
+    "Haus verbraucht": "Dom zużywa",
+    "Heute nichts mehr": "Dziś już nic",
+    "Nichts braucht dich": "Nic nie wymaga uwagi",
+    "Sonne": "Słońce",
+    "Verbrauch jetzt": "Zużycie teraz",
+    "Zur Kenntnis": "Do wiadomości",
+    "aus dem Netz": "z sieci",
+    "ins Netz": "do sieci",
+    "Akku gibt ab": "Akumulator oddaje energię",
+    "Arzttermin": "Lekarz",
+    "Lamellenstellung": "Lamele"
   },
   "patterns": [
     [
@@ -5136,6 +5221,70 @@
     [
       "^(\\d+(?:,\\d+)?) Portionen$",
       "Porcje: {1}"
+    ],
+    [
+      "^(\\d+) von (\\d+) zu Hause$",
+      "{1} z {2} w domu"
+    ],
+    [
+      "^(\\d+) Ladepunkte$",
+      "Punkty ładowania: {1}"
+    ],
+    [
+      "^ab (\\d[\\d.,]*) km$",
+      "od {1} km"
+    ],
+    [
+      "^(\\d+) Ladesäulen$",
+      "Ładowarki: {1}"
+    ],
+    [
+      "^Nächste (\\d[\\d.,]*) km$",
+      "Najbliższa {1} km"
+    ],
+    [
+      "^Nächster Schnelllader: (.+), (.+)\\.$",
+      "Najbliższa szybka ładowarka: {1}, {2}."
+    ],
+    [
+      "^Nächste Ladesäule: (.+), (.+)\\.$",
+      "Najbliższa ładowarka: {1}, {2}."
+    ],
+    [
+      "^Der Akku reicht noch etwa (\\S+) (\\S+)\\.$",
+      "Akumulator wystarczy jeszcze na około {1} {2}."
+    ],
+    [
+      "^Schnellste, (.+)$",
+      "Najszybsza, {1}"
+    ],
+    [
+      "^Noch (\\d+) Std\\. (\\d+) Min\\. Tageslicht$",
+      "Jeszcze {1} godz. {2} min światła dziennego"
+    ],
+    [
+      "^Noch (\\d+) Min\\. Tageslicht$",
+      "Jeszcze {1} min światła dziennego"
+    ],
+    [
+      "^(\\d+) Abholungen$",
+      "{1} odbiorów"
+    ],
+    [
+      "^in (\\d+) Std\\. (\\d+) Min\\.$",
+      "za {1} godz. {2} min"
+    ],
+    [
+      "^(\\d+) Dinge brauchen dich$",
+      "{1} rzeczy wymaga uwagi"
+    ],
+    [
+      "^(.+) aus$",
+      "{1} wył."
+    ],
+    [
+      "^(.+) aktiv$",
+      "{1} aktywny"
     ]
   ]
 }

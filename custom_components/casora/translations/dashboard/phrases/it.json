@@ -1,6 +1,7 @@
 {
   "exact": {
     "Alle Änderungen": "Tutte le modifiche",
+    "Nebel": "Nebbia",
     "Tankinhalt": "Carburante nel serbatoio",
     "Staubbeutel oder Filter fehlt": "Manca il sacchetto o il filtro",
     "Absauggebläse gestört": "Guasto alla ventola di svuotamento",
@@ -2866,7 +2867,91 @@
     "Die Aufgabe konnte nicht gespeichert werden.": "Impossibile salvare l'attività.",
     "Abhaken": "Spunta",
     "Wieder öffnen": "Riapri",
-    "Eintrag löschen?": "Eliminare questa voce?"
+    "Eintrag löschen?": "Eliminare questa voce?",
+    "Wärmepumpe": "Pompa di calore",
+    "Warmwasser": "Acqua calda",
+    "Vorlauf": "Mandata",
+    "Rücklauf": "Ritorno",
+    "Außen": "Esterno",
+    "Leistungszahl": "COP",
+    "Verdichterleistung": "Potenza compressore",
+    "Verdichter": "Compressore",
+    "Verdichter läuft": "Compressore in funzione",
+    "Verdichter aus": "Compressore spento",
+    "Einmal aufheizen": "Riscalda una volta",
+    "Aufheizen gestartet": "Riscaldamento avviato",
+    "Taut ab": "Sbrinamento",
+    "Landkarte": "Mappa",
+    "Nichts auf der Karte": "Niente sulla mappa",
+    "Soll": "Impostata",
+    "Ist": "Attuale",
+    "Solltemperatur": "Temperatura impostata",
+    "Heizkreispumpe": "Pompa del circuito di riscaldamento",
+    "Zirkulationspumpe": "Pompa di ricircolo",
+    "Frostschutz": "Protezione antigelo",
+    "Vorlauftemperatur · 24 Std.": "Temperatura di mandata · 24 h",
+    "Außentemperatur · 24 Std.": "Temperatura esterna · 24 h",
+    "1 Ladepunkt": "1 punto di ricarica",
+    "Ladepunkte": "punti di ricarica",
+    "Daten: Open Charge Map, CC BY 4.0": "Dati: Open Charge Map, CC BY 4.0",
+    "Gleich noch einmal versuchen": "Riprova tra un momento",
+    "Keine Ladesäule in diesem Umkreis": "Nessuna colonnina in questo raggio",
+    "Keine Ladesäule passt zum Filter": "Nessuna colonnina corrisponde al filtro",
+    "Kostenlos": "Gratis",
+    "kostenlos": "gratis",
+    "Ladesäule": "Colonnina",
+    "Ladesäulen": "Colonnine",
+    "Ladesäulen werden geladen": "Caricamento delle colonnine",
+    "Open Charge Map antwortet gerade nicht": "Open Charge Map non risponde al momento",
+    "Open Charge Map nimmt den Schlüssel nicht an": "Open Charge Map non accetta la chiave",
+    "Zu viele Abfragen, später noch einmal": "Troppe richieste, riprova più tardi",
+    "Rund um Zuhause": "Intorno a casa",
+    "Rund um das Auto": "Intorno all'auto",
+    "Schnellste": "La più veloce",
+    "Leistung unbekannt": "Potenza sconosciuta",
+    "1 Ladesäule": "1 colonnina",
+    "Beste Wahl": "Scelta migliore",
+    "Jetzt laden": "Ricarica ora",
+    "Bald laden": "Ricarica presto",
+    "Laden nicht nötig": "Non serve ricaricare",
+    "Keine Ladesäule": "Nessuna colonnina",
+    "Keine kostenlose Ladesäule": "Nessuna colonnina gratuita",
+    "Ladeleistung": "Potenza di ricarica",
+    "Ladesäulen gerade nicht abrufbar": "Colonnine non disponibili al momento",
+    "Ladesäulen in der Nähe": "Colonnine vicine",
+    "im Umkreis": "nel raggio",
+    "leer": "scarica",
+    "voll": "carica",
+    "Der Akku ist gut gefüllt.": "La batteria è ben carica.",
+    "Abend am Meer": "Sera sul mare",
+    "Alpenglühen": "Bagliore alpino",
+    "Aufgang": "Alba",
+    "Bergsee": "Lago di montagna",
+    "Dünen": "Dune",
+    "Fjord am Morgen": "Fiordo al mattino",
+    "Landschaften": "Paesaggi",
+    "Nebelwald": "Bosco nella nebbia",
+    "Polarlicht": "Aurora boreale",
+    "Sanfte Hügel": "Dolci colline",
+    "Untergang": "Tramonto",
+    "Winternacht": "Notte d’inverno",
+    "Canyon": "Canyon",
+    "1 Abholung": "1 ritiro",
+    "Eigener Strom": "Energia propria",
+    "Eine Sache braucht dich": "Una cosa ha bisogno di te",
+    "Erzeugung jetzt": "Produzione ora",
+    "Fast alles ruhig": "Quasi tutto tranquillo",
+    "Haus verbraucht": "La casa consuma",
+    "Heute nichts mehr": "Nient'altro oggi",
+    "Nichts braucht dich": "Niente ha bisogno di te",
+    "Sonne": "Sole",
+    "Verbrauch jetzt": "Consumo ora",
+    "Zur Kenntnis": "Per conoscenza",
+    "aus dem Netz": "dalla rete",
+    "ins Netz": "in rete",
+    "Akku gibt ab": "La batteria si scarica",
+    "Arzttermin": "Medico",
+    "Lamellenstellung": "Lamelle"
   },
   "patterns": [
     [
@@ -5136,6 +5221,70 @@
     [
       "^(\\d+(?:,\\d+)?) Portionen$",
       "{1} porzioni"
+    ],
+    [
+      "^(\\d+) von (\\d+) zu Hause$",
+      "{1} di {2} a casa"
+    ],
+    [
+      "^(\\d+) Ladepunkte$",
+      "{1} punti di ricarica"
+    ],
+    [
+      "^ab (\\d[\\d.,]*) km$",
+      "da {1} km"
+    ],
+    [
+      "^(\\d+) Ladesäulen$",
+      "{1} colonnine"
+    ],
+    [
+      "^Nächste (\\d[\\d.,]*) km$",
+      "La più vicina a {1} km"
+    ],
+    [
+      "^Nächster Schnelllader: (.+), (.+)\\.$",
+      "Colonnina rapida più vicina: {1}, {2}."
+    ],
+    [
+      "^Nächste Ladesäule: (.+), (.+)\\.$",
+      "Colonnina più vicina: {1}, {2}."
+    ],
+    [
+      "^Der Akku reicht noch etwa (\\S+) (\\S+)\\.$",
+      "La batteria basta ancora per circa {1} {2}."
+    ],
+    [
+      "^Schnellste, (.+)$",
+      "La più veloce, {1}"
+    ],
+    [
+      "^Noch (\\d+) Std\\. (\\d+) Min\\. Tageslicht$",
+      "Ancora {1} h {2} min di luce"
+    ],
+    [
+      "^Noch (\\d+) Min\\. Tageslicht$",
+      "Ancora {1} min di luce"
+    ],
+    [
+      "^(\\d+) Abholungen$",
+      "{1} ritiri"
+    ],
+    [
+      "^in (\\d+) Std\\. (\\d+) Min\\.$",
+      "tra {1} h {2} min"
+    ],
+    [
+      "^(\\d+) Dinge brauchen dich$",
+      "{1} cose hanno bisogno di te"
+    ],
+    [
+      "^(.+) aus$",
+      "{1} spento"
+    ],
+    [
+      "^(.+) aktiv$",
+      "{1} attivo"
     ]
   ]
 }

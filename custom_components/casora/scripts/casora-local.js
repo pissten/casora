@@ -254,6 +254,10 @@ const MODULES = [
   '43-aufgaben',
   '43-screensaver',
   '44-tile-glass',
+  '44-waermepumpe',
+  '44-landkarte',
+  '45-charging',
+  '46-screensaver',
 ];
 
 const START_MODULES = MODULES.slice(0, 5);

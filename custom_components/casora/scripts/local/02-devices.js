@@ -1511,13 +1511,13 @@
     + ' .hui-more.open > .hui-mbd > * { break-inside: avoid; -webkit-column-break-inside: avoid; display: block; margin: 0; padding-bottom: 18px; }'
     + ' .hui-more.open > .hui-mbd > style { display: none; margin: 0; } }';
   /* Blueprint v2 (rule 7): sub page in the same popup (‹ back, label = page before) with one live section;
-     code = body (… return html). */
-  H.page = function (title, watch, code, entity) {
+     code = body (… return html); extra: further popup settings (gear: the settings section of its gear). */
+  H.page = function (title, watch, code, entity, extra) {
     if (!window.casoraPopup || !window.casoraPopup.sub) return;
     var col = H.col(['p'], { p: '[[[\n' + code + '\n]]]' }, watch, entity);
     col.card_mod = { style: WRAP_CSS };
     col.styles.card = [{ background: 'transparent' }, { border: 'none' }, { 'box-shadow': 'none' }, { padding: '0 26px 24px 26px' }];
-    window.casoraPopup.sub({ title: title, content: col });
+    window.casoraPopup.sub(Object.assign({ title: title, content: col }, extra || {}));
   };
   /* More section as its own button-card with triggers_update; code = body (… return html). */
   H.moreCard = function (watch, code, entity) {
@@ -1810,7 +1810,11 @@
     var p = num(states, c.progress);
     if (p != null) return Math.max(0, Math.min(100, p));
     var r = remOf(c, states), e = elOf(c, states);
-    return r != null && e != null && r + e > 0 ? e / (r + e) * 100 : null;
+    if (r != null && e != null && r + e > 0) return e / (r + e) * 100;
+    /* No run time (LG ThinQ washers and dryers have no "running" sensor, issue 162): the cycle's total time and
+       what is left of it. More left than the total (time was added): no percent. */
+    var t = e == null && r != null ? mins(states, c.total) : null;
+    return t != null && t > 0 && r <= t ? (t - r) / t * 100 : null;
   };
   var doorOpen = function (c, states) {
     var d = c.door && states[c.door];

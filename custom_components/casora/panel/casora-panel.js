@@ -102,7 +102,27 @@ const CASORA_THEMES = [
   { name: "Casora Glas", label: "Casora Glas", sub: "Casora with frosted glass over your room photos.",
     shot: { light: "/casora_assets/themes/glas-light.webp", dark: "/casora_assets/themes/glas-dark.webp" },
     ph: { light: 'url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20320%20200%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%23D9C3A5%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%238C8378%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%22320%22%20height%3D%22200%22%20fill%3D%22url%28%23g%29%22%2F%3E%3Crect%20x%3D%2224%22%20y%3D%2226%22%20width%3D%22120%22%20height%3D%2214%22%20rx%3D%227%22%20fill%3D%22%23FFFDFA%22%20fill-opacity%3D%22.6%22%2F%3E%3Crect%20x%3D%2224%22%20y%3D%2258%22%20width%3D%2284%22%20height%3D%2222%22%20rx%3D%2211%22%20fill%3D%22%23FFFDFA%22%20fill-opacity%3D%22.6%22%2F%3E%3Crect%20x%3D%22116%22%20y%3D%2258%22%20width%3D%2284%22%20height%3D%2222%22%20rx%3D%2211%22%20fill%3D%22%23FFFDFA%22%20fill-opacity%3D%22.6%22%2F%3E%3Crect%20x%3D%2224%22%20y%3D%22104%22%20width%3D%22128%22%20height%3D%2272%22%20rx%3D%2216%22%20fill%3D%22%23FFFDFA%22%2F%3E%3Crect%20x%3D%22168%22%20y%3D%22104%22%20width%3D%22128%22%20height%3D%2272%22%20rx%3D%2216%22%20fill%3D%22%23FFFDFA%22%20fill-opacity%3D%22.6%22%2F%3E%3Ccircle%20cx%3D%2246%22%20cy%3D%22126%22%20r%3D%2210%22%20fill%3D%22%23B67A50%22%2F%3E%3Ccircle%20cx%3D%22190%22%20cy%3D%22126%22%20r%3D%2210%22%20fill%3D%22%23B67A50%22%20opacity%3D%22.35%22%2F%3E%3C%2Fsvg%3E")', dark: 'url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20320%20200%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%233A4250%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%231C1916%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%22320%22%20height%3D%22200%22%20fill%3D%22url%28%23g%29%22%2F%3E%3Crect%20x%3D%2224%22%20y%3D%2226%22%20width%3D%22120%22%20height%3D%2214%22%20rx%3D%227%22%20fill%3D%22%231E1B18%22%20fill-opacity%3D%22.6%22%2F%3E%3Crect%20x%3D%2224%22%20y%3D%2258%22%20width%3D%2284%22%20height%3D%2222%22%20rx%3D%2211%22%20fill%3D%22%231E1B18%22%20fill-opacity%3D%22.6%22%2F%3E%3Crect%20x%3D%22116%22%20y%3D%2258%22%20width%3D%2284%22%20height%3D%2222%22%20rx%3D%2211%22%20fill%3D%22%231E1B18%22%20fill-opacity%3D%22.6%22%2F%3E%3Crect%20x%3D%2224%22%20y%3D%22104%22%20width%3D%22128%22%20height%3D%2272%22%20rx%3D%2216%22%20fill%3D%22%23F2E8DA%22%2F%3E%3Crect%20x%3D%22168%22%20y%3D%22104%22%20width%3D%22128%22%20height%3D%2272%22%20rx%3D%2216%22%20fill%3D%22%231E1B18%22%20fill-opacity%3D%22.6%22%2F%3E%3Ccircle%20cx%3D%2246%22%20cy%3D%22126%22%20r%3D%2210%22%20fill%3D%22%23B67A50%22%2F%3E%3Ccircle%20cx%3D%22190%22%20cy%3D%22126%22%20r%3D%2210%22%20fill%3D%22%23B67A50%22%20opacity%3D%22.35%22%2F%3E%3C%2Fsvg%3E")' } },
+  // Casora in another colour world (10.11.2026, tools/build-color-themes.py): same build as Casora, recoloured like
+  // Nebel but with a neutral that keeps its colour. ph as for Nebel.
+  { name: "Casora Salbei", label: "Casora Salbei", sub: "Sage green surfaces with a forest green accent.",
+    shot: { light: "/casora_assets/themes/salbei-light.webp", dark: "/casora_assets/themes/salbei-dark.webp" },
+    ph: { light: 'url("data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%20320%20200%22%3E%3Crect%20width=%22320%22%20height=%22200%22%20fill=%22%23E0EBDE%22/%3E%3Crect%20x=%2224%22%20y=%2226%22%20width=%22120%22%20height=%2214%22%20rx=%227%22%20fill=%22%23C4D3C1%22/%3E%3Crect%20x=%2224%22%20y=%2258%22%20width=%2284%22%20height=%2222%22%20rx=%2211%22%20fill=%22%23F2F9F0%22/%3E%3Crect%20x=%22116%22%20y=%2258%22%20width=%2284%22%20height=%2222%22%20rx=%2211%22%20fill=%22%23F2F9F0%22/%3E%3Crect%20x=%2224%22%20y=%22104%22%20width=%22128%22%20height=%2272%22%20rx=%2216%22%20fill=%22%23F2F9F0%22/%3E%3Crect%20x=%22168%22%20y=%22104%22%20width=%22128%22%20height=%2272%22%20rx=%2216%22%20fill=%22%23F2F9F0%22/%3E%3Ccircle%20cx=%2246%22%20cy=%22126%22%20r=%2210%22%20fill=%22%233F7A5C%22/%3E%3Ccircle%20cx=%22190%22%20cy=%22126%22%20r=%2210%22%20fill=%22%233F7A5C%22%20opacity=%22.35%22/%3E%3C/svg%3E")',
+      dark: 'url("data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%20320%20200%22%3E%3Crect%20width=%22320%22%20height=%22200%22%20fill=%22%231A221D%22/%3E%3Crect%20x=%2224%22%20y=%2226%22%20width=%22120%22%20height=%2214%22%20rx=%227%22%20fill=%22%2333443A%22/%3E%3Crect%20x=%2224%22%20y=%2258%22%20width=%2284%22%20height=%2222%22%20rx=%2211%22%20fill=%22%23212D25%22/%3E%3Crect%20x=%22116%22%20y=%2258%22%20width=%2284%22%20height=%2222%22%20rx=%2211%22%20fill=%22%23212D25%22/%3E%3Crect%20x=%2224%22%20y=%22104%22%20width=%22128%22%20height=%2272%22%20rx=%2216%22%20fill=%22%23212D25%22/%3E%3Crect%20x=%22168%22%20y=%22104%22%20width=%22128%22%20height=%2272%22%20rx=%2216%22%20fill=%22%23212D25%22/%3E%3Ccircle%20cx=%2246%22%20cy=%22126%22%20r=%2210%22%20fill=%22%237FC29F%22/%3E%3Ccircle%20cx=%22190%22%20cy=%22126%22%20r=%2210%22%20fill=%22%237FC29F%22%20opacity=%22.35%22/%3E%3C/svg%3E")' } },
+  { name: "Casora Marine", label: "Casora Marine", sub: "Warm sand with navy blue; at night deep blue with sand gold.",
+    shot: { light: "/casora_assets/themes/marine-light.webp", dark: "/casora_assets/themes/marine-dark.webp" },
+    ph: { light: 'url("data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%20320%20200%22%3E%3Crect%20width=%22320%22%20height=%22200%22%20fill=%22%23F4EFE7%22/%3E%3Crect%20x=%2224%22%20y=%2226%22%20width=%22120%22%20height=%2214%22%20rx=%227%22%20fill=%22%23DDD3C3%22/%3E%3Crect%20x=%2224%22%20y=%2258%22%20width=%2284%22%20height=%2222%22%20rx=%2211%22%20fill=%22%23FFFDF9%22/%3E%3Crect%20x=%22116%22%20y=%2258%22%20width=%2284%22%20height=%2222%22%20rx=%2211%22%20fill=%22%23FFFDF9%22/%3E%3Crect%20x=%2224%22%20y=%22104%22%20width=%22128%22%20height=%2272%22%20rx=%2216%22%20fill=%22%23FFFDF9%22/%3E%3Crect%20x=%22168%22%20y=%22104%22%20width=%22128%22%20height=%2272%22%20rx=%2216%22%20fill=%22%23FFFDF9%22/%3E%3Ccircle%20cx=%2246%22%20cy=%22126%22%20r=%2210%22%20fill=%22%232B4A7F%22/%3E%3Ccircle%20cx=%22190%22%20cy=%22126%22%20r=%2210%22%20fill=%22%232B4A7F%22%20opacity=%22.35%22/%3E%3C/svg%3E")',
+      dark: 'url("data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%20320%20200%22%3E%3Crect%20width=%22320%22%20height=%22200%22%20fill=%22%23171B25%22/%3E%3Crect%20x=%2224%22%20y=%2226%22%20width=%22120%22%20height=%2214%22%20rx=%227%22%20fill=%22%232F3A52%22/%3E%3Crect%20x=%2224%22%20y=%2258%22%20width=%2284%22%20height=%2222%22%20rx=%2211%22%20fill=%22%231D2331%22/%3E%3Crect%20x=%22116%22%20y=%2258%22%20width=%2284%22%20height=%2222%22%20rx=%2211%22%20fill=%22%231D2331%22/%3E%3Crect%20x=%2224%22%20y=%22104%22%20width=%22128%22%20height=%2272%22%20rx=%2216%22%20fill=%22%231D2331%22/%3E%3Crect%20x=%22168%22%20y=%22104%22%20width=%22128%22%20height=%2272%22%20rx=%2216%22%20fill=%22%231D2331%22/%3E%3Ccircle%20cx=%2246%22%20cy=%22126%22%20r=%2210%22%20fill=%22%23E8C27A%22/%3E%3Ccircle%20cx=%22190%22%20cy=%22126%22%20r=%2210%22%20fill=%22%23E8C27A%22%20opacity=%22.35%22/%3E%3C/svg%3E")' } },
+  { name: "Casora Dämmerung", label: "Casora Dämmerung", sub: "Gray lilac with a coral accent.",
+    shot: { light: "/casora_assets/themes/daemmerung-light.webp", dark: "/casora_assets/themes/daemmerung-dark.webp" },
+    ph: { light: 'url("data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%20320%20200%22%3E%3Crect%20width=%22320%22%20height=%22200%22%20fill=%22%23E6E3EE%22/%3E%3Crect%20x=%2224%22%20y=%2226%22%20width=%22120%22%20height=%2214%22%20rx=%227%22%20fill=%22%23CBC6D9%22/%3E%3Crect%20x=%2224%22%20y=%2258%22%20width=%2284%22%20height=%2222%22%20rx=%2211%22%20fill=%22%23F5F1FD%22/%3E%3Crect%20x=%22116%22%20y=%2258%22%20width=%2284%22%20height=%2222%22%20rx=%2211%22%20fill=%22%23F5F1FD%22/%3E%3Crect%20x=%2224%22%20y=%22104%22%20width=%22128%22%20height=%2272%22%20rx=%2216%22%20fill=%22%23F5F1FD%22/%3E%3Crect%20x=%22168%22%20y=%22104%22%20width=%22128%22%20height=%2272%22%20rx=%2216%22%20fill=%22%23F5F1FD%22/%3E%3Ccircle%20cx=%2246%22%20cy=%22126%22%20r=%2210%22%20fill=%22%23D9694F%22/%3E%3Ccircle%20cx=%22190%22%20cy=%22126%22%20r=%2210%22%20fill=%22%23D9694F%22%20opacity=%22.35%22/%3E%3C/svg%3E")',
+      dark: 'url("data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%20320%20200%22%3E%3Crect%20width=%22320%22%20height=%22200%22%20fill=%22%231C1A23%22/%3E%3Crect%20x=%2224%22%20y=%2226%22%20width=%22120%22%20height=%2214%22%20rx=%227%22%20fill=%22%23393349%22/%3E%3Crect%20x=%2224%22%20y=%2258%22%20width=%2284%22%20height=%2222%22%20rx=%2211%22%20fill=%22%2325212D%22/%3E%3Crect%20x=%22116%22%20y=%2258%22%20width=%2284%22%20height=%2222%22%20rx=%2211%22%20fill=%22%2325212D%22/%3E%3Crect%20x=%2224%22%20y=%22104%22%20width=%22128%22%20height=%2272%22%20rx=%2216%22%20fill=%22%2325212D%22/%3E%3Crect%20x=%22168%22%20y=%22104%22%20width=%22128%22%20height=%2272%22%20rx=%2216%22%20fill=%22%2325212D%22/%3E%3Ccircle%20cx=%2246%22%20cy=%22126%22%20r=%2210%22%20fill=%22%23F08A6E%22/%3E%3Ccircle%20cx=%22190%22%20cy=%22126%22%20r=%2210%22%20fill=%22%23F08A6E%22%20opacity=%22.35%22/%3E%3C/svg%3E")' } },
+  { name: "Casora Farbe", label: "Casora Farbe", sub: "Tiles that are on in the colour of their device, a soft colour wash.",
+    shot: { light: "/casora_assets/themes/farbe-light.webp", dark: "/casora_assets/themes/farbe-dark.webp" },
+    ph: { light: 'url("data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%20320%20200%22%3E%3Crect%20width=%22320%22%20height=%22200%22%20fill=%22%23FBE6DC%22/%3E%3Crect%20x=%2224%22%20y=%2226%22%20width=%22120%22%20height=%2214%22%20rx=%227%22%20fill=%22%23CBC6D9%22/%3E%3Crect%20x=%2224%22%20y=%2258%22%20width=%2284%22%20height=%2222%22%20rx=%2211%22%20fill=%22%23F5F1FD%22/%3E%3Crect%20x=%22116%22%20y=%2258%22%20width=%2284%22%20height=%2222%22%20rx=%2211%22%20fill=%22%23F5F1FD%22/%3E%3Crect%20x=%2224%22%20y=%22104%22%20width=%22128%22%20height=%2272%22%20rx=%2216%22%20fill=%22%23F5F1FD%22/%3E%3Crect%20x=%22168%22%20y=%22104%22%20width=%22128%22%20height=%2272%22%20rx=%2216%22%20fill=%22%23F5F1FD%22/%3E%3Ccircle%20cx=%2246%22%20cy=%22126%22%20r=%2210%22%20fill=%22%23D9694F%22/%3E%3Ccircle%20cx=%22190%22%20cy=%22126%22%20r=%2210%22%20fill=%22%23D9694F%22%20opacity=%22.35%22/%3E%3C/svg%3E")',
+      dark: 'url("data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%20320%20200%22%3E%3Crect%20width=%22320%22%20height=%22200%22%20fill=%22%23241A2A%22/%3E%3Crect%20x=%2224%22%20y=%2226%22%20width=%22120%22%20height=%2214%22%20rx=%227%22%20fill=%22%23393349%22/%3E%3Crect%20x=%2224%22%20y=%2258%22%20width=%2284%22%20height=%2222%22%20rx=%2211%22%20fill=%22%2325212D%22/%3E%3Crect%20x=%22116%22%20y=%2258%22%20width=%2284%22%20height=%2222%22%20rx=%2211%22%20fill=%22%2325212D%22/%3E%3Crect%20x=%2224%22%20y=%22104%22%20width=%22128%22%20height=%2272%22%20rx=%2216%22%20fill=%22%2325212D%22/%3E%3Crect%20x=%22168%22%20y=%22104%22%20width=%22128%22%20height=%2272%22%20rx=%2216%22%20fill=%22%2325212D%22/%3E%3Ccircle%20cx=%2246%22%20cy=%22126%22%20r=%2210%22%20fill=%22%23F08A6E%22/%3E%3Ccircle%20cx=%22190%22%20cy=%22126%22%20r=%2210%22%20fill=%22%23F08A6E%22%20opacity=%22.35%22/%3E%3C/svg%3E")' } },
 ];
+// Designs built like Casora (its colours, its accent names): Casora itself and its recoloured siblings.
+const CASORA_FAMILY = [CASORA_THEME, "Casora Nebel", "Casora Salbei", "Casora Marine", "Casora Dämmerung", "Casora Farbe"];
 const isCasoraTheme = (n) => !!n && CASORA_THEMES.some((x) => x.name === n || (x.aliases || []).includes(n));
 // Casora's designs are served by the integration (theme.py) and applied by scripts/casora-theme.js;
 // they are no HA themes. window.casoraTheme knows the design of the installation and of this browser.
@@ -653,7 +673,8 @@ const PHONE_FILTERS = ["climate", "lights", "people", "media", "security", "ener
 // vorn, Szenen (nur Home, als Badge) hinten. Gespeicherte Listen gehen vor, was darin fehlt,
 // folgt in dieser Reihenfolge – ältere Listen ohne „scenes“ behalten Szenen also am Ende.
 // Wie im Hemma-Original: Medien zuletzt (erscheint nur bei Wiedergabe und verschiebt so nichts).
-const BADGE_ORDER_IDS = ["security", "climate", "lights", "people", "energy", "scenes", "media"];
+// The Updates badge (#167) shows only while updates wait: last, after media, so it never shifts the others.
+const BADGE_ORDER_IDS = ["security", "climate", "lights", "people", "energy", "scenes", "media", "updates"];
 
 const BADGE_SWITCH_KEYS = ["climate", "lights", "people", "media", "security", "energy"].map((id) => "show_" + id);
 
@@ -711,6 +732,7 @@ function secSubRows(saved, present) {
 const FILTER_CATEGORIES = {
   casora_thermostat: "climate",
   casora_velair: "climate",
+  casora_heat_pump: "climate",
   casora_air_purifier: "climate",
   // Wie CASORA_FILTER_CATEGORIES (casora-core.js): Jalousien gehören zu keinem Badge-Filter.
   casora_cover: "unfiltered",
@@ -733,6 +755,7 @@ const FILTER_CATEGORIES = {
   casora_tasks: "unfiltered",
   casora_kettle: "unfiltered",
   casora_co: "security",
+  casora_map: "unfiltered",
   casora_plant: "unfiltered",
 };
 
@@ -975,6 +998,8 @@ function markPhoneManaged(cfg, showBell, showAssist, rooms) {
           if (hv.casora_greeting && Array.isArray(hv.casora_greeting_people) && hv.casora_greeting_people.length) {
             c.variables.casora_greeting_people = hv.casora_greeting_people.slice();
           } else delete c.variables.casora_greeting_people;
+          if (hv.casora_greeting && hv.casora_greeting_next === true) c.variables.casora_greeting_next = true;
+          else delete c.variables.casora_greeting_next;
         }
       }
       walk(c.cards);
@@ -1452,7 +1477,7 @@ const CHIPS_SECURITY_KEYS = ["room_name", "security_locks", "security_locks_labe
 // „Name auf dem Badge“ (06.10.2026): eigene Badge-Namen, auch für die Raumseite am Handy.
 const BADGE_TITLE_KEYS = ["climate_title", "lights_title", "people_title", "media_title", "security_title", "energy_title"];
 const CHIPS_ROOM_KEYS = ["temp_entity", "humidity_entity", "entity_quality",
-  "aqi_room_name", "aqi_sensors", "lights_entity"].concat(CHIPS_SECURITY_KEYS, BADGE_TITLE_KEYS);
+  "aqi_room_name", "aqi_sensors", "lights_entity"].concat(CHIPS_SECURITY_KEYS, BADGE_TITLE_KEYS, ["motion_entity", "motion_entity_2", "motion_entity_3", "motion_entity_4"]);
 const chipsHasSecurity = (c) => !!c && (!!(c.security_locks || []).length
   || [1, 2, 3, 4, 5, 6, 7, 8].some((n) => !!c["security_entity_" + n]));
 
@@ -1512,6 +1537,7 @@ function syncRoomChips(pair) {
     const next = { ...(chips[key] || {}) };
     CHIPS_ROOM_KEYS.forEach((k) => { delete next[k]; });
     const set = (k, v) => { if (!emptyVal(v)) next[k] = clone(v); };
+    ["motion_entity", "motion_entity_2", "motion_entity_3", "motion_entity_4"].forEach((k) => set(k, V[k]));
     if (V.show_climate !== false) {
       Object.keys(CHIPS_FROM_ROOM).forEach((k) => set(k, V[CHIPS_FROM_ROOM[k]]));
       set("aqi_sensors", CHIPS_AQI_FROM_ROOM.map((k) => V[k]).filter(Boolean));
@@ -1605,6 +1631,7 @@ function phoneCondSnapshot(pair) {
   ((pair.link || {}).links || []).forEach((link) => {
     const room = rooms[link.room], sec = sections[link.section];
     if (link.section === null || !room || !sec) return;
+    // The phone tile the pair sync gives each conditional room tile (assignTwins, issue 158).
     const byKey = new Map();
     (sec.tiles || []).forEach((mt) => {
       if (!mt || mt.type !== "conditional") return;
@@ -1612,17 +1639,94 @@ function phoneCondSnapshot(pair) {
       if (!byKey.has(k)) byKey.set(k, []);
       byKey.get(k).push(mt);
     });
-    const used = new Map();
-    (room.tiles || []).forEach((t) => {
+    const lists = new Map();
+    (room.tiles || []).forEach((t, i) => {
       if (!t || t.type !== "conditional") return;
-      const k = tileTwinKey(t), list = byKey.get(k);
-      if (!list) return;
-      const n = used.get(k) || 0;
-      used.set(k, n + 1);
-      if (n < list.length) out.set(t, condChain(list[n]));
+      const k = tileTwinKey(t);
+      if (!lists.has(k)) lists.set(k, []);
+      lists.get(k).push(i);
+    });
+    lists.forEach((list, k) => {
+      const mts = byKey.get(k);
+      if (!mts) return;
+      const seen = new Set();
+      assignTwins(room.tiles, list, mts).at.forEach((i, mt) => {
+        if (seen.has(i)) return;
+        seen.add(i);
+        out.set(room.tiles[i], condChain(mt));
+      });
     });
   });
   return out;
+}
+
+// What a tile is, without what only the phone keeps on it: among tiles with the same twin key (two Universal tiles
+// without a device, two hosted cards without a title) the phone's copy belongs to the room tile that reads the same.
+function tileTwinSig(t) {
+  const c = clone(t);
+  for (let v = c, d = 0; v && typeof v === "object" && d < 5; v = v.type === "conditional" ? v.card : null, d++) {
+    if (!v.variables) continue;
+    MOBILE_ONLY_TILE_KEYS.forEach((k) => { delete v.variables[k]; });
+    if (!Object.keys(v.variables).length) delete v.variables;
+  }
+  return stable(c);
+}
+
+// Casora's own copy of a room tile on the phone (marker casora_from_room), not a derived tile.
+const isRoomCopy = (mt) => !!mt && !(mt.variables && mt.variables.casora_derived)
+  && (tileView(mt).variables || {}).casora_from_room === true;
+
+// Issue 158: which room tile each phone tile of ONE twin key stands for. Tiles of one kind on one device (or, like two
+// Universal tiles, on none) share a key. Each phone tile takes a room tile of its own: the one that reads the same
+// first (so deleting or moving one of them in the room takes the right copy along), the rest in the phone's order.
+// Known limits: tiles that read exactly the same cannot be told apart, and a phone tile that no longer reads like its
+// room tile (kept in step only by syncTwinTile, which carries neither a hosted card nor a symbol) goes by its place.
+// More on the phone than in the room: a copy of Casora's follows its twin out (surplus); a tile without the marker
+// stays with the last room tile, as before. One exception: a tile from before the marker that is Casora's shape (the
+// rule the sync has for such tiles anyway) goes when a copy of Casora's already stands for that room tile – it is the
+// leftover of a deleted twin, and the room tile would show twice.
+// roomTiles: the room's tiles, list: the indices with this key, mts: the phone tiles with it.
+function assignTwins(roomTiles, list, mts) {
+  const at = new Map(), surplus = new Set();
+  if (mts.length === 1 && list.length === 1) { at.set(mts[0], list[0]); return { at, surplus }; }
+  const holder = new Map();
+  const take = (mt, i) => { at.set(mt, i); holder.set(i, mt); };
+  const sigs = new Map(list.map((i) => [i, tileTwinSig(roomTiles[i])]));
+  const own = new Map(mts.map((mt) => [mt, tileTwinSig(mt)]));
+  // Same place and same reading first: a tile that is where it belongs stays there. Without this, two phone tiles
+  // that both read like the second room tile took turns at it on every sync.
+  mts.forEach((mt, n) => { if (n < list.length && sigs.get(list[n]) === own.get(mt)) take(mt, list[n]); });
+  mts.forEach((mt) => {
+    if (at.has(mt)) return;
+    const i = list.find((x) => !holder.has(x) && sigs.get(x) === own.get(mt));
+    if (i !== undefined) take(mt, i);
+  });
+  mts.forEach((mt) => {
+    if (at.has(mt)) return;
+    const i = list.find((x) => !holder.has(x));
+    if (i !== undefined) { take(mt, i); return; }
+    if (isRoomCopy(mt)) { surplus.add(mt); return; }
+    const last = list[list.length - 1];
+    const v = tileView(mt);
+    const old = (v.variables || {}).casora_from_room === undefined && (!!tileTypeOf(v) || !!carouselId(carouselOf(mt)));
+    if (old && isRoomCopy(holder.get(last))) surplus.add(mt); else at.set(mt, last);
+  });
+  return { at, surplus };
+}
+
+// A phone copy made anew from its room tile, with what only the phone keeps on it. Among several tiles with one twin
+// key the copy has to read exactly like its room tile (hosted card and symbol included), or the next sync could not
+// tell them apart.
+function rebuildTwinCopy(twin, mt) {
+  const next = clone(twin);
+  for (let a = next, b = mt, d = 0; a && b && d < 5; d++) {
+    const keep = {};
+    MOBILE_ONLY_TILE_KEYS.forEach((k) => { if (b.variables && b.variables[k] !== undefined) keep[k] = clone(b.variables[k]); });
+    if (Object.keys(keep).length) a.variables = { ...(a.variables || {}), ...keep };
+    if (a.type !== "conditional" || b.type !== "conditional") break;
+    a = a.card; b = b.card;
+  }
+  return next;
 }
 
 function syncPairTiles(pair) {
@@ -1649,9 +1753,8 @@ function syncPairTiles(pair) {
         if (id && p && !carouselId(p)) p.variables = { ...(p.variables || {}), casora_carousel: id };
       });
     }
-    // Gleiche Kacheln (Art + Entität) mehrfach im Raum: der Reihe nach zuordnen, die erste
-    // Handy-Kachel zur ersten im Raum usw. – sonst bekamen alle die Einstellungen (auch „Größe
-    // am Handy“) der letzten. Mehr am Handy als im Raum: die übrigen zur letzten, wie bisher.
+    // Gleiche Kacheln (Art + Entität) mehrfach im Raum: jede Handy-Kachel gehört zu einer eigenen Raum-Kachel –
+    // sonst bekamen alle die Einstellungen (auch „Größe am Handy“) der letzten. Zuordnung weiter unten (Issue 158).
     const byKey = new Map();
     (room.tiles || []).forEach((t, i) => {
       if (!t) return;
@@ -1670,14 +1773,29 @@ function syncPairTiles(pair) {
       if (!byPlain.has(k)) byPlain.set(k, []);
       byPlain.get(k).push(i);
     });
-    const phoneKeys = new Set((sec.tiles || []).filter(Boolean).map(tileTwinKey));
+    // Counted per key (issue 158): of several equal tiles each phone tile takes a room tile of its own, the one whose
+    // tile inside reads the same first. A phone tile whose key is still in the room is only reshaped when the phone
+    // has one more of them than the room (one of several equal tiles got or lost its condition) and its twin is plain
+    // to see.
+    const phoneKeys = new Map();
+    (sec.tiles || []).filter(Boolean).forEach((mt) => { const k = tileTwinKey(mt); phoneKeys.set(k, (phoneKeys.get(k) || 0) + 1); });
+    const reshaped = new Set();
     (sec.tiles || []).forEach((mt, si) => {
-      if (!mt || byKey.has(tileTwinKey(mt))) return;
+      if (!mt) return;
+      const key = tileTwinKey(mt);
+      const spare = byKey.has(key) && phoneKeys.get(key) > byKey.get(key).length;
+      if (byKey.has(key) && !spare) return;
       const inner = innerTile(mt);
       // Nur eine einzelne Kachel (keine Sammelkarte) und nur, wenn der Raum sie anders umhüllt.
       if (!inner || isContainerCard(inner)) return;
-      const list = byPlain.get(plainKey(mt));
-      const ti = list && list.find((x) => !phoneKeys.has(tileTwinKey(room.tiles[x])));
+      const free = (byPlain.get(plainKey(mt)) || []).filter((x) => { const k = tileTwinKey(room.tiles[x]);
+        return k !== key && !reshaped.has(x) && (phoneKeys.get(k) || 0) < byKey.get(k).length; });
+      let ti = free[0];
+      if (free.length > 1 || spare) {
+        const sg = tileTwinSig(inner);
+        const same = free.find((x) => tileTwinSig(innerTile(room.tiles[x])) === sg);
+        ti = same !== undefined ? same : (spare ? undefined : free[0]);
+      }
       if (ti === undefined) return;
       const twin = room.tiles[ti];
       const tIn = innerTile(twin);
@@ -1690,21 +1808,36 @@ function syncPairTiles(pair) {
       });
       if (Object.keys(keep).length) nIn.variables = { ...(nIn.variables || {}), ...keep };
       sec.tiles[si] = next;
-      phoneKeys.add(tileTwinKey(next));
+      reshaped.add(ti);
+      phoneKeys.set(key, phoneKeys.get(key) - 1);
+      phoneKeys.set(tileTwinKey(next), (phoneKeys.get(tileTwinKey(next)) || 0) + 1);
     });
-    const used = new Map();
     const at = new Map();
-    const onPhone = new Set();
+    // Issue 158: each phone tile takes a room tile of its own (assignTwins), "is there one on the phone" let only the
+    // first of several equal tiles across.
+    const twinAt = new Map();
+    const taken = new Set();
+    const surplus = new Set();
+    const several = new Set();
+    const groups = new Map();
     (sec.tiles || []).forEach((mt) => {
       if (!mt) return;
       const k = tileTwinKey(mt);
-      onPhone.add(k);
+      if (!groups.has(k)) groups.set(k, []);
+      groups.get(k).push(mt);
+    });
+    groups.forEach((mts, k) => {
       const list = byKey.get(k);
-      const n = used.get(k) || 0;
-      used.set(k, n + 1);
-      const ti = list ? list[Math.min(n, list.length - 1)] : -1;
+      if (!list) return;
+      const a = assignTwins(room.tiles, list, mts);
+      a.at.forEach((i, mt) => { twinAt.set(mt, i); taken.add(i); });
+      a.surplus.forEach((mt) => surplus.add(mt));
+      if (mts.length > 1 || list.length > 1) mts.forEach((mt) => several.add(mt));
+    });
+    (sec.tiles || []).forEach((mt, si) => {
+      if (!mt || surplus.has(mt)) return;
+      const ti = twinAt.has(mt) ? twinAt.get(mt) : -1;
       const twin = ti >= 0 ? room.tiles[ti] : null;
-      if (twin) at.set(mt, ti);
       if (!twin) {
         const copied = (tileView(mt).variables || {}).casora_from_room;
         if (!(copied === undefined ? !!tileTypeOf(mt) : copied)) {
@@ -1712,7 +1845,17 @@ function syncPairTiles(pair) {
         }
         return;
       }
-      syncTwinTile(twin, mt);
+      // One of several with this key: Casora's copy is the room tile again, whole (a single tile is kept in step
+      // as it always was).
+      const plain = innerTile(twin);
+      if (several.has(mt) && isRoomCopy(mt) && plain && !isContainerCard(plain) && !carouselId(carouselOf(twin))) {
+        const next = rebuildTwinCopy(twin, mt);
+        sec.tiles[si] = next;
+        at.set(next, ti);
+      } else {
+        at.set(mt, ti);
+        syncTwinTile(twin, mt);
+      }
       synced++;
     });
 
@@ -1727,9 +1870,7 @@ function syncPairTiles(pair) {
       // Karussell mit Kennung (1.4) gehört aufs Handy; importierte ohne Kennung wie bisher nicht.
       if (!t || (!tv.entity && tv.template !== CUSTOM_TEMPLATE && !(ty && (ty.noEntity || ty.ownData))
         && !carouselId(carouselOf(t)))) return;
-      const key = tileTwinKey(t);
-      if (onPhone.has(key)) return;
-      onPhone.add(key);
+      if (taken.has(ti)) return;
       sec.tiles = sec.tiles || [];
       const copy = clone(t);
       const cv = tileView(copy);
@@ -1741,7 +1882,7 @@ function syncPairTiles(pair) {
 
     const before = (sec.tiles || []).length;
     sec.tiles = (sec.tiles || []).filter((mt) => {
-      if (!mt) return false;
+      if (!mt || surplus.has(mt)) return false;
       if (mt.variables && mt.variables.casora_derived) return true;
       if (byKey.has(tileTwinKey(mt))) return true;
       // Only a tile Casora copied out of the room follows its twin out again.
@@ -2274,6 +2415,7 @@ const STUDIO_ICON = {
   "set-vent": ["main", "var(--casora-color-blue, #0A84FF)"],
   "set-fuel": ["main", "var(--casora-color-teal, #00C3D0)"],
   "set-live": ["energy", "var(--casora-color-green, #30D158)"],
+  "set-saver": ["info", "var(--casora-color-blue, #0A84FF)"],
   // Erststart und Umzug
   "flow-rooms": ["main", "#2fd6e0"],
   "flow-devices": ["light", "#ffb340"],
@@ -2303,7 +2445,8 @@ const GROUPS = [
     blurb: "The cards along the bottom of the room." },
 ];
 
-const R = (id, label, max, fields, menuGroup, kinds) => ({ id, label, max, fields, menuGroup: menuGroup || null, kinds: kinds || null });
+const MOTION_KEYS = ["motion_entity", "motion_entity_2", "motion_entity_3", "motion_entity_4"];
+const R = (id, label, max, fields, menuGroup, kinds, closeGaps) => ({ id, label, max, fields, menuGroup: menuGroup || null, kinds: kinds || null, closeGaps: !!closeGaps });
 
 const mediaRepeats = () => [
   R("player", "Media player", 10, [{ ...E("media_player_%", "Media player %", ["media_player"]),
@@ -2353,12 +2496,20 @@ const SECTIONS = [
       { ...LIST("casora_greeting_people", "People to name", ["person"]), always: true, homeOnly: true,
         when: (v) => v.casora_greeting === "names",
         hint: "Empty: everyone who is home. With three or more at home, just the greeting." },
+      // #157: off by default; a line under the greeting (casoraHomeNext, 00-finder.js).
+      { key: "casora_greeting_next", label: "Next event and waste collection", type: "bool", boolDefault: false, always: true, homeOnly: true,
+        when: (v) => !!v.casora_greeting,
+        hint: "Shows the next calendar event and the next waste collection in a line under the greeting." },
       { key: "__phone_name", label: "Name on phone", type: "text", always: true,
         phoneName: true, placeholder: MOBILE_FAVORITES,
         hint: "Heading of the favorites on the phone's Home page." },
       { key: "image", label: "Background image", type: "image", always: true },
-      { ...E("motion_entity", "Motion sensor", ["binary_sensor"]), classes: ["motion", "occupancy", "presence"],
-        hint: "Pulses a dot beside this room in the navigation, and shows a motion icon on the phone." },
+    ],
+    // #150: several sensors count as one, on while any is on; the first keeps its old key.
+    repeats: [
+      R("motion", "Motion sensor", MOTION_KEYS.length, [{ ...E("motion_entity_%", "Motion sensor %", ["binary_sensor"]), key1: "motion_entity",
+        classes: ["motion", "occupancy", "presence"], hintOnce: true,
+        hint: "Pulses a dot beside this room in the navigation, and shows a motion icon on the phone." }], null, null, true),
     ],
   },
   {
@@ -2392,7 +2543,8 @@ const SECTIONS = [
         optionLabels: { "": "Off", "1": "After 1 minute", "2": "After 2 minutes",
           "5": "After 5 minutes", "10": "After 10 minutes" },
         hint: "Tablets only. Brings one back to Home after a while without use." },
-      // Wall-panel clock (scripts/local/43-screensaver.js). Off until a dashboard turns it on.
+      // Our screensaver (43-screensaver.js). His ten designs stay in 46-screensaver.js but do not
+      // cover the dashboard, so the two do not stack.
       { key: "casora_screensaver", sub: "chrome", label: "Screensaver",
         type: "select", auto: true, scope: "dashboard",
         options: ["", "1", "2", "5", "10"],
@@ -2739,7 +2891,7 @@ const SECTIONS = [
         { id: "alarm", label: "Alarm system", domains: ["alarm_control_panel"] },
         { id: "lock", label: "Lock", domains: ["lock"] },
         { id: "camera", label: "Camera", domains: ["camera"] },
-      ]),
+      ], true),
     ],
   },
   {
@@ -2811,6 +2963,16 @@ const SECTIONS = [
     blurb: "Badges of your own: a device's state or the text of a template.",
     fields: [{ key: "custom_badges", label: "Own badges", type: "custombadges", always: true }],
   },
+  {
+    // Updates badge (#167): only on Home (the phone start page reads Home's settings), off by default, shown only
+    // while updates wait; a tap opens the Updates popup (casora_badge_updates).
+    label: "Updates badge", title: "Updates", bid: "updates", icon: "updates", iconColor: "var(--casora-color-teal, #00C3D0)",
+    group: "badges", homeOnly: true, toggleFn: "updatesBadge",
+    blurb: "Shows only while updates are waiting, with their number by kind. A tap opens the list of updates.",
+    fields: [
+      { ...T("updates_title", "Name on the badge"), always: true, ord: -1, placeholder: "Updates" },
+    ],
+  },
 ];
 
 // Devices an own badge can show (any domain with a readable state).
@@ -2840,6 +3002,8 @@ function sectionFields(sec) {
           repeatOf: rep.id,
           repeatLabel: rep.label,
           repeatKinds: rep.kinds,
+          repeatCloseGaps: rep.closeGaps,
+          repeatMax: rep.max,
           menuGroup: f.menuGroup || rep.menuGroup || null,
         });
       });
@@ -3912,7 +4076,7 @@ const autoRoomGlyph = (name) => {
 // kitchen) is no reason to offer them as "Fits <room>".
 const HOUSE_WIDE_TILES = new Set(["energy_tile", "network", "battery", "updates", "casora_alarm",
   "casora_weather_warning", "casora_solar_tip", "casora_trash", "casora_recipe", "casora_pulse", "casora_calendar", "casora_tasks",
-  "casora_entity_list", "casora_more"]);
+  "casora_entity_list", "casora_more", "casora_map"]);
 
 // The automatic icon follows the name. A new name it doesn't know ("Küche" →
 // "Kochecke") would fall back to the house - keep the icon the room had instead.
@@ -4229,13 +4393,17 @@ function retargetRoutes(root, urlPath, rooms, extras) {
           // Casora ihn angelegt hat und er unverändert ist; ein eigener Name steht ohne Übersetzung.
           if (isDefaultHome(r, rooms)) route.auto = AUTO_HOME;
           else if ((r.variables || {}).name_literal || (isHomeRoom(r, rooms) && isDefaultHomeName(r.name))) route.literal = true;
-          const m = (r.variables || {}).motion_entity;
           // The global helper is a mute switch: absent means nothing to mute.
           // Only a plain entity ID goes into the expression (an imported file or a hand edit could hold anything).
-          if (typeof m === "string" && /^[a-z_]+\.[a-z0-9_]+$/.test(m)) route.badge = { show: "[[[ const b = states['input_boolean.casora_motion_badges'];"
+          const motion = MOTION_KEYS.map((k) => (r.variables || {})[k]).filter((x) => typeof x === "string" && /^[a-z_]+\.[a-z0-9_]+$/.test(x));
+          const m = motion[0];
+          if (motion.length === 1) route.badge = { show: "[[[ const b = states['input_boolean.casora_motion_badges'];"
             + " if (b && b.state !== 'on') return false;"
             + " const s = states['" + m + "'];"
             + " return !!s && s.state === 'on'; ]]]" };
+          else if (motion.length) route.badge = { show: "[[[ const b = states['input_boolean.casora_motion_badges'];"
+            + " if (b && b.state !== 'on') return false;"
+            + " return [" + motion.map((x) => "'" + x + "'").join(",") + "].some((e) => states[e] && states[e].state === 'on'); ]]]" };
           return route;
         })
         .concat(clone(keep));
@@ -4683,7 +4851,7 @@ const purpleIsRed = () => {
   const h = hueOf(swatchCss("var(--casora-color-purple, #9333ea)"));
   return h !== null && (h < 25 || h > 335);
 };
-const casoraLookTheme = () => ACCENT_THEME === CASORA_THEME || ACCENT_THEME === "Casora Nebel" || purpleIsRed();
+const casoraLookTheme = () => CASORA_FAMILY.includes(ACCENT_THEME) || purpleIsRed();
 const accentLabel = (a) => (a.key === "purple" && casoraLookTheme() ? "Dark red" : a.label);
 // Die Farben zur Auswahl: „Lila“ (violet) nur im Casora-Look – Hemma 1/2 haben ihr Lila schon (purple).
 // Im Casora-Look (Weich/Nebel) sind Bernstein, Eis und Gold Zwillinge von Orange, Blau und Gelb
@@ -5563,6 +5731,7 @@ const TILE_MAIN_FIND = {
   // zone sensors) – a climate Velair does not plan has no schedule to show.
   // anchors: the finder's whole list, asked once per search (not per entity – per entity the fridge finder walked every
   // device for each of thousands of entities and the Studio hung).
+  casora_heat_pump: { domain: "climate", anchors: (h) => (window.casoraHeatPumpFind ? Object.keys(h.states || {}).filter((id) => id.startsWith("climate.") && window.casoraHeatPumpFind.isPump(h, id)) : []) },
   casora_velair: { domain: "climate", anchors: (h) => (window.casoraVelairFind ? window.casoraVelairFind.climates(h) : []) },
   casora_fridge: { anchors: (h) => (window.casoraFridgeFind ? window.casoraFridgeFind.all(h).map((f) => f.anchor) : []) },
   // Oven: the anchor of every oven the shared finder knows (casoraOvenFind.all in 00-finder.js – Home Connect in HA core and
@@ -6514,6 +6683,7 @@ const tileStateWord = (kind, tile, ent, states, hass) => {
     const cal = Object.keys(S).sort().find((id) => id.startsWith("calendar.") && S[id].attributes && S[id].attributes.message);
     return cal ? String(S[cal].attributes.message) : "No events";
   }
+  if (kind === "casora_map") return "";
   if (kind === "casora_tasks") {
     const T = typeof window !== "undefined" && window._casoraTasks;
     return T && T.tile ? T.tile(states || {}, V) : "Tasks";
@@ -14806,7 +14976,8 @@ class CasoraPanel extends HTMLElement {
     if (!look) look = (casoraThemeApi() && casoraThemeApi().active(this._hass)) || null;
     look = THEME_RENAMED[look] || look;
     // Nebel hat eigene Bilder (perf-nebel-*), gleicher Aufbau wie Weich; std = eigenes Theme (Dashboard ohne Casora-Look).
-    const set = look === "Casora Nebel" ? "nebel" : look === CASORA_THEME ? "weich" : "std";
+    // The recoloured siblings have no pictures of their own: they are built like Casora, so its pictures show the same.
+    const set = look === "Casora Nebel" ? "nebel" : CASORA_FAMILY.includes(look) ? "weich" : "std";
     const shot = (mode) => shotLang("/casora_assets/themes/perf-" + set + "-" + mode + "-" + (dark ? "dark" : "light") + ".webp", this._hass);
     const grid = document.createElement("div");
     grid.className = "themegrid perfgrid";
@@ -15907,27 +16078,12 @@ class CasoraPanel extends HTMLElement {
     }));
   }
 
-  // A real dashboard, live, as a picture: an iframe scaled into box. HA starts it without
-  // its sidebar (dockedSidebar is read once at start); the viewer's setting is put back at once.
+  // A real dashboard, live, as a picture: an iframe scaled into box. Only the frame's own HA drops its sidebar
+  // (_updateHass, which unlike the dock event stores nothing); the viewer's setting is never touched (#154).
   _livePreview(box, url, w, h, top) {
     const warm = this._warm;
     if (warm && warm.url === url && warm.w === w && warm.h === h && !top && warm.wrap.isConnected) return this._warmShow(box);
     top = top || 0;
-    // Mehrere Vorschauen gleichzeitig (Desktop + Handy): nur die erste merkt sich den echten
-    // Wert, erst die letzte stellt ihn zurück – sonst bliebe „always_hidden“ stehen.
-    if (!this._dockHold) {
-      try { this._dockPrev = localStorage.getItem("dockedSidebar"); } catch (e) { this._dockPrev = undefined; }
-    }
-    this._dockHold = (this._dockHold || 0) + 1;
-    try { localStorage.setItem("dockedSidebar", JSON.stringify("always_hidden")); } catch (e) { /* nichts */ }
-    let restored = false;
-    const restore = () => {
-      if (restored) return; restored = true;
-      if (--this._dockHold > 0) return;
-      const prev = this._dockPrev;
-      try { if (prev === null) localStorage.removeItem("dockedSidebar"); else if (prev !== undefined) localStorage.setItem("dockedSidebar", prev); } catch (e) { /* nichts */ }
-    };
-    setTimeout(restore, 20000);
     const f = document.createElement("iframe");
     f.className = "dn-frame"; f.src = url; f.setAttribute("tabindex", "-1"); f.setAttribute("aria-hidden", "true");
     // top = Höhe der Notch: der Rahmen reicht bis ganz oben; im Rahmen wird der sichere Bereich
@@ -15945,8 +16101,8 @@ class CasoraPanel extends HTMLElement {
       const tick = () => {
         try {
           const ha = f.contentDocument.querySelector("home-assistant");
-          if (!(ha && ha.hass)) { if (Date.now() - t0 < 15000) setTimeout(tick, 200); else { restore(); box.classList.add("ready"); } return; }
-          restore();
+          if (!(ha && ha.hass)) { if (Date.now() - t0 < 15000) setTimeout(tick, 200); else box.classList.add("ready"); return; }
+          if (typeof ha._updateHass === "function") ha._updateHass({ dockedSidebar: "always_hidden" });
           setTimeout(() => box.classList.add("ready"), 1500);
           // T11 (test 2): right after creating, a badge whose card script was not there yet stayed HA's red
           // "Configuration error" in the preview (the dashboard itself was fine) – look once more and reload the frame once.
@@ -15959,7 +16115,7 @@ class CasoraPanel extends HTMLElement {
             box.classList.remove("ready");
             try { f.contentWindow.location.reload(); } catch (e) { f.src = url; }
           }, ms));
-        } catch (e) { restore(); box.classList.add("ready"); }
+        } catch (e) { box.classList.add("ready"); }
       };
       tick();
     };
@@ -18601,7 +18757,16 @@ class CasoraPanel extends HTMLElement {
           if (unitLive(u) || !addable(u) || !met(u, units)) return;
           if (u.fields.every((f) => f.noAdd) || !u.fields.some(modAvail)) return;
           const rep = u.fields[0].repeatOf;
-          if (rep) { if (seenRep.has(rep)) return; seenRep.add(rep); }
+          if (rep) {
+            if (seenRep.has(rep)) return;
+            // Rows that close their gaps keep the empty one last, also in a config saved with a gap (#152).
+            const f0 = u.fields[0];
+            if (f0.repeatCloseGaps) {
+              const last = Math.max(0, ...units.filter((x) => x.fields[0].repeatOf === rep && unitLive(x)).map((x) => x.fields[0].repeatN));
+              if (f0.repeatN < last && last < f0.repeatMax) return;
+            }
+            seenRep.add(rep);
+          }
           out.add(u.id);
         });
       }
@@ -18802,6 +18967,7 @@ class CasoraPanel extends HTMLElement {
     SECTIONS.forEach((sec) => {
       if (only && !only.has(sec.label)) return;
       if (sec.roomOnly && onHome) return;
+      if (sec.homeOnly && !onHome) return;
       const fs = document.createElement("section");
       fs.className = "card";
       fs.dataset.k = sec.label;
@@ -18894,6 +19060,12 @@ class CasoraPanel extends HTMLElement {
         get: () => this._scenesMode() !== "off",
         // Einschalten: als Badge auf Home – so wie Casora neue Dashboards anlegt.
         set: () => this._setScenesMode(this._scenesMode() === "off" ? "badge" : "off"),
+      } : (sec.toggleFn === "updatesBadge" ? {
+        get: () => room.variables.show_updates === true,
+        set: () => {
+          if (room.variables.show_updates === true) delete room.variables.show_updates;
+          else room.variables.show_updates = true;
+        },
       } : (sec.toggleFn === "roomScenes" ? {
         get: () => room.variables.show_scenes === true,
         set: () => {
@@ -18912,7 +19084,7 @@ class CasoraPanel extends HTMLElement {
             if (room.variables.show_media === false) delete room.variables.show_media;
           }
         },
-      } : null)));
+      } : null))));
 
       if (toggle) {
         const on = toggle.get();
@@ -19037,6 +19209,24 @@ class CasoraPanel extends HTMLElement {
       };
 
       const unitSeen = new Set();
+      // #152: when a numbered row goes, the later ones move up with their labels.
+      const closeGaps = (repId) => {
+        const slots = new Map();
+        sectionFields(sec).filter((x) => x.repeatOf === repId).forEach((x) => {
+          if (!slots.has(x.repeatN)) slots.set(x.repeatN, []);
+          slots.get(x.repeatN).push(x);
+        });
+        const all = [...slots.keys()].sort((a, b) => a - b).map((n) => slots.get(n));
+        const kept = all.filter((fs) => fs.some(isSet)).map((fs) => fs.map((x) => room.variables[x.key]));
+        all.forEach((fs, i) => {
+          fs.forEach((x, j) => {
+            const v = kept[i] ? kept[i][j] : undefined;
+            if (room.variables[x.key] !== v) setVar(x.key, v, x);
+          });
+          this._slotKind.delete(room.path + "|" + unitOf(fs[0]));
+          if (!kept[i]) this._revealed.delete(room.path + "|" + unitOf(fs[0]));
+        });
+      };
       const addDrop = (row, f) => {
         const cell = document.createElement("button");
         cell.className = "drop";
@@ -19053,6 +19243,7 @@ class CasoraPanel extends HTMLElement {
           this._armRow(row, kindLabel(f) || f.label, () => {
             sectionFields(sec).filter((x) => unitOf(x) === u).forEach((x) => setVar(x.key, undefined, x));
             this._revealed.delete(room.path + "|" + u);
+            if (f.repeatCloseGaps) closeGaps(f.repeatOf);
             this._renderForm();
           });
         };
@@ -19086,6 +19277,11 @@ class CasoraPanel extends HTMLElement {
         row.dataset.key = f.key;
         const lab = document.createElement("label");
         lab.textContent = kindLabel(f) || f.label;
+        // Numbered by position, so a config saved with a gap still reads 1, 2, 3 (#152).
+        if (f.repeatCloseGaps && !f.labelOf && !kindLabel(f)) {
+          const nums = [...new Set(shownFields(sec).filter((x) => x.repeatOf === f.repeatOf).map((x) => x.repeatN))].sort((a, b) => a - b);
+          lab.textContent = f.label.replace(/\d+$/, String(nums.indexOf(f.repeatN) + 1));
+        }
         // Mehrere gleiche „Beschriftung“-Felder: mit dem Gerät, zu dem sie gehören.
         if (f.labelOf) {
           const dev = room.variables[f.labelOf];
@@ -24706,6 +24902,14 @@ class CasoraPanel extends HTMLElement {
       if (!own || ids.length) out.push({ id: "scenes", label: "Scenes", icon: "scenes", color: studioIcon("scenes"),
         dim: !act, text: act ? act + " active" : "None active", subs });
     }
+    // Updates badge on Home (#167): the dashboard hides it while nothing waits; here it stays, dimmed, so it can be found.
+    if (V.show_updates === true) {
+      const st = (this._hass && this._hass.states) || {};
+      const n = Object.keys(st).filter((id) => id.startsWith("update.") && st[id].state === "on"
+        && !(st[id].attributes || {}).in_progress).length;
+      out.push({ id: "updates", label: "Updates", icon: "updates", color: "var(--casora-color-teal, #00C3D0)",
+        dim: !n, text: n ? n + " available" : "None waiting", subs: [] });
+    }
     // „Name auf dem Badge“: eigener Name statt des Standardnamens, unübersetzt (wie im Dashboard).
     out.forEach((b) => {
       const own = String(V[b.id + "_title"] || "").trim();
@@ -25930,7 +26134,8 @@ class CasoraPanel extends HTMLElement {
       });
       // Bewegung (nur Handy, room_chips[<raum>].motion_entity) steht hinter den Badges.
       if (e && e.motion_entity) {
-        const ms = (this._hass.states[e.motion_entity] || {}).state;
+        const mStates = MOTION_KEYS.map((k) => e[k]).filter(Boolean).map((id) => (this._hass.states[id] || {}).state);
+        const ms = mStates.includes("on") ? "on" : mStates.includes("off") ? "off" : undefined;
         crow.appendChild(this._paintChip({ icon: "motion", label: "Motion", glyphHeight: "70%", color: "#fff", bare: true,
           text: ms === "on" ? "Detected" : ms === "off" ? "Not Detected" : "Unavailable" }));
       }
@@ -26428,8 +26633,19 @@ class CasoraPanel extends HTMLElement {
     const order = rooms.map((r, i) => i);
     if (own !== null && rooms[own]) order.unshift(...order.splice(own, 1));
     for (const i of order) {
-      const hit = (rooms[i].tiles || []).find((t) => t && tileTwinKey(t) === key);
-      if (hit) return { tile: hit, roomIndex: i };
+      const tiles = rooms[i].tiles || [];
+      const list = tiles.map((t, x) => (t && tileTwinKey(t) === key ? x : -1)).filter((x) => x >= 0);
+      if (!list.length) continue;
+      // Several tiles with this key (issue 158): the room tile the pair sync gives this phone tile (assignTwins).
+      let x = list[0];
+      if (i === own) {
+        const mts = ((sec && sec.tiles) || []).filter((t) => t && tileTwinKey(t) === key);
+        if ((list.length > 1 || mts.length > 1) && mts.includes(tile)) {
+          const a = assignTwins(tiles, list, mts).at;
+          if (a.has(tile)) x = a.get(tile);
+        }
+      }
+      return { tile: tiles[x], roomIndex: i };
     }
     return null;
   }
@@ -27014,7 +27230,7 @@ class CasoraPanel extends HTMLElement {
       || !!RV.psn_1 || !!RV.psn_2);
     const onHome = isHomeRoom(room, ((this._state || {}).compact || {}).rooms || []);
     SECTIONS.filter((sec) => sec.group === "badges" && sec.icon && !shown.has(sec.bid)
-      && !(sec.bid === "media" && mediaSetUp) && !(sec.roomOnly && onHome))
+      && !(sec.bid === "media" && mediaSetUp) && !(sec.roomOnly && onHome) && !(sec.homeOnly && !onHome))
       .sort((a, b) => rank(a.bid) - rank(b.bid)).forEach((sec) => {
       const el = pill({ id: String(sec.label).toLowerCase(), label: secName(sec),
         icon: sec.icon, color: sec.iconColor || "var(--ink)", subs: [] }, false);
@@ -30002,7 +30218,7 @@ window.__casoraPanelInternals = {
   applyMotion, markPhoneManaged, applyFirstRun, CASORA_THEMES, ensureCustomFontCss, sceneBadgeOn, dropNavScenes,
   parseCardText, cardToText,
   isDefaultHomeName, homeRoomWord, shotLang, isHomeRoom, roomLabel, storedRoomName, HOME_ROOM_NAME, markAutoHome, isDefaultHome, setHomeName, badgeOrderOf, BADGE_ORDER_IDS,
-  linkPair, syncPairRooms, syncPairTiles, syncTwinTile, phoneCondSnapshot, condChain, condModel, condWrite, syncRoomChips, phoneRoomBadgeVars, PHONE_ROOM_OVERRIDE, phoneRoundTrips, phoneStale, phoneRoomKeys, carryPhoneSizes, restorePhoneSizes, hasTileSize, setInnerSize, expandMobileConfig, extractMobileConfig,
+  linkPair, syncPairRooms, syncPairTiles, syncTwinTile, assignTwins, tileTwinSig, phoneCondSnapshot, condChain, condModel, condWrite, syncRoomChips, phoneRoomBadgeVars, PHONE_ROOM_OVERRIDE, phoneRoundTrips, phoneStale, phoneRoomKeys, carryPhoneSizes, restorePhoneSizes, hasTileSize, setInnerSize, expandMobileConfig, extractMobileConfig,
   deriveEnergyRooms, energyManual, energyBackToAuto, fillHomeLights, homeLightsEdit, homeLightsOldPick, fixHomeLightSlots, phoneSlotsMatch, roomVisibility, homePickOrder, MENU_ICONS, SECTIONS, tileTwinKey,
   CASORA_ACCENTS, accentsShown, accentLabel, swatchCss,
   condStates, condLoadSeen, isCarouselCard, isPageTile, carouselOf, carouselId, markCarousel, CAROUSEL_CARD, CAROUSEL_TILE,

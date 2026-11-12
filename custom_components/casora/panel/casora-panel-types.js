@@ -447,6 +447,31 @@ window.CASORA_TILE_TYPES = [
       { key: "target_entity", label: "Target temperature", domains: ["number"] },
       { key: "keep_warm_entity", label: "Keep warm", domains: ["switch"] },
       TITLE_NAME] },
+  // Map (community card, card request 159): a title and a symbol on the tile, no device needed; the popup is Home
+  // Assistant's own map card, large (scripts/local/44-landkarte.js). Without entities: all persons and zones.
+  { id: "casora_map", label: "Area map", template: "casora_map", domains: [], noEntity: true, icon: "map",
+    color: "var(--casora-color-teal, #00C3D0)",
+    community: { desc: "Home Assistant's map right on the tile, with the title and who is home. A tap opens it large in the popup: persons and zones, geo location data if you like, the way people took and the zoom you set. Without the map: a small tile with a title and a symbol.", darkShots: true },
+    fields: [
+      { key: "map_tile", label: "Map on the tile", type: "bool", boolDefault: true,
+        hint: "The tile shows the map itself, large. Off: a small tile with a title and a symbol." },
+      { key: "map_entities", label: "On the map", type: "list", noAnchor: true, domains: ["person", "zone", "device_tracker"], placeholder: "Add device …",
+        hint: "Empty: all persons and zones." },
+      { key: "map_geo", label: "Geo location data", type: "select", options: ["", "all"], optionLabels: { "": "None", all: "All sources" },
+        // The sources this home has (attribute source of geo_location entities); a stored one stays selectable.
+        dynOptions: (hass) => {
+          const found = [...new Set(Object.keys((hass && hass.states) || {}).filter((id) => id.startsWith("geo_location."))
+            .map((id) => (hass.states[id].attributes || {}).source).filter(Boolean))].sort();
+          return { options: ["", "all", ...found], labels: {} };
+        },
+        hint: "Earthquakes, wildfires and other sources that put points on the map." },
+      { key: "map_hours", label: "History (hours)", type: "number", placeholder: "0",
+        hint: "How many hours of the way people took are drawn. 0: none." },
+      { key: "map_zoom", label: "Default zoom", type: "number", placeholder: "14",
+        hint: "How far the map zooms in when it fits everyone: 1 (world) to 20. Empty: Home Assistant's default." },
+      { key: "map_theme", label: "Map look", type: "select", options: ["", "light", "dark"],
+        optionLabels: { "": "Follows the theme", light: "Light map", dark: "Dark map" } },
+      ICON, TITLE_NAME] },
   // CO detector (community card, card request 124): a sensor with device_class carbon_monoxide (Matter's CO concentration
   // in ppm). Tile: the reading, the symbol in the color of its level (green, from 30 ppm yellow, from 50 orange, from 100
   // red); popup: the reading on a dial with the levels, Verlauf 24 h / 7 days, what to do, battery, self-test and alarm of
@@ -458,6 +483,27 @@ window.CASORA_TILE_TYPES = [
     community: { desc: "Carbon monoxide in ppm on the tile, the symbol in the color of its level: green, from 30 ppm yellow, from 50 orange, from 100 red. The popup shows the value in a ring with the four levels, the history of 24 hours and 7 days, what to do when it rises and when it was last raised, plus battery, self-test and alarm of the detector. For every CO sensor, e.g. Matter smoke and CO alarms.",
       darkShots: true },
     fields: [ICON, TITLE_NAME] },
+  // Heat pump (issue 132): a climate with program, hot water and compressor – thermostat tile underneath, own popup
+  // (44-waermepumpe.js). Everything but the climate is optional; empty fields are found on the climate's device.
+  { id: "casora_heat_pump", like: "thermostat", label: "Heat pump", template: "casora_heat_pump", domains: ["climate"],
+    icon: "heat_pump", color: "var(--casora-color-orange, #FF9F0A)", entityLabel: "Heating (climate)", entityPlaceholder: "The heat pump's climate entity",
+    fields: [
+      { key: "temp_sensor", label: "Temperature sensor", domains: ["sensor"], classes: ["temperature"], placeholder: "None",
+        hint: "Shown on the dial when the heating reports no temperature of its own." },
+      { key: "water_heater_entity", label: "Hot water", domains: ["water_heater"], find: { heatpump: "water" }, group: "Hot water" },
+      { key: "charge_button", label: "One-time charge", domains: ["button"], find: { heatpump: "charge" }, group: "Hot water" },
+      { key: "compressor_entity", label: "Compressor", domains: ["binary_sensor"], find: { heatpump: "compressor" }, group: "Status" },
+      { key: "pump_entity", label: "Heating circuit pump", domains: ["binary_sensor"], find: { heatpump: "pump" }, group: "Status" },
+      { key: "circulation_entity", label: "Hot water circulation pump", domains: ["binary_sensor"], find: { heatpump: "circulation" }, group: "Status" },
+      { key: "frost_entity", label: "Frost protection", domains: ["binary_sensor"], find: { heatpump: "frost" }, group: "Status" },
+      { key: "outdoor_entity", label: "Outdoor temperature", domains: ["sensor"], classes: ["temperature"], find: { heatpump: "outdoor" }, group: "Values" },
+      { key: "supply_entity", label: "Supply temperature", domains: ["sensor"], classes: ["temperature"], find: { heatpump: "supply" }, group: "Values" },
+      { key: "return_entity", label: "Return temperature", domains: ["sensor"], classes: ["temperature"], find: { heatpump: "return" }, group: "Values" },
+      // Shown only when chosen (feedback on the first beta: mostly fixed figures, not for the popup's first page).
+      { key: "cop_entity", label: "Coefficient of performance", domains: ["sensor"], placeholder: "None", group: "Values" },
+      { key: "power_entity", label: "Compressor power", domains: ["sensor"], classes: ["power"], placeholder: "None", group: "Values" },
+      TITLE_NAME,
+    ] },
   // Velair (community card, issue #32): a climate Velair (HACS, domain velair) plans. Tile = the thermostat tile;
   // the popup adds Velair's schedule (today, week, on/off, editing a day) from Velair's WebSocket API and services
   // (scripts/local/31-velair.js, casoraVelairFind in 00-finder.js). Only offered when an entity has the platform velair.
@@ -470,6 +516,9 @@ window.CASORA_TILE_TYPES = [
     fields: [
       { key: "temp_sensor", label: "Temperature sensor", domains: ["sensor"], classes: ["temperature"] },
       { key: "show_toggle", label: "Toggle button", type: "bool", boolDefault: true },
+      // As on the thermostat tile (issue 170): casora_velair is casora_thermostat, which draws the line.
+      { key: "sparkline", label: "Trend on tile", type: "bool", advanced: true, tileLevel: true,
+        hint: "A small line of the room temperature over the last 24 hours." },
       TITLE_NAME] },
   // Chart (community card, card request #50): any numeric sensor with a state class (CPU load of System Monitor,
   // temperature, power, energy). Tile: value with unit and a 24 h sparkline; popup: Casora's own chart over
@@ -689,7 +738,8 @@ window.CASORA_EXTRA_ICONS = Object.fromEntries([
   "shield_alarm", "shield_bypass", "shield_vacation", "calendar", "calendar-day", "window-open",
   "window-closed", "heating_coil", "wind", "rooms", "soccer", "pulse", "lawn-mower", "coffee-maker", "paw",
   "coffee-espresso", "coffee-doppio", "coffee-cup", "coffee-cappuccino", "coffee-latte", "coffee-tall", "coffee-water",
-  "coffee-milk", "coffee-tea", "chart", "velair", "list", "tasks", "grid", "cart", "universal", "kettle", "co",
+  "coffee-milk", "coffee-tea", "chart", "velair", "list", "tasks", "grid", "cart", "universal", "kettle", "co", "heat_pump",
+  "coffee-milk", "coffee-tea", "chart", "velair", "list", "tasks", "grid", "cart", "universal", "kettle", "co", "map",
 ].map((n) => [n, "/casora_assets/icons/" + n + ".svg"]));
 
 // Preview: show conditional cards (type: conditional) as the dashboard does –
@@ -1049,6 +1099,11 @@ window.CASORA_EXTRA_ICONS = Object.fromEntries([
       if (f.find.dish) {
         const LF = window.casoraLaundryFind;
         return (LF && LF.dish && LF.dish.field(hass, tile.entity, f.find.dish)) || null;
+      }
+      // Heat pump (issue 132): on the climate's device, by translation_key, else the entity's own words.
+      if (f.find.heatpump) {
+        const HF = window.casoraHeatPumpFind;
+        return (HF && HF.field(hass, tile.entity, f.find.heatpump)) || null;
       }
       // Fridge: the shared fridge finder (Liebherr, Home Connect, generic) and its field.
       if (f.find.fridge) {

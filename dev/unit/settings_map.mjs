@@ -16,7 +16,7 @@ const win = {};
 const doc = { createElement: () => ({ style: {}, classList: { add() {}, toggle() {}, contains() { return false; } }, setAttribute() {}, appendChild() {} }), getElementById: () => null };
 new Function('window', 'document', 'customElements', 'localStorage', src)(win, doc, { whenDefined: () => ({ then() {} }), get: () => null }, { getItem: () => null });
 const NEU = win.casoraSettingsMap && win.casoraSettingsMap.tiles;
-assert.ok(Array.isArray(NEU) && NEU.length === 8, 'eight tiles');
+assert.ok(Array.isArray(NEU) && NEU.length === 9, 'nine tiles');
 
 // The previous settings (26.11.9): pages, their personal sections, the dashboard sections the topics linked, the topic ids.
 const pageIds = ['design', 'home', 'calendar', 'alerts', 'dashboards', 'ai', 'outdoor', 'vent', 'live', 'fuel'];
@@ -99,7 +99,7 @@ const texts = new Set(['Open updates', 'Advanced', 'Search: e.g. clock, waste, p
   'The dashboard could not be saved. Your changes are still here.',
   'What do you want to set up? Pick a topic or search for a word.']);
 NEU.forEach((tl) => { texts.add(tl.label); texts.add(tl.sub); tl.blocks.forEach((b) => { texts.add(b.title); texts.add(b.plain); }); });
-const langs = ['de', 'es', 'fr', 'it', 'nl', 'pl', 'pt'];
+const langs = ['de', 'es', 'fr', 'it', 'nl', 'pl', 'pt', 'nb'];
 langs.forEach((l) => {
   const tab = l === 'de' ? de : JSON.parse(read('translations/panel/' + l + '.json')).exact;
   texts.forEach((s) => assert.ok(tab[s], l + ' missing: ' + s));
