@@ -3075,7 +3075,7 @@
     "Landscapes": "Landskap",
     "Photos": "Bilder",
     "Word clock": "Ordklokke",
-    "Sky follows the sun and the weather. Landscapes are drawn, nothing is loaded. Photos shows this dashboard's room photos.": "Himmel følger solen og været. Landskapene er tegnet, ingenting lastes. Bilder viser rombildene til dette dashbordet.",
+    "Sky follows the sun and the weather. Landscapes are drawn, nothing is loaded. Photos shows this dashboard's room photos. Live loads a new photo every 15 minutes, only when you choose it.": "Himmel følger solen og været. Landskapene er tegnet, ingenting lastes. Bilder viser rombildene til dette dashbordet. Live henter et nytt bilde hvert 15. minutt, bare når du velger det.",
     "The preview appears once the dashboard's scripts have loaded.": "Forhåndsvisningen vises når dashbordets skript er lastet.",
     "Day line": "Dagslinje",
     "Week": "Uke",

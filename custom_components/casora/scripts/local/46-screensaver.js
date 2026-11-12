@@ -30,7 +30,7 @@
     { id: 'himmel', label: 'Sky' }, { id: 'land', label: 'Landscapes' }, { id: 'fotos', label: 'Photos' },
     { id: 'wort', label: 'Word clock' }, { id: 'wetter', label: 'Weather' }, { id: 'linie', label: 'Day line' },
     { id: 'woche', label: 'Week' }, { id: 'musik', label: 'Music' }, { id: 'energie', label: 'Energy flow' },
-    { id: 'ruhe', label: 'House at rest' },
+    { id: 'ruhe', label: 'House at rest' }, { id: 'live', label: 'Live' },
   ];
 
   // ── The time as people say it ────────────────────────────────────────────
@@ -554,6 +554,12 @@
       var r = rooms[Math.floor(+ctx.now / 120000) % rooms.length];
       return '<div class="cs-photo" style="background-image:url(&quot;' + esc(r.url) + '&quot;)"></div><div class="cs-in">' + bar(ctx, r.name, '') + '</div>';
     },
+    // A new photo every 15 minutes. Only when this one is chosen: the mix never asks for it.
+    live: function (ctx) {
+      var n = Math.floor(+ctx.now / 900000);
+      var url = 'https://picsum.photos/seed/casora-wall-' + n + '/1920/1080';
+      return '<div class="cs-photo" style="background-image:url(&quot;' + esc(url) + '&quot;)"></div><div class="cs-in">' + bar(ctx, T('Live'), '') + '</div>';
+    },
     wort: function (ctx) {
       var wx = ctx.wx, lines = S.words(langOf(), ctx.now.getHours(), ctx.now.getMinutes());
       return '<div class="cs-in"><div class="cs-words" data-no-i18n>' + lines.map(function (l) { return '<span' + (l.acc ? ' class="cs-acc"' : '') + '>' + esc(l.t) + '</span>'; }).join('') + '</div>'
@@ -771,8 +777,9 @@
   };
   // „mix“ shows one after the other, five minutes each.
   S.kindAt = function (kind, now) {
-    var ids = S.KINDS.map(function (k) { return k.id; });
+    var ids = S.KINDS.map(function (k) { return k.id; }).filter(function (id) { return id !== 'live'; });
     if (kind === 'mix') return ids[Math.floor(+now / 300000) % ids.length];
+    if (kind === 'live') return 'live';
     return ids.indexOf(kind) === -1 ? ids[0] : kind;
   };
   S.html = function (kind, ctx) {
@@ -830,8 +837,6 @@
   S.minutes = function (v) { var n = parseFloat(v); return isFinite(n) && n > 0 ? Math.min(n, 240) : 0; };
   // ── On the dashboard ─────────────────────────────────────────────────────
   if (!window.document || window.document.nodeType !== 9 || S._booted) return;
-  // The fork's screensaver is the one on the dashboard. This one stays loaded for its drawings.
-  if (window._casoraScreensaver) return;
   S._booted = true;
   var FORCE = /[?&]casora_saver=1/.test(location.search), OFF = /[?&]casora_saver=0/.test(location.search);
   // The tablet navbar's own test, as „Return to Home when idle“ uses it.

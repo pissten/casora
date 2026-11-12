@@ -3075,7 +3075,7 @@
     "Landscapes": "Landschaften",
     "Photos": "Fotos",
     "Word clock": "Wortuhr",
-    "Sky follows the sun and the weather. Landscapes are drawn, nothing is loaded. Photos shows this dashboard's room photos.": "Himmel folgt der Sonne und dem Wetter. Landschaften sind gezeichnet, es wird nichts geladen. Fotos zeigt die Raumfotos dieses Dashboards.",
+    "Sky follows the sun and the weather. Landscapes are drawn, nothing is loaded. Photos shows this dashboard's room photos. Live loads a new photo every 15 minutes, only when you choose it.": "Himmel folgt der Sonne und dem Wetter. Landschaften sind gezeichnet, es wird nichts geladen. Fotos zeigt die Raumfotos dieses Dashboards. Live lädt alle 15 Minuten ein neues Foto, nur wenn du das wählst.",
     "The preview appears once the dashboard's scripts have loaded.": "Die Vorschau erscheint, sobald die Skripte des Dashboards geladen sind.",
     "Day line": "Tageslinie",
     "Week": "Woche",

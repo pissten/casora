@@ -3075,7 +3075,7 @@
     "Landscapes": "Paysages",
     "Photos": "Photos",
     "Word clock": "Horloge en mots",
-    "Sky follows the sun and the weather. Landscapes are drawn, nothing is loaded. Photos shows this dashboard's room photos.": "Ciel suit le soleil et la météo. Les paysages sont dessinés, rien n'est chargé. Photos montre les photos des pièces de ce tableau de bord.",
+    "Sky follows the sun and the weather. Landscapes are drawn, nothing is loaded. Photos shows this dashboard's room photos. Live loads a new photo every 15 minutes, only when you choose it.": "Ciel suit le soleil et la météo. Les paysages sont dessinés, rien n'est chargé. Photos montre les photos des pièces de ce tableau de bord. Live charge une nouvelle photo toutes les 15 minutes, seulement si tu le choisis.",
     "The preview appears once the dashboard's scripts have loaded.": "L'aperçu apparaît dès que les scripts du tableau de bord sont chargés.",
     "Day line": "Fil de la journée",
     "Week": "Semaine",

@@ -252,7 +252,6 @@ const MODULES = [
   '41-display-diag',
   '42-co',
   '43-aufgaben',
-  '43-screensaver',
   '44-tile-glass',
   '44-waermepumpe',
   '44-landkarte',

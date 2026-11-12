@@ -82,7 +82,7 @@
       blocks: [
         { k: "saver", sec: "General", sub: "chrome", keys: ["casora_screensaver", "casora_screensaver_kind", "casora_screensaver_photos"], saver: true,
           title: "Screensaver", plain: "Pick a screensaver and after how long it starts. The picture shows what it looks like.",
-          kw: "bildschirmschoner screensaver wandtablet tablet uhr wortuhr himmel landschaft fotos leerlauf idle ruhe" },
+          kw: "bildschirmschoner screensaver wandtablet tablet uhr wortuhr himmel landschaft fotos live leerlauf idle ruhe" },
       ] },
     { id: "phone", label: "Phone", icon: "iphone", tone: "set-live",
       sub: "The dashboard on the phone, and progress on the lock screen.",

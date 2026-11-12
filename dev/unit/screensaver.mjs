@@ -154,7 +154,11 @@ win.casoraEnergyHouse = () => ({ solar: ['sensor.pv'], grid: ['sensor.grid'], ba
 const he = { states: { 'sensor.pv': { state: '2.5', attributes: { unit_of_measurement: 'kW' } }, 'sensor.grid': { state: '-700', attributes: { unit_of_measurement: 'W' } } } };
 assert.deepEqual(JSON.parse(JSON.stringify(S.energy(he))), { solar: 2500, grid: -700, battery: null, soc: null, hasSolar: true, hasBattery: false, house: 1800 });
 delete win.casoraEnergyHouse;
-assert.equal(S.KINDS.length, 10, 'ten screensavers');
+assert.equal(S.KINDS.length, 11, 'eleven screensavers');
+assert.equal(S.KINDS[10].id, 'live');
+for (let i = 0; i < 12; i++) assert.notEqual(S.kindAt('mix', new Date(i * 300000)), 'live', 'the mix does not load a photo from outside');
+h = S.html('live', ctx());
+assert.ok(/data-kind="live"/.test(h) && /picsum\.photos\/seed\/casora-wall-/.test(h), 'live: a new photo every 15 minutes');
 // A preview shows an example where the house has nothing; what the house has stays.
 const bare = S.sample(ctx({ wx: null, hourly: [], daily: [], events: [], bins: [], media: null, energy: null, bell: [], people: [] }));
 for (const k of ['wetter', 'linie', 'woche', 'musik', 'energie']) assert.ok(new RegExp('data-kind="' + k + '"').test(S.html(k, bare)), 'example for ' + k);

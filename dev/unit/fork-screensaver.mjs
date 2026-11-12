@@ -45,10 +45,9 @@ const rows = S.upcoming([
 ], now, 6);
 assert.deepEqual(rows.map((r) => r.summary), ['Soon', 'Tomorrow']);
 
-assert.ok(read('custom_components/casora/scripts/casora-local.js').includes("'43-screensaver'"), 'module in MODULES');
-assert.ok(read('custom_components/casora/panel/casora-panel.js').includes('casora_screensaver'), 'studio setting');
+assert.ok(!read('custom_components/casora/scripts/casora-local.js').includes("'43-screensaver'"), 'the old screensaver is not loaded');
+assert.ok(read('custom_components/casora/panel/casora-panel.js').includes('live: "Live"'), 'live is one of the screensavers');
 assert.ok(!/weather\.[a-z0-9_]+/.test(read('custom_components/casora/scripts/local/43-screensaver.js')), 'no weather entity id');
-assert.ok(read('custom_components/casora/panel/casora-panel.js').includes('Live wallpapers'), 'live or local is a setting');
 assert.ok(!/unsplash\.com/.test(read('custom_components/casora/scripts/local/43-screensaver.js')), 'no second photo source');
 assert.equal(S.wallQuery, '(hover: none) and (pointer: coarse) and (min-width: 600px)');
 assert.equal(S.deskQuery, '(hover: hover), (pointer: fine)');
