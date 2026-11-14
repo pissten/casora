@@ -1,5 +1,7 @@
 {
   "exact": {
+    "Nur ansehen": "Solo visualizzazione",
+    "Nur ansehen – hier wird nichts geschaltet": "Solo visualizzazione – qui non si aziona nulla",
     "Alle Änderungen": "Tutte le modifiche",
     "Nebel": "Nebbia",
     "Tankinhalt": "Carburante nel serbatoio",
@@ -2951,7 +2953,21 @@
     "ins Netz": "in rete",
     "Akku gibt ab": "La batteria si scarica",
     "Arzttermin": "Medico",
-    "Lamellenstellung": "Lamelle"
+    "Lamellenstellung": "Lamelle",
+    "Breaking": "Cambiamento importante",
+    "● KI-Fehler": "● Errore IA",
+    "Tippen für das Livebild": "Tocca per l’immagine dal vivo",
+    "Bildschirmschoner starten": "Avvia salvaschermo",
+    "Zusammen abspielen": "Riproduci insieme",
+    "Person erkannt": "Persona rilevata",
+    "Heute keine Bewegung": "Nessun movimento oggi",
+    "Heute · 1 Ereignis": "Oggi · 1 evento",
+    "Ereignisse": "eventi",
+    "Verbrauch je Gerät": "Consumo per dispositivo",
+    "Sonstige": "Altri",
+    "pro Stunde": "all'ora",
+    "pro Tag": "al giorno",
+    "Nicht erfasst": "Non misurato"
   },
   "patterns": [
     [
@@ -4307,6 +4323,34 @@
       "Nuovo: {1} · IA: non verificato"
     ],
     [
+      "^Neu: (.+) · KI: Unkritisch$",
+      "Nuovo: {1} · IA: non critico"
+    ],
+    [
+      "^Neu: (.+) · KI: Handeln$",
+      "Nuovo: {1} · IA: agire"
+    ],
+    [
+      "^Neu: (.+) · KI: Breaking$",
+      "Nuovo: {1} · IA: cambiamento importante"
+    ],
+    [
+      "^Neu: (.+) · KI: Breaking Change$",
+      "Nuovo: {1} · IA: cambiamento importante"
+    ],
+    [
+      "^Neu: (.+) · KI: Braucht Aufmerksamkeit$",
+      "Nuovo: {1} · IA: da controllare"
+    ],
+    [
+      "^Neu: (.+) · KI: KI-Fehler$",
+      "Nuovo: {1} · IA: errore"
+    ],
+    [
+      "^Neu: (.+) · KI: (.+)$",
+      "Nuovo: {1} · IA: {2}"
+    ],
+    [
       "^Neu: (.+) · KI: Unklar$",
       "Nuovo: {1} · IA: incerto"
     ],
@@ -5285,6 +5329,34 @@
     [
       "^(.+) aktiv$",
       "{1} attivo"
+    ],
+    [
+      "^(.+) braucht Aufmerksamkeit$",
+      "{1} richiede attenzione"
+    ],
+    [
+      "^KI: 1 Breaking Change$",
+      "IA: 1 cambiamento importante"
+    ],
+    [
+      "^KI: (\\d+) Breaking Changes$",
+      "IA: {1} cambiamenti importanti"
+    ],
+    [
+      "^KI: (\\d+) von (\\d+) geprüft$",
+      "IA: {1} di {2} verificati"
+    ],
+    [
+      "^Heute · (\\d+) Ereignisse$",
+      "Oggi · {1} eventi"
+    ],
+    [
+      "^Zusammen abspielen · (\\d+) Lautsprecher$",
+      "Riproduci insieme · {1} altoparlanti"
+    ],
+    [
+      "^Geräte · (\\d+)$",
+      "Dispositivi · {1}"
     ]
   ]
 }

@@ -151,6 +151,7 @@ def build_classes(hass: HomeAssistant) -> dict[str, type]:
     from homeassistant.components.device_tracker import SourceType, TrackerEntity
     from homeassistant.components.event import EventEntity
     from homeassistant.components.sensor import SensorEntity
+    from homeassistant.components.text import TextEntity
     from homeassistant.components.time import TimeEntity
     from homeassistant.components.update import UpdateEntity
 
@@ -388,6 +389,32 @@ def build_classes(hass: HomeAssistant) -> dict[str, type]:
 
         async def async_select_source(self, source: str) -> None:
             self.put(None, source=source)
+
+        # Grouping (medien.py speakers): group_members as the store keeps it, leader first, on every member.
+        @property
+        def group_members(self):
+            return self.a.get("group_members")
+
+        def _regroup(self, members: list) -> None:
+            for eid in members:
+                obj = self.mock.objs.get(eid)
+                if obj is not None:
+                    obj.put(None, group_members=list(members) if len(members) > 1 else [eid])
+
+        async def async_join_players(self, group_members: list) -> None:
+            members = [self.entity_id] + [e for e in (self.group_members or []) if e != self.entity_id]
+            members += [e for e in group_members if e not in members]
+            for eid in group_members:  # a joining player leaves its old group
+                obj = self.mock.objs.get(eid)
+                old = [e for e in ((obj.group_members if obj else None) or []) if e != eid and e not in members]
+                if old:
+                    self._regroup(old)
+            self._regroup(members)
+
+        async def async_unjoin_player(self) -> None:
+            rest = [e for e in (self.group_members or []) if e != self.entity_id]
+            self._regroup(rest)
+            self.put(None, group_members=[self.entity_id])
 
     class MVacuum(MockEntity, StateVacuumEntity):
         async def async_start(self) -> None:
@@ -767,7 +794,10 @@ def build_classes(hass: HomeAssistant) -> dict[str, type]:
     # Display-only platforms: the real base classes bring HA's defaults (category, device class),
     # state and attributes still come from the store (MockEntity first in the MRO).
     class MSensor(MockEntity, SensorEntity):
-        pass
+        # Fixture's display_precision as the integration's suggested precision; HA keeps it in the registry.
+        @property
+        def suggested_display_precision(self) -> int | None:
+            return self.mock.entities[self._key].get("display_precision")
 
     class MBinarySensor(MockEntity, BinarySensorEntity):
         @property
@@ -785,6 +815,15 @@ def build_classes(hass: HomeAssistant) -> dict[str, type]:
 
     class MDate(MockEntity, DateEntity):
         pass
+
+    # Free text (Tumble's note on a cycle): the store's state is the value, setting it writes it back.
+    class MText(MockEntity, TextEntity):
+        @property
+        def native_value(self) -> str | None:
+            return None if self.s in ("unknown", "unavailable") else self.s
+
+        async def async_set_value(self, value: str) -> None:
+            self.put(value)
 
     # Every tracker of the test house is TrackerEntity (category and attributes are the same for scanners);
     # source_type from the store, like the GPS tracker of Tractive.
@@ -827,14 +866,14 @@ def build_classes(hass: HomeAssistant) -> dict[str, type]:
         "update": MUpdate,
         # display only, no services
         "sensor": MSensor, "binary_sensor": MBinarySensor, "device_tracker": MTracker,
-        "event": MEvent, "time": MTime, "date": MDate,
+        "event": MEvent, "time": MTime, "date": MDate, "text": MText,
     }
 
 
 PLATFORMS = [
     "light", "switch", "siren", "remote", "fan", "cover", "lock", "climate", "media_player",
     "vacuum", "lawn_mower", "humidifier", "button", "select", "number", "alarm_control_panel", "scene", "camera", "todo", "image",
-    "calendar", "weather", "sensor", "binary_sensor", "device_tracker", "update", "event", "time", "date",
+    "calendar", "weather", "sensor", "binary_sensor", "device_tracker", "update", "event", "time", "date", "text",
 ]
 
 

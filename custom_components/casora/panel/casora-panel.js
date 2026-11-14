@@ -63,7 +63,8 @@ function clock12(hass) {
       { hour: "numeric" }).resolvedOptions().hour12 === true;
   } catch (e) { return false; }
 }
-const LOCALE_12H = clock12(null);
+// A bool field's default: a plain value, or a function of hass (the 12-hour clock needs the HA user).
+const fieldDefault = (f, hass) => (typeof f.boolDefault === "function" ? !!f.boolDefault(hass) : f.boolDefault);
 
 const REQUIREMENTS = [
   { kind: "integration", id: "uix", label: "UI eXtension", required: true,
@@ -2543,6 +2544,13 @@ const SECTIONS = [
         optionLabels: { "": "Off", "1": "After 1 minute", "2": "After 2 minutes",
           "5": "After 5 minutes", "10": "After 10 minutes" },
         hint: "Tablets only. Brings one back to Home after a while without use." },
+      // Issue 114: swipe left/right on Home or an open room for the next/previous page (scripts/local/40-swipe-rooms.js),
+      // on every touch device (owner, 03.11.2026: one setting). Under Screen, not Phone (issue 186: read as phone only).
+      // The tablet reads swipe_rooms from the room views (casora-core.js, window._casoraSwipeRooms), the phone's bottom
+      // bar card gets it on save (markPhoneManaged). Never with a mouse (owner, 12.11.2026).
+      { key: "swipe_rooms", sub: "chrome", label: "Swipe between rooms", type: "bool",
+        boolDefault: false, auto: true, scope: "dashboard",
+        hint: "On a phone or tablet, swipe left or right on Home or an open room to get to the next or previous room, in the order of the room menu." },
       // Screensaver for wall tablets (scripts/local/46-screensaver.js). Off until a dashboard turns it on; the kind
       // "" shows one after the other. Live is the eleventh and is never part of that mix.
       { key: "casora_screensaver", sub: "chrome", label: "Start the screensaver", type: "select", auto: true, scope: "dashboard",
@@ -2551,12 +2559,21 @@ const SECTIONS = [
           "10": "After 10 minutes", "15": "After 15 minutes", "30": "After 30 minutes" },
         hint: "Tablets only. After this time without a touch the screensaver covers the dashboard. A touch brings it back." },
       { key: "casora_screensaver_kind", sub: "chrome", label: "Screensaver", type: "select", auto: true, scope: "dashboard",
-        options: ["", "himmel", "land", "fotos", "wort", "wetter", "linie", "woche", "musik", "energie", "ruhe", "live"],
+        options: ["", "himmel", "land", "fotos", "wort", "wetter", "linie", "woche", "musik", "energie", "ruhe", "kameras", "kalender", "live"],
         optionLabels: { "": "One after the other", himmel: "Sky", land: "Landscapes", fotos: "Photos", wort: "Word clock", wetter: "Weather",
-          linie: "Day line", woche: "Week", musik: "Music", energie: "Energy flow", ruhe: "House at rest", live: "Live" },
+          linie: "Day line", woche: "Week", musik: "Music", energie: "Energy flow", ruhe: "House at rest", kameras: "Cameras", kalender: "Calendar", live: "Live" },
         when: (v) => v.casora_screensaver != null && v.casora_screensaver !== "",
         hint: "Sky follows the sun and the weather. Landscapes are drawn, nothing is loaded. Photos shows this dashboard's room photos. Live loads a new photo every 15 minutes, only when you choose it." },
       { key: "casora_screensaver_photos", sub: "chrome", label: "Screensaver photos", type: "text", auto: true, scope: "dashboard", when: () => false },
+      // Which kinds take turns (none = all), which cameras and calendars the screensavers show (none = all): picked on the
+      // Screensaver page under its preview like the photos, never drawn as a field.
+      { key: "casora_screensaver_mix", sub: "chrome", label: "Screensavers that alternate", type: "text", auto: true, scope: "dashboard", when: () => false },
+      { key: "casora_screensaver_cameras", sub: "chrome", label: "Screensaver cameras", type: "text", auto: true, scope: "dashboard", when: () => false },
+      { key: "casora_screensaver_calendars", sub: "chrome", label: "Screensaver calendars", type: "text", auto: true, scope: "dashboard", when: () => false },
+      // While music plays, the screensavers with a coloured ground take a soft wash in the cover's colour.
+      { key: "casora_screensaver_tint", sub: "chrome", label: "Cover colour", type: "bool", boolDefault: false, auto: true, scope: "dashboard",
+        when: (v) => v.casora_screensaver != null && v.casora_screensaver !== "",
+        hint: "While music plays, the calm screensavers take on a soft tint in the main colour of the cover." },
       // Halten auf Kacheln (22-halten.js): leer = Schnellmenü. casora-core.js setzt daraus window._casoraHoldMode,
       // ans Handy geht es über casora_mobile_bg. Je Kachel überstimmbar (variables.hold_mode, Kachel-Inspektor).
       { key: "hold_mode", sub: "hold", label: "Hold on tiles", type: "select", auto: true, scope: "dashboard",
@@ -2613,12 +2630,6 @@ const SECTIONS = [
       { key: "show_search", sub: "phone", label: "Show search", type: "bool",
         boolDefault: true, auto: true, scope: "dashboard",
         hint: "Pull down at the top of the phone's Home to show a search field: rooms, devices and scenes. On a computer, Cmd+K or Ctrl+K opens the same search." },
-      // Issue 114: swipe left/right on Home or an open room for the next/previous page (scripts/local/40-swipe-rooms.js),
-      // on every touch device (owner, 03.11.2026: one setting). The tablet reads swipe_rooms from the room views
-      // (casora-core.js, window._casoraSwipeRooms), the phone's bottom bar card gets it on save (markPhoneManaged).
-      { key: "swipe_rooms", sub: "phone", label: "Swipe between rooms", type: "bool",
-        boolDefault: false, auto: true, scope: "dashboard",
-        hint: "On a phone or tablet, swipe left or right on Home or an open room to get to the next or previous room, in the order of the room menu." },
       { key: "room_groups", sub: "phone", label: "Group rooms by category on the phone", type: "bool",
         boolDefault: false, auto: true, scope: "dashboard",
         hint: "Like Apple's Home app: Light, Climate, Security … each with a small heading. Off shows all devices under one heading." },
@@ -2662,9 +2673,12 @@ const SECTIONS = [
       // until 26.10 it stood under the 12-hour switch at the bottom).
       { key: "show_time", label: "Show clock", type: "bool", boolDefault: true, always: true, ord: -1,
         hint: "For desktop and tablet – the phone layout has no clock." },
+      // #179: weekday and date in small type under the time.
+      { key: "show_date", label: "Show date", type: "bool", boolDefault: false, always: true,
+        hint: "Weekday and date in small type under the time." },
       // Always visible: without an entry the clock takes sensor.time, and that should show.
       { ...E("time_entity", "Time sensor", ["sensor"]), always: true, placeholder: "Automatic" },
-      { key: "use_12h", label: "12-hour clock", type: "bool", boolDefault: LOCALE_12H, always: true },
+      { key: "use_12h", label: "12-hour clock", type: "bool", boolDefault: clock12, always: true },
       { ...T("time_suffix", "Suffix"),
         auto: true, advanced: true, noAdd: true },
     ],
@@ -2697,6 +2711,9 @@ const SECTIONS = [
         always: true, ord: 5 },
       { key: "notify_people", sub: "house", glyph: "person", tone: "var(--casora-popup-ui-good, #30D158)", label: "People", type: "bool", boolDefault: true,
         always: true, ord: 6 },
+      // Hemma round #11c: one's own comings and goings stay out (person.user_id == the reader). Off = as before.
+      { key: "notification_hide_own", sub: "house", glyph: "person", tone: "var(--casora-color-sand, #9A8672)", label: "Hide my own arrivals and departures", type: "bool", boolDefault: false,
+        always: true, ord: 9.1, hint: "For people linked to a Home Assistant user: you see the others come and go, not yourself." },
       { key: "notify_vacuum", sub: "house", glyph: "vacuum-charge", tone: "var(--casora-color-teal, #00C3D0)", label: "Vacuum", type: "bool", boolDefault: true,
         always: true, ord: 7 },
       { key: "notify_appliances", sub: "house", glyph: "stove-fill", tone: "var(--casora-popup-ui-good, #30D158)", label: "Appliances", type: "bool", boolDefault: true,
@@ -2715,6 +2732,10 @@ const SECTIONS = [
       // #70: notifications from scripts and automations (persistent_notification.create), live from HA.
       { key: "notify_ha", sub: "system", glyph: "bell", tone: "var(--casora-color-teal, #00C3D0)", label: "Home Assistant notifications", type: "bool", boolDefault: true,
         always: true, ord: 12.1, hint: "What scripts and automations create with persistent_notification.create, and Home Assistant's own notices. Swiping one away in the bell dismisses it in Home Assistant too." },
+
+      // Hemma round #11d: one list of removed messages for everyone (notify_hidden.py). Off = per user as before.
+      { key: "notification_hidden_shared", sub: "system", glyph: "bell", tone: "var(--casora-color-sand, #9A8672)", label: "Removed for all users", type: "bool", boolDefault: false,
+        always: true, ord: 12.2, hint: "A message removed from the bell is gone for everyone. Off: only on your own devices." },
 
       { ...LIST("notification_appliances", "Appliances to watch",
         ["sensor", "binary_sensor", "switch", "vacuum"]),
@@ -10312,6 +10333,7 @@ class CasoraPanel extends HTMLElement {
           font-size:var(--nav); color:rgba(255,255,255,0.92); padding:0;
         }
         .mini-time { flex:0 0 auto; font-weight:530; }
+        .mini-date { display:block; margin-top:2px; font-size:0.6em; font-weight:600; opacity:0.6; line-height:1; }
         .mini-tabs { flex:1 1 auto; display:flex; gap:13px; justify-content:center; overflow:hidden; }
         /* Too many rooms for the bar: the tabs sit in their own strip that scrolls
            sideways (touch, trackpad, wheel) like the dashboard's nav, start-aligned so
@@ -19510,7 +19532,8 @@ class CasoraPanel extends HTMLElement {
         if (f.type === "bool") {
           // invert: the switch shows the opposite of the stored value.
           const flip = (v) => (f.invert && v !== undefined && v !== "" && v !== null ? !v : v);
-          row.appendChild(this._boolSwitch(flip(cur), f.invert ? !f.boolDefault : f.boolDefault, (v) => {
+          const def = fieldDefault(f, this._hass);
+          row.appendChild(this._boolSwitch(flip(cur), f.invert ? !def : def, (v) => {
             setVar(f.key, flip(v), f);
             filled(f);
           }, f.label));
@@ -27047,6 +27070,13 @@ class CasoraPanel extends HTMLElement {
     const extra = String(V.time_suffix || "").trim();
     q(".mini-time").textContent = hh + ":" + String(d.getMinutes()).padStart(2, "0")
       + suffix + (extra ? " " + extra : "");
+    // #179: the date under the time, as on the dashboard.
+    if (V.show_date === true) {
+      const dl = document.createElement("span");
+      dl.className = "mini-date";
+      dl.textContent = d.toLocaleDateString(this._hass?.locale?.language || "de", { weekday: "long", day: "numeric", month: "long" });
+      q(".mini-time").appendChild(dl);
+    }
     q(".mini-time").style.visibility = V.show_time === false ? "hidden" : "";
     const tabs = q(".mini-tabs");
     const strip = document.createElement("span");
@@ -30210,7 +30240,7 @@ function previewHasError(doc) {
 window.__casoraPanelInternals = {
   blankRoom, roomPhoto, slug, translit, expandConfig, expandAny, extractAny, retargetRoutes, mobileFromRooms,
   applyScenePick, confirmEntities, confirmNames, entityUsers, wrapCustomCard, hostCard, FINGERPRINT_KEY, fingerprintOf, refreshTemplates, templatePrint, TILE_TYPES, USER_TILE_TYPES,
-  findType, tileTypeAny, newTile, previewHasError, isPetTracker, petName, isStatSensor, isPlantEntity, listCategory, TILE_MAIN_FIND, tileMissingEntity, tileEntityGone, iconUrl, studioIcon, roomGlyph, roomIconSrc, titleCase, clone, FLOW_TINT, isMobileConfig, applyKiosk,
+  fieldDefault, findType, tileTypeAny, newTile, previewHasError, isPetTracker, petName, isStatSensor, isPlantEntity, listCategory, TILE_MAIN_FIND, tileMissingEntity, tileEntityGone, iconUrl, studioIcon, roomGlyph, roomIconSrc, titleCase, clone, FLOW_TINT, isMobileConfig, applyKiosk,
   applyMotion, markPhoneManaged, applyFirstRun, CASORA_THEMES, ensureCustomFontCss, sceneBadgeOn, dropNavScenes,
   parseCardText, cardToText,
   isDefaultHomeName, homeRoomWord, shotLang, isHomeRoom, roomLabel, storedRoomName, HOME_ROOM_NAME, markAutoHome, isDefaultHome, setHomeName, badgeOrderOf, BADGE_ORDER_IDS,

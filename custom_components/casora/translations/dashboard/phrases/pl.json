@@ -1,5 +1,7 @@
 {
   "exact": {
+    "Nur ansehen": "Tylko podgląd",
+    "Nur ansehen – hier wird nichts geschaltet": "Tylko podgląd – tutaj nic się nie przełącza",
     "Alle Änderungen": "Wszystkie zmiany",
     "Nebel": "Mgła",
     "Tankinhalt": "Paliwo w baku",
@@ -2951,7 +2953,21 @@
     "ins Netz": "do sieci",
     "Akku gibt ab": "Akumulator oddaje energię",
     "Arzttermin": "Lekarz",
-    "Lamellenstellung": "Lamele"
+    "Lamellenstellung": "Lamele",
+    "Breaking": "Istotna zmiana",
+    "● KI-Fehler": "● Błąd AI",
+    "Tippen für das Livebild": "Dotknij, aby zobaczyć obraz na żywo",
+    "Bildschirmschoner starten": "Uruchom wygaszacz ekranu",
+    "Zusammen abspielen": "Odtwarzaj razem",
+    "Person erkannt": "Wykryto osobę",
+    "Heute keine Bewegung": "Dziś bez ruchu",
+    "Heute · 1 Ereignis": "Dziś · 1 zdarzenie",
+    "Ereignisse": "zdarzenia",
+    "Verbrauch je Gerät": "Zużycie według urządzeń",
+    "Sonstige": "Pozostałe",
+    "pro Stunde": "na godzinę",
+    "pro Tag": "dziennie",
+    "Nicht erfasst": "Niezmierzone"
   },
   "patterns": [
     [
@@ -4307,6 +4323,34 @@
       "Nowe: {1} · AI: niesprawdzone"
     ],
     [
+      "^Neu: (.+) · KI: Unkritisch$",
+      "Nowe: {1} · AI: niekrytyczne"
+    ],
+    [
+      "^Neu: (.+) · KI: Handeln$",
+      "Nowe: {1} · AI: działaj"
+    ],
+    [
+      "^Neu: (.+) · KI: Breaking$",
+      "Nowe: {1} · AI: istotna zmiana"
+    ],
+    [
+      "^Neu: (.+) · KI: Breaking Change$",
+      "Nowe: {1} · AI: istotna zmiana"
+    ],
+    [
+      "^Neu: (.+) · KI: Braucht Aufmerksamkeit$",
+      "Nowe: {1} · AI: wymaga uwagi"
+    ],
+    [
+      "^Neu: (.+) · KI: KI-Fehler$",
+      "Nowe: {1} · AI: błąd"
+    ],
+    [
+      "^Neu: (.+) · KI: (.+)$",
+      "Nowe: {1} · AI: {2}"
+    ],
+    [
       "^Neu: (.+) · KI: Unklar$",
       "Nowe: {1} · AI: niejasne"
     ],
@@ -5285,6 +5329,34 @@
     [
       "^(.+) aktiv$",
       "{1} aktywny"
+    ],
+    [
+      "^(.+) braucht Aufmerksamkeit$",
+      "{1} wymaga uwagi"
+    ],
+    [
+      "^KI: 1 Breaking Change$",
+      "AI: 1 istotna zmiana"
+    ],
+    [
+      "^KI: (\\d+) Breaking Changes$",
+      "AI: istotne zmiany: {1}"
+    ],
+    [
+      "^KI: (\\d+) von (\\d+) geprüft$",
+      "AI: sprawdzono {1} z {2}"
+    ],
+    [
+      "^Heute · (\\d+) Ereignisse$",
+      "Dziś · zdarzenia: {1}"
+    ],
+    [
+      "^Zusammen abspielen · (\\d+) Lautsprecher$",
+      "Odtwarzaj razem · głośniki: {1}"
+    ],
+    [
+      "^Geräte · (\\d+)$",
+      "Urządzenia · {1}"
     ]
   ]
 }

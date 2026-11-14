@@ -1,5 +1,7 @@
 {
   "exact": {
+    "Nur ansehen": "Alleen bekijken",
+    "Nur ansehen – hier wird nichts geschaltet": "Alleen bekijken – hier wordt niets geschakeld",
     "Alle Änderungen": "Alle wijzigingen",
     "Nebel": "Mist",
     "Tankinhalt": "Tankinhoud",
@@ -2951,7 +2953,21 @@
     "ins Netz": "naar het net",
     "Akku gibt ab": "Accu ontlaadt",
     "Arzttermin": "Dokter",
-    "Lamellenstellung": "Lamellen"
+    "Lamellenstellung": "Lamellen",
+    "Breaking": "Breaking change",
+    "● KI-Fehler": "● AI-fout",
+    "Tippen für das Livebild": "Tik voor het livebeeld",
+    "Bildschirmschoner starten": "Schermbeveiliging starten",
+    "Zusammen abspielen": "Samen afspelen",
+    "Person erkannt": "Persoon gedetecteerd",
+    "Heute keine Bewegung": "Vandaag geen beweging",
+    "Heute · 1 Ereignis": "Vandaag · 1 gebeurtenis",
+    "Ereignisse": "gebeurtenissen",
+    "Verbrauch je Gerät": "Verbruik per apparaat",
+    "Sonstige": "Overige",
+    "pro Stunde": "per uur",
+    "pro Tag": "per dag",
+    "Nicht erfasst": "Niet gemeten"
   },
   "patterns": [
     [
@@ -4307,6 +4323,34 @@
       "Nieuw: {1} · AI: niet gecontroleerd"
     ],
     [
+      "^Neu: (.+) · KI: Unkritisch$",
+      "Nieuw: {1} · AI: onkritisch"
+    ],
+    [
+      "^Neu: (.+) · KI: Handeln$",
+      "Nieuw: {1} · AI: handelen"
+    ],
+    [
+      "^Neu: (.+) · KI: Breaking$",
+      "Nieuw: {1} · AI: breaking change"
+    ],
+    [
+      "^Neu: (.+) · KI: Breaking Change$",
+      "Nieuw: {1} · AI: breaking change"
+    ],
+    [
+      "^Neu: (.+) · KI: Braucht Aufmerksamkeit$",
+      "Nieuw: {1} · AI: heeft aandacht nodig"
+    ],
+    [
+      "^Neu: (.+) · KI: KI-Fehler$",
+      "Nieuw: {1} · AI: fout"
+    ],
+    [
+      "^Neu: (.+) · KI: (.+)$",
+      "Nieuw: {1} · AI: {2}"
+    ],
+    [
       "^Neu: (.+) · KI: Unklar$",
       "Nieuw: {1} · AI: onduidelijk"
     ],
@@ -5285,6 +5329,34 @@
     [
       "^(.+) aktiv$",
       "{1} actief"
+    ],
+    [
+      "^(.+) braucht Aufmerksamkeit$",
+      "{1} heeft aandacht nodig"
+    ],
+    [
+      "^KI: 1 Breaking Change$",
+      "AI: 1 breaking change"
+    ],
+    [
+      "^KI: (\\d+) Breaking Changes$",
+      "AI: {1} breaking changes"
+    ],
+    [
+      "^KI: (\\d+) von (\\d+) geprüft$",
+      "AI: {1} van {2} gecontroleerd"
+    ],
+    [
+      "^Heute · (\\d+) Ereignisse$",
+      "Vandaag · {1} gebeurtenissen"
+    ],
+    [
+      "^Zusammen abspielen · (\\d+) Lautsprecher$",
+      "Samen afspelen · {1} speakers"
+    ],
+    [
+      "^Geräte · (\\d+)$",
+      "Apparaten · {1}"
     ]
   ]
 }

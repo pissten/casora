@@ -39,6 +39,7 @@ def merge(fixture: dict, extra: dict, label: str = "Stresshaus aktiv") -> None:
     fixture.setdefault("_history_extra", {}).update(extra.get("_history", {}))
     # Days of long-term statistics per entity (default 30; e.g. 400 for the chart card's year range).
     fixture.setdefault("_stats_days", {}).update(extra.get("_stats_days", {}))
+    fixture.setdefault("_stats_events", {}).update(extra.get("_stats_events", {}))
     _LOGGER.warning("Casora Mock: %s (+%s Entitäten)", label, len(extra.get("entities", [])))
 
 
@@ -59,7 +60,7 @@ def vacuum_map(fixture: dict) -> None:
 def compose(fixture: dict, now: datetime, stress: dict | None = None, hacs: dict | None = None) -> dict:
     """Fixture plus the made-up devices, in the order async_setup_entry always used."""
     from . import (aquarium, befeuchter, co, coffee, dishwasher, ebike, energie, frigate, fussball, game_account, haustier,
-                   halten, hubs, klingel, fridge, kettle, live, maeher, oven, shopping, testlimousine, testserver, testwagen, velair, waesche, wetter)
+                   halten, hubs, klingel, fridge, medien, kettle, live, maeher, oven, shopping, testlimousine, testserver, testwagen, tumble, velair, waesche, wetter)
     if stress:
         merge(fixture, stress)
     # Demo house (dev/demo/demo_fixture.py sets "_demo"): without the German test devices (washers A/B with
@@ -68,6 +69,8 @@ def compose(fixture: dict, now: datetime, stress: dict | None = None, hacs: dict
     # Two neutral washers (WashData-like and Home-Connect-like), see waesche.py.
     if not demo:
         merge(fixture, waesche.extra(now), "Waschmaschinen A/B")
+    # A Tumble washer and dryer (plug-based, platform tumble), also in the demo house, see tumble.py.
+    merge(fixture, tumble.extra(now), "Tumble-Waschmaschine/Trockner")
     # A made-up team tracker sensor (football tile), see fussball.py.
     merge(fixture, fussball.extra(now), "Team-Tracker-Sensor")
     # Two made-up aquariums (HeliaLux- and Fluval/Chihiros-like lamp, dosing pump), see aquarium.py.
@@ -87,6 +90,10 @@ def compose(fixture: dict, now: datetime, stress: dict | None = None, hacs: dict
     merge(fixture, frigate.extra(now), "Frigate-Testhof")
     # A made-up Reolink doorbell with presses in the history (community card), see klingel.py.
     merge(fixture, klingel.extra(now), "Testklingel")
+    # A made-up TV with remote, groupable speakers and a garden camera with motion (media/camera popups), see medien.py.
+    merge(fixture, medien.extra(now, demo), "Testfernseher/Testlautsprecher/Testgarten")
+    from . import ring_probe
+    merge(fixture, ring_probe.extra(now), "Testring")
     # Made-up coffee machines (Home Connect core/local, De'Longhi BT, power curve, a named plug) and a grinder, see coffee.py.
     merge(fixture, coffee.extra(now), "Testbarista/Morgenbohne/Bohnenwerk/Kaffeeinsel/Espressobar")
     # A made-up pet with a Tractive-like tracker (community card #25), see haustier.py.
@@ -166,7 +173,7 @@ def snapshot(fixture: dict, skip: list[str] | tuple = ()) -> dict:
         # registry_platform: registered under another integration's name (Velair, velair.py), as in a real house.
         entities[eid] = {"entity_id": eid, "platform": e.get("registry_platform") or "casora_mock", "device_id": did if did in devices else None,
                          "area_id": area_id.get(e.get("area")), "name": e.get("name"), "icon": e.get("icon"),
-                         "translation_key": e.get("translation_key"), "hidden": False,
+                         "translation_key": e.get("translation_key"), "hidden": bool(e.get("hidden")),
                          "entity_category": e.get("entity_category") or DEFAULT_CATEGORY.get(domain)}
         states[eid] = {"entity_id": eid, "state": e["state"], "attributes": dict(e.get("attributes") or {})}
     return {"states": states, "entities": entities, "devices": devices, "areas": areas}

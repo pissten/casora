@@ -26,6 +26,7 @@ from homeassistant.util import dt as dt_util
 
 from .entity import PLATFORMS, build_classes
 from .haus import compose
+from .registry_rules import hidden_by_for, sensor_options_for
 
 DOMAIN = "casora_mock"
 _LOGGER = logging.getLogger(__name__)
@@ -181,6 +182,10 @@ class CasoraMock:
                 upd["icon"] = e["icon"]
             if e.get("name") and entry.name != e["name"]:
                 upd["name"] = e["name"]
+            # Fixture "hidden": true sets hidden_by INTEGRATION; a user's own hiding stays (registry_rules.py).
+            hidden_by = hidden_by_for(e, entry.hidden_by)
+            if hidden_by != entry.hidden_by:
+                upd["hidden_by"] = er.RegistryEntryHider(hidden_by) if hidden_by else None
             if upd:
                 try:
                     ents.async_update_entity(entry.entity_id, **upd)
@@ -190,6 +195,13 @@ class CasoraMock:
                     upd.pop("area_id", None)
                     if upd:
                         ents.async_update_entity(entry.entity_id, **upd)
+            # Another integration's sensor has no sensor object: its suggested precision goes into the registry.
+            # Our own sensors return it from MSensor.suggested_display_precision, and HA writes it.
+            if e.get("registry_platform") and domain == "sensor":
+                current = entry.options.get("sensor")
+                wanted = sensor_options_for(e, current)
+                if wanted != (current or None):
+                    ents.async_update_entity_options(entry.entity_id, "sensor", wanted)
 
     # ── Zustände ────────────────────────────────────────────────────────
     def apply_fixture(self) -> None:
@@ -273,7 +285,11 @@ class CasoraMock:
 
     def on_button(self, eid: str) -> None:
         for target, state in self.fixture.get("_buttons", {}).get(eid, {}).items():
-            self.set(target, state)
+            # A dict sets attributes too: {"state": …, "attrs": {…}} (Tumble's care sensors: due → false).
+            if isinstance(state, dict):
+                self.set(target, state.get("state"), **(state.get("attrs") or {}))
+            else:
+                self.set(target, state)
         p = self.printer
         if not p:
             return
@@ -506,9 +522,36 @@ class CasoraMock:
                 "source": "recorder", "statistic_id": eid, "unit_class": unit_class(unit), "unit_of_measurement": unit,
             }, rows)
             n += 1
+        # Counters that rise in steps (an appliance's cycles and their energy, "_stats_events": eid → [[hours ago,
+        # amount], …]): sums with those steps instead of the house-sized energy curve below.
+        events = self.fixture.get("_stats_events") or {}
+        for eid, steps in events.items():
+            st = self.store.get(eid)
+            if not st:
+                continue
+            unit = st[1].get("unit_of_measurement")
+            at = {end - int(ago) * 3600: float(v) for ago, v in steps}
+            hours = list(hours_of(eid))
+            use = [at.get(h, 0.0) for h in hours]
+            total = sum(use)
+            try:
+                start_v = max(0.0, float(st[0]) - total)
+            except (TypeError, ValueError):
+                start_v = 0.0
+            acc, rows = 0.0, []
+            for h, u in zip(hours, use):
+                acc += u
+                rows.append({"start": utc(h), "state": start_v + acc, "sum": acc - total})
+            async_import_statistics(self.hass, {
+                "has_mean": False, "mean_type": StatisticMeanType.NONE, "has_sum": True, "name": None,
+                "source": "recorder", "statistic_id": eid, "unit_class": unit_class(unit), "unit_of_measurement": unit,
+            }, rows)
+            n += 1
         for eid, (state, attrs) in self.store.items():
             if not eid.startswith("sensor.") or attrs.get("device_class") != "energy" \
                     or attrs.get("state_class") not in ("total_increasing", "total"):
+                continue
+            if eid in events:
                 continue
             try:
                 now_v = float(state)
@@ -519,9 +562,19 @@ class CasoraMock:
             rnd = random.Random(eid)
             hours = hours_of(eid)
             use = []
+            # Demo household devices (demo_fixture.py DEVICE_PROFILES): their own day and week shape instead of the
+            # common one – consumption per device then looks like a home.
+            prof = (self.fixture.get("_stats_profile") or {}).get(eid)
             for h in hours:
                 at = datetime.fromtimestamp(h)
                 hour = at.hour
+                if prof:
+                    v = prof.get("base", 0.0)
+                    for b0, b1, kwh, days in prof.get("blocks", []):
+                        if b0 <= hour < b1 and (days is None or at.weekday() in days):
+                            v += kwh * (0.8 + 0.4 * rnd.random())
+                    use.append(v * scale)
+                    continue
                 base = 0.12 + 0.35 * math.exp(-((hour - 19.5) / 2.2) ** 2) + 0.25 * math.exp(-((hour - 7.5) / 1.2) ** 2)
                 # Jahresgang: Januar ~ +30 %, Juli ~ −30 % – Monatsbalken sehen nach Verbrauch aus.
                 season = 1 + 0.3 * math.cos(2 * math.pi * (at.timetuple().tm_yday - 15) / 365)
