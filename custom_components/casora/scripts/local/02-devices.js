@@ -597,7 +597,7 @@
       const nm = (o) => { try { if (hass && hass.formatEntityState) return hass.formatEntityState(sel, o) || o; } catch (x) {} return o; };
       const seen = new Set();
       return (sel.attributes.options || []).filter((o) => { const k = nm(o); if (seen.has(k)) return false; seen.add(k); return true; })
-        .map((o) => ({ icon: aqIcon(o + ' ' + nm(o)), text: nm(o), active: sel.state === o,
+        .map((o) => ({ icon: aqIcon(o + ' ' + nm(o)), text: nm(o), fit: true, active: sel.state === o,
           svc: { domain: 'select', service: 'select_option', data: { option: o }, target: { entity_id: c.hx.sel } } }));
     }
     if (!l || l.state === 'unavailable') return [];
@@ -606,7 +606,8 @@
     // A raw effect key HA has no word for („partly_cloudy“) reads as words („Partly cloudy“) – never the raw value.
     const fxName = (e) => { let t = e; try { if (hass && hass.formatEntityAttributeValue) t = hass.formatEntityAttributeValue(l, 'effect', e) || e; } catch (x) {}
       return t === e && /^[a-z0-9_]+$/.test(e) ? (e.charAt(0).toUpperCase() + e.slice(1)).replace(/_/g, ' ') : t; };
-    return fx.length >= 2 ? fx.map((e) => ({ icon: aqIcon(e + ' ' + fxName(e)), text: fxName(e), active: l.state === 'on' && a.effect === e,
+    // fit: a long name gets a short word on the moon instead of a smaller size (V16, owner 14.11.2026; casora-core moonFitWord).
+    return fx.length >= 2 ? fx.map((e) => ({ icon: aqIcon(e + ' ' + fxName(e)), text: fxName(e), fit: true, active: l.state === 'on' && a.effect === e,
       svc: { domain: 'light', service: 'turn_on', data: { effect: e }, target: { entity_id: c.light } } })) : [];
   };
   // Who sets the colours: 'ha' | 'lamp' | null (no schedule switch).
@@ -1903,8 +1904,10 @@
   /* Taps: chart rows (data-hp-metric) and „Erledigt“ for maintenance (two steps). */
   L.wrap = function (html) {
     return '<style>.hui-row.hp-sel{background:var(--casora-popup-row-hover, rgba(255,255,255,0.08));}'
-      + '.hw-done{display:inline-block;pointer-events:auto;cursor:pointer;padding:8px 10px;margin:-8px -10px;white-space:nowrap;'
+      // Hit area 44 on the phone (the word with its padding is 36): an invisible ::before above and below (§12).
+      + '.hw-done{position:relative;display:inline-block;pointer-events:auto;cursor:pointer;padding:8px 10px;margin:-8px -10px;white-space:nowrap;'
       + 'font-size:16px;font-weight:500;color:var(--casora-popup-ui-action, var(--casora-color-teal, #00C3D0));}'
+      + '.hw-done::before{content:"";position:absolute;inset:-4px 0;}'
       + '.hw-done.armed{color:#fff;background:var(--casora-popup-ui-action, var(--casora-color-teal, #00C3D0));border-radius:11px;}'
       + '</style>'
       + '<div ontouchstart="window._hpPlantTap&&window._hpPlantTap(event,\'s\');window._casoraLaundry.tap(event,\'s\')"'
@@ -5728,7 +5731,7 @@
         // Running: the cavity's temperature as the value, the target and the programme under it, the end as the foot.
         if (temp != null) { value = String(Math.round(temp)); unit = unitOf(states, c.temp); }
         var heating = temp != null && tgt != null && temp < tgt - 5;
-        word = [s.raw === 'run' ? null : s.word, target ? (heating ? T('Heizt auf') + ' ' + target : T('Ziel') + ' ' + target) : null, progTxt]
+        word = [s.raw === 'run' ? null : s.word, target ? (heating ? T('Heizt auf') + ' ' + target : T('Ziel ' + target)) : null, progTxt]
           .filter(Boolean).join(' · ') || null;
         program = [pct != null ? Math.round(pct) + ' %' : null, left != null && left > 0 ? 'Fertig gegen ' + clock(new Date(Date.now() + left * 60000)) + ' Uhr' : null]
           .filter(Boolean).join(' · ') || null;

@@ -21,11 +21,13 @@
 //   window._casoraSaver.kindAt(kind, now, pool) → the kind on show
 //   window._casoraSaver.canStart() / start()   → start by hand (the dashboard's ⋯ menu), only where one may start
 // Studio settings beside the three above: casora_screensaver_mix (kinds that alternate, none = all),
-// casora_screensaver_cameras / _calendars (none = all), casora_screensaver_tint (the playing cover's colour as a wash).
+// casora_screensaver_cameras (none = automatic: the real cameras) / _calendars (none = all), casora_screensaver_tint (the playing cover's colour as a wash).
 (function () {
   if (window._casoraSaver) return;
   var S = window._casoraSaver = {};
   var esc = window.casoraEsc || function (t) { return String(t == null ? '' : t).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
+  // Inside a CSS url("…"): quote, backslash and line breaks as CSS escapes (an address never has them).
+  var cssUrl = function (u) { return String(u == null ? '' : u).replace(/["\\\n\r\f]/g, function (c) { return '\\' + c.charCodeAt(0).toString(16) + ' '; }); };
   var T = function (t) { return typeof window.casoraTr === 'function' ? window.casoraTr(t) : t; };
   var hassOf = function () { var ha = document.querySelector('home-assistant'); return (ha && ha.hass) || null; };
   var loc = function () { return window.casoraLocale ? window.casoraLocale() : 'de-DE'; };
@@ -274,29 +276,19 @@
     }
     return DATA.fc[key] || [];
   };
-  // The calendars that count: visible ones, not the Workday integration's (as under the greeting, #157).
-  // only: one calendar, or the ones picked in the Studio (casora_screensaver_calendars); none picked (or none of them
-  // left) = all that count.
+  // The calendars that count: only: one calendar, or the ones picked for the screensaver (casora_screensaver_calendars);
+  // none picked (or none of them left) = the ones that count on the calendar tile and under the greeting
+  // (window.casoraCalendars, V26), without those shown only in the popup (tile: false).
   S.calendars = function (hass, only) {
-    var R = (hass && hass.entities) || {}, S0 = (hass && hass.states) || {};
+    var S0 = (hass && hass.states) || {};
     if (typeof only === 'string' && only && S0[only]) return [only];
     if (Array.isArray(only) && only.length) {
       var mine = only.map(String).filter(function (id) { return id.indexOf('calendar.') === 0 && S0[id]; });
       if (mine.length) return mine.slice(0, 8);
     }
-    // No pick of its own: the calendars picked under Settings › Home & devices › Calendars, as on the calendar tile
-    // and under the greeting (#189); one shown only in the popup (tile: false) is left out.
-    var own = null;
-    try { own = window.casoraSettings ? window.casoraSettings().calendars : null; } catch (e) { own = null; }
-    if (Array.isArray(own) && own.length) {
-      var set = own.map(function (c) { return typeof c === 'string' ? c : c && c.tile !== false && c.entity; })
-        .filter(function (id) { return id && String(id).indexOf('calendar.') === 0 && S0[id]; });
-      if (set.length) return set.slice(0, 8);
-    }
-    return Object.keys(S0).filter(function (id) {
-      var e = R[id];
-      return id.indexOf('calendar.') === 0 && !(e && (e.hidden || e.disabled_by || e.platform === 'workday'));
-    }).sort().slice(0, 8);
+    var all = window.casoraCalendars ? window.casoraCalendars(hass, null) : [];
+    return all.filter(function (c) { return c.tile !== false && S0[c.entity]; })
+      .map(function (c) { return c.entity; }).slice(0, 8);
   };
   // Events of the coming days from Home Assistant's calendar API: [{ title, start, end, allDay }] sorted by start.
   // from: the first day asked for (the month calendar starts with the week of the 1st); default today.
@@ -306,7 +298,8 @@
     if (!hass || !ids.length || typeof hass.callApi !== 'function') return DATA.ev[key] || [];
     if (!(DATA.at[key] && Date.now() - DATA.at[key] < 600000)) {
       DATA.at[key] = Date.now();
-      var b = new Date(a.getTime() + days * 86400000);
+      // Calendar days, not 24-hour steps: across a clock change the window still ends at midnight.
+      var b = new Date(a); b.setDate(b.getDate() + days);
       var q = '?start=' + encodeURIComponent(a.toISOString()) + '&end=' + encodeURIComponent(b.toISOString());
       Promise.all(ids.map(function (id) {
         return hass.callApi('GET', 'calendars/' + id + q).then(function (rows) { return rows || []; }, function () { return []; });
@@ -397,20 +390,49 @@
     });
   };
   // ── Cameras ──────────────────────────────────────────────────────────────
-  // The cameras that count: visible, not unavailable; only = the ones picked in the Studio (casora_screensaver_cameras),
-  // none picked (or none of them left) = all. [{ id, name, url, stream }] (url: Home Assistant's still picture).
-  S.cameras = function (hass, only) {
+  // The cameras that count: visible, not unavailable, with a picture. only = the ones picked in the Studio
+  // (casora_screensaver_cameras), kept as picked (a printer camera too). None picked (or none of them left) =
+  // „Automatic“: the cameras with a real picture, without robot vacuum maps, 3D printer cameras and diagnostic
+  // cameras (owner 13.11.2026), by the Cameras tile's rule (casoraDevice.notSurveillance in 00-finder.js, printers
+  // included as in every automatic list). [{ id, name, url, stream }] (url: Home Assistant's still picture).
+  var camOk = function (hass, id) {
+    var st = ((hass && hass.states) || {})[id], e = ((hass && hass.entities) || {})[id];
+    return id.indexOf('camera.') === 0 && !!st && st.state !== 'unavailable' && !(e && (e.hidden || e.disabled_by)) && !!(st.attributes || {}).entity_picture;
+  };
+  // Why „Automatic“ leaves a camera out: 'printer', 'map' (a map or a robot vacuum's camera), '' = it takes part.
+  var camWhy = function (hass, id) {
+    var CD = window.casoraDevice;
+    if (!(CD && CD.notSurveillance && CD.notSurveillance(hass, id, true))) return '';
+    return CD.isPrinter && CD.isPrinter(hass, id) && !CD.notSurveillance(hass, id, false) ? 'printer' : 'map';
+  };
+  var camName = function (hass, id) { return String((((hass && hass.states) || {})[id].attributes || {}).friendly_name || id.slice(7)); };
+  // Every camera the Studio offers (not a diagnostic one): [{ id, name, auto, why }], auto = „Automatic“ takes it.
+  S.cameraChoices = function (hass) {
     var S0 = (hass && hass.states) || {}, R = (hass && hass.entities) || {};
-    var ok = function (id) {
-      var st = S0[id], e = R[id];
-      return id.indexOf('camera.') === 0 && st && st.state !== 'unavailable' && !(e && (e.hidden || e.disabled_by)) && !!(st.attributes || {}).entity_picture;
-    };
-    var ids = Array.isArray(only) && only.length ? only.map(String).filter(ok) : [];
-    if (!ids.length) ids = Object.keys(S0).filter(ok).sort();
+    return Object.keys(S0).filter(function (id) { return camOk(hass, id) && !(R[id] && R[id].entity_category); }).sort().map(function (id) {
+      var why = camWhy(hass, id);
+      return { id: id, name: camName(hass, id), auto: !why, why: why };
+    });
+  };
+  S.cameras = function (hass, only) {
+    var S0 = (hass && hass.states) || {};
+    var ids = Array.isArray(only) && only.length ? only.map(String).filter(function (id) { return camOk(hass, id); }) : [];
+    if (!ids.length) ids = S.cameraChoices(hass).filter(function (c) { return c.auto; }).map(function (c) { return c.id; });
     return ids.slice(0, 12).map(function (id) {
       var a = S0[id].attributes || {};
-      return { id: id, name: String(a.friendly_name || id.slice(7)), url: String(a.entity_picture), stream: !!((Number(a.supported_features) || 0) & 2) };
+      return { id: id, name: camName(hass, id), url: String(a.entity_picture), stream: !!((Number(a.supported_features) || 0) & 2) };
     });
+  };
+  // One tap in a Studio list (what alternates, cameras, calendars): none picked = automatic (auto, the ids
+  // „Automatic“ takes; null = all). From automatic the tap starts from what automatic takes; the result in list order;
+  // back to exactly that (or nothing left) = automatic again.
+  S.pickNext = function (cur, ids, auto, id) {
+    var base = Array.isArray(auto) ? ids.filter(function (x) { return auto.indexOf(x) > -1; }) : ids.slice();
+    var from = cur && cur.length ? cur : base;
+    var next = from.indexOf(id) > -1 ? from.filter(function (x) { return x !== id; }) : from.concat([id]);
+    next = ids.filter(function (x) { return next.indexOf(x) > -1; });
+    var same = next.length === base.length && next.every(function (x) { return base.indexOf(x) > -1; });
+    return same ? [] : next;
   };
   // A fresh still picture every few seconds without a blank moment: the next one loads in the background and only
   // takes the place of the last one once it is there (a repaint follows).
@@ -508,8 +530,15 @@
   var dayName = function (ts, short) { return new Intl.DateTimeFormat(loc(), { weekday: short ? 'short' : 'long' }).format(new Date(ts)); };
   var sameDay = function (a, b) { var x = new Date(a), y = new Date(b); return x.getFullYear() === y.getFullYear() && x.getMonth() === y.getMonth() && x.getDate() === y.getDate(); };
 
+  // 12 hours like the dashboard's clock (#191): the HA user's time format, else the dashboard language.
+  var use12 = function (hass) {
+    var f = hass && hass.locale && hass.locale.time_format;
+    if (f === '12') return true;
+    if (f === '24') return false;
+    try { return !!new Intl.DateTimeFormat((hass && hass.locale && hass.locale.language) || (hass && hass.language) || loc(), { hour: 'numeric' }).resolvedOptions().hour12; } catch (e) { return false; }
+  };
   var timeText = function (now, hass) {
-    var h12 = hass && hass.locale && hass.locale.time_format === '12';
+    var h12 = use12(hass);
     var h = now.getHours();
     if (h12) h = ((h + 11) % 12) + 1;
     return (h12 ? String(h) : String(h).padStart(2, '0')) + ':' + String(now.getMinutes()).padStart(2, '0');
@@ -729,7 +758,7 @@
       var rooms = ctx.rooms || [];
       if (!rooms.length) return DRAW.land(ctx);
       var r = rooms[Math.floor(+ctx.now / 120000) % rooms.length];
-      return '<div class="cs-photo" style="background-image:url(&quot;' + esc(r.url) + '&quot;)"></div><div class="cs-in">' + bar(ctx, r.name, '') + '</div>';
+      return '<div class="cs-photo" style="background-image:url(&quot;' + esc(cssUrl(r.url)) + '&quot;)"></div><div class="cs-in">' + bar(ctx, r.name, '') + '</div>';
     },
     // A new photo every 15 minutes. Only when this one is chosen: the mix never asks for it.
     live: function (ctx) {
@@ -799,7 +828,8 @@
   // The day as one line from 6 to 24: what was, where now is, what comes; the next appointment big at the top.
   DRAW.linie = function (ctx) {
     var now = +ctx.now, d0 = new Date(ctx.now); d0.setHours(0, 0, 0, 0);
-    var from = +d0 + 6 * 3600000, to = +d0 + 24 * 3600000;
+    // 6 and 24 o'clock of that day by the calendar (on 29.03. and 25.10. the day is not 24 hours long).
+    var from = +new Date(d0.getFullYear(), d0.getMonth(), d0.getDate(), 6), to = +new Date(d0.getFullYear(), d0.getMonth(), d0.getDate() + 1);
     var pos = function (t) { return Math.max(0, Math.min(100, (t - from) / (to - from) * 100)); };
     var today = (ctx.events || []).filter(function (e) { return !e.allDay && sameDay(e.start, now) && e.start >= from; }).slice(0, 6);
     var next = (ctx.events || []).filter(function (e) { return !e.allDay && e.start > now; })[0] || null;
@@ -834,7 +864,8 @@
     var ev = ctx.events || [], bins = ctx.bins || [], daily = ctx.daily || [];
     var nEv = 0, nBin = 0, cols = '';
     for (var i = 0; i < 7; i++) {
-      var day = +d0 + i * 86400000, items = [];
+      // The i-th calendar day (24-hour steps showed the 25.10. twice).
+      var day = +new Date(d0.getFullYear(), d0.getMonth(), d0.getDate() + i), items = [];
       // A waste integration gives a pickup twice, as a calendar event and as a sensor (#171): the pickup line wins.
       var binNames = bins.filter(function (b) { return b.days === i; }).map(function (b) { return norm(b.label); });
       ev.filter(function (e) { return sameDay(e.start, day) && (i || e.allDay || (e.end || e.start) >= +ctx.now) && binNames.indexOf(norm(e.title)) < 0; }).slice(0, 4).forEach(function (e, j) {
@@ -860,7 +891,7 @@
     var m = ctx.media;
     if (!m) return DRAW.himmel(ctx);
     var pct = m.dur && m.pos != null ? Math.max(0, Math.min(100, m.pos / m.dur * 100)) : null;
-    var pic = m.cover ? 'background-image:url(&quot;' + esc(m.cover) + '&quot;)' : '';
+    var pic = m.cover ? 'background-image:url(&quot;' + esc(cssUrl(m.cover)) + '&quot;)' : '';
     return (m.cover ? '<div class="cs-blur" style="' + pic + '"></div>' : '') + '<div class="cs-in"><div class="cs-cover" style="' + pic + '"></div>'
       + '<div class="cs-corner"><div class="cs-time">' + esc(timeText(ctx.now, ctx.hass)) + '</div><div class="cs-date">' + esc(dateText(ctx.now)) + '</div></div>'
       + '<div class="cs-meta"><div class="cs-cap" data-no-i18n>' + esc(m.where) + '</div><h2 data-no-i18n>' + esc(m.title) + '</h2>' + (m.artist ? '<h3 data-no-i18n>' + esc(m.artist) + '</h3>' : '')
@@ -925,7 +956,7 @@
     return '<div class="cs-in">' + head(ctx, T('Kameras'), T('Tippen für das Livebild')) + '<div class="cs-body"><div class="cs-cams" style="' + esc(grid) + '">'
       + cams.map(function (c) {
         var pic = c.shot || c.url;
-        return '<button type="button" class="cs-cam" data-sv-act="cam" data-cam="' + esc(c.id) + '"><i class="cs-camic"><ha-icon icon="mdi:cctv"></ha-icon></i><span class="cs-shot"' + (pic ? ' style="background-image:url(&quot;' + esc(pic) + '&quot;)"' : '') + '></span>'
+        return '<button type="button" class="cs-cam" data-sv-act="cam" data-cam="' + esc(c.id) + '"><i class="cs-camic"><ha-icon icon="mdi:cctv"></ha-icon></i><span class="cs-shot"' + (pic ? ' style="background-image:url(&quot;' + esc(cssUrl(pic)) + '&quot;)"' : '') + '></span>'
           + '<b data-no-i18n>' + esc(c.name) + '</b></button>';
       }).join('') + '</div></div></div>';
   };
@@ -1053,8 +1084,14 @@
       s2.textContent = CSS;
       root.appendChild(s2);
     }
-    var api = { kind: '' };
+    var api = { kind: '' }, shown = false, gone = false;
     var update = function () {
+      // A box that was in the page and left it (the Studio draws its page again and never calls destroy): stop, or
+      // every redraw would leave a timer and a repaint listener behind.
+      if (gone) return;
+      // A box not in the page yet (drawn before it is inserted) is drawn as before.
+      if (host.isConnected === false && shown) { api.destroy(); return; }
+      if (host.isConnected) shown = true;
       var want = typeof o.kind === 'function' ? o.kind() : kind;
       var base = (typeof o.context === 'function' ? o.context() : o.context) || {};
       var now = base.now || new Date();
@@ -1087,7 +1124,15 @@
     // Data that arrives later (forecast, calendar) repaints at once.
     listeners.push(update);
     api.update = update;
-    api.destroy = function () { clearInterval(timer); listeners.splice(listeners.indexOf(update), 1); host.innerHTML = ''; };
+    // Once only: a second call must not take another mount's listener (indexOf -1 would splice the last one).
+    api.destroy = function () {
+      if (gone) return;
+      gone = true;
+      clearInterval(timer);
+      var i = listeners.indexOf(update);
+      if (i > -1) listeners.splice(i, 1);
+      host.innerHTML = '';
+    };
     return api;
   };
 
@@ -1196,7 +1241,11 @@
     stage.style.cssText = 'position:absolute;inset:0;';
     layer.appendChild(stage);
     // A touch only wakes the dashboard: it must not reach a tile underneath. A camera and its live picture are the
-    // exception: they keep the screensaver.
+    // exception: they keep the screensaver. The layer fades at once but stays until the tap is over: removed on
+    // pointerdown, the rest of the tap (pointerup, click) landed on the tile or badge underneath (Alltag round
+    // 14.11.2026: waking expanded a badge, r731).
+    var ending = null;
+    var mine = layer, endSoon = function (ms) { clearTimeout(ending); ending = setTimeout(function () { if (layer === mine) hide(); }, ms); };
     var wake = function (ev) {
       var t = ev.composedPath ? ev.composedPath()[0] : ev.target;
       var act = t && t.closest ? t.closest('[data-sv-act]') : null;
@@ -1208,10 +1257,14 @@
         if (what === 'cam') openCam(act.getAttribute('data-cam'));
         return;
       }
-      ev.preventDefault(); ev.stopPropagation(); hide();
+      ev.preventDefault(); ev.stopPropagation();
+      var lyr = ev.currentTarget;
+      if (lyr && lyr.style) { lyr.style.transition = 'opacity .18s ease'; lyr.style.opacity = '0'; }
+      // Down: wait for the end of the tap (a finger left resting: at most 1.5 s); up or the click: gone shortly after.
+      endSoon(/down|start/.test(ev.type) ? 1500 : 300);
     };
-    ['pointerdown', 'touchstart', 'click', 'contextmenu'].forEach(function (t) { layer.addEventListener(t, wake, { passive: false }); });
-    document.body.appendChild(layer);
+    ['pointerdown', 'touchstart', 'pointerup', 'touchend', 'mousedown', 'mouseup', 'click', 'contextmenu'].forEach(function (t) { layer.addEventListener(t, wake, { passive: false }); });
+    layer.setAttribute('data-casora-window', ''); document.body.appendChild(layer);
     // Every five seconds: the cameras' pictures stay fresh (everything else only repaints when it changed).
     live = S.mount(stage, null, { drift: true, every: 5000, kind: function () { return S.vars(config() || cfg).casora_screensaver_kind || 'mix'; },
       context: function () { var c = config() || cfg; return { config: c, vars: S.vars(c) }; } });

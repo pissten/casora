@@ -600,6 +600,7 @@
     "Abfall morgen": "Odpady jutro",
     "Restmüll": "Zmieszane",
     "Biomüll": "Bio",
+    "Bio": "Bio",
     "Papier": "Papier",
     "Gelber Sack": "Plastik i metal",
     "Wertstoff": "Surowce",
@@ -691,7 +692,7 @@
     "Status": "Status",
     "Modus": "Tryb",
     "Zustand": "Stan",
-    "Zielwert": "Wartość docelowa",
+    "Zielwert": "Zadana",
     "Feinstaub PM2,5": "Pył PM2,5",
     "Bodenfeuchtigkeit": "Wilgotność gleby",
     "Beleuchtungsstärke": "Natężenie światła",
@@ -1118,7 +1119,7 @@
     "Reispfanne mit Hähnchen und Pilzen": "Ryż z kurczakiem i pieczarkami",
     "Roboter gekippt": "Robot przewrócony",
     "Roboter steckt fest": "Robot utknął",
-    "Saugen & wischen": "Odkurzanie i mopowanie",
+    "Saugen & wischen": "Odkurz. + mop",
     "Saugt & wischt": "Odkurza i mopuje",
     "Saugt & wischt Zone": "Odkurza i mopuje strefę",
     "Wischt Zone": "Mopuje strefę",
@@ -2608,7 +2609,7 @@
     "Ping": "Ping",
     "Liste wird geladen …": "Wczytywanie listy …",
     "Neue Einträge erscheinen hier": "Nowe pozycje pojawią się tutaj",
-    "Saugen und Wischen": "Odkurzanie i mycie",
+    "Saugen und Wischen": "Odkurzanie i mopowanie",
     "Suchen": "Szukaj",
     "Tankstand": "Poziom paliwa",
     "Gerade kein Spiel": "Teraz brak gry",
@@ -2967,7 +2968,11 @@
     "Sonstige": "Pozostałe",
     "pro Stunde": "na godzinę",
     "pro Tag": "dziennie",
-    "Nicht erfasst": "Niezmierzone"
+    "Nicht erfasst": "Niezmierzone",
+    "Wohlfühlbereich": "Zakres komfortu",
+    "feucht": "wilgotno",
+    "Lüften nicht nötig": "Wietrzenie niepotrzebne",
+    "Optimal": "Optymalnie"
   },
   "patterns": [
     [
@@ -3091,7 +3096,7 @@
       "Trafienie {1}%"
     ],
     [
-      "^Gestern (\\d{1,2}:\\d{2})$",
+      "^Gestern (\\d{1,2}:\\d{2}(?: [AP]M)?)$",
       "Wczoraj {1}"
     ],
     [
@@ -3875,6 +3880,10 @@
       "Ostatnio {1}"
     ],
     [
+      "^Zuletzt (.+) (vor \\d+ (?:Min\\.|Std\\.|T\\.|Tagen)|gestern|gerade eben)$",
+      "Ostatnio {1} {2}"
+    ],
+    [
       "^Zuletzt (.+)$",
       "Ostatnio {1}"
     ],
@@ -4543,11 +4552,11 @@
       "vs {1}"
     ],
     [
-      "^Heute (\\d\\d:\\d\\d)$",
+      "^Heute (\\d{1,2}:\\d{2}(?: [AP]M)?)$",
       "Dziś {1}"
     ],
     [
-      "^Morgen (\\d\\d:\\d\\d)$",
+      "^Morgen (\\d{1,2}:\\d{2}(?: [AP]M)?)$",
       "Jutro {1}"
     ],
     [
@@ -5357,6 +5366,10 @@
     [
       "^Geräte · (\\d+)$",
       "Urządzenia · {1}"
+    ],
+    [
+      "^Wohlfühlbereich (\\d+)–(\\d+) %$",
+      "Zakres komfortu {1}–{2} %"
     ]
   ]
 }

@@ -999,7 +999,8 @@ function markPhoneManaged(cfg, showBell, showAssist, rooms) {
           if (hv.casora_greeting && Array.isArray(hv.casora_greeting_people) && hv.casora_greeting_people.length) {
             c.variables.casora_greeting_people = hv.casora_greeting_people.slice();
           } else delete c.variables.casora_greeting_people;
-          if (hv.casora_greeting && hv.casora_greeting_next === true) c.variables.casora_greeting_next = true;
+          // The line under the title goes with the room name too (#189), only when switched on.
+          if (hv.casora_greeting_next === true) c.variables.casora_greeting_next = true;
           else delete c.variables.casora_greeting_next;
         }
       }
@@ -2497,10 +2498,9 @@ const SECTIONS = [
       { ...LIST("casora_greeting_people", "People to name", ["person"]), always: true, homeOnly: true,
         when: (v) => v.casora_greeting === "names",
         hint: "Empty: everyone who is home. With three or more at home, just the greeting." },
-      // #157: off by default; a line under the greeting (casoraHomeNext, 00-finder.js).
+      // #157: off by default; a line under the title (casoraHomeNext, 00-finder.js), with the room name too (#189).
       { key: "casora_greeting_next", label: "Next event and waste collection", type: "bool", boolDefault: false, always: true, homeOnly: true,
-        when: (v) => !!v.casora_greeting,
-        hint: "Shows the next calendar event and the next waste collection in a line under the greeting." },
+        hint: "Shows the next calendar event and the next waste collection in a line under the title." },
       { key: "__phone_name", label: "Name on phone", type: "text", always: true,
         phoneName: true, placeholder: MOBILE_FAVORITES,
         hint: "Heading of the favorites on the phone's Home page." },
@@ -2551,6 +2551,15 @@ const SECTIONS = [
       { key: "swipe_rooms", sub: "chrome", label: "Swipe between rooms", type: "bool",
         boolDefault: false, auto: true, scope: "dashboard",
         hint: "On a phone or tablet, swipe left or right on Home or an open room to get to the next or previous room, in the order of the room menu." },
+      // Room bar on desktop and tablet (casora-nav-bar, casora-core.js): "" = the first view (Home, whatever it is
+      // called) only as its round house icon, the rooms keep their names (default since owner, 15.11.2026); "all" =
+      // every name. "All" stays first as before; a stored "rooms" (beta b4) is not an option and so shows the default.
+      // Read from the room views like swipe_rooms. The phone's bottom bar is not affected. Drawn as its own block
+      // "Room bar" under Settings › Look & feel.
+      { key: "nav_names", sub: "chrome", label: "Show names", type: "select", seg: true, auto: true, scope: "dashboard",
+        options: ["all", ""],
+        optionLabels: { all: "All", "": "Home page as icon" },
+        hint: "Without the text, one more room fits in the bar." },
       // Screensaver for wall tablets (scripts/local/46-screensaver.js). Off until a dashboard turns it on; the kind
       // "" shows one after the other. Live is the eleventh and is never part of that mix.
       { key: "casora_screensaver", sub: "chrome", label: "Start the screensaver", type: "select", auto: true, scope: "dashboard",
@@ -3883,6 +3892,14 @@ let firstRunFont = null;
 // E10 (test 2): the setup assistant remembers its step and choices in this browser (a reload started over at the
 // look, with "Casora" picked again). Kept a day; cleared when a dashboard is made or the assistant is restarted.
 const SETUP_KEY = "casora.setup.progress";
+// Design choice in the setup: cards per row on a wide screen (more designs wrap to a second row).
+const THEME_COLS = 4;
+// The setup assistant counts its steps from the first screen (V21): look, font, effects, rooms, fill, preview.
+// The "existing dashboard found" choice in between is a fork, not a step. Without it, rooms/fill/preview are 1-3 of 3.
+const SETUP_STEPS = 6;
+const SETUP_LEAD = 3;
+// Step n of the rooms part (1-3): inside the whole assistant it comes after the look, font and effects.
+const setupStep = (n, inSetup) => (inSetup ? [SETUP_LEAD + n, SETUP_STEPS] : [n, 3]);
 function setupLoad() {
   try {
     const v = JSON.parse(localStorage.getItem(SETUP_KEY) || "null");
@@ -6106,6 +6123,21 @@ const numOf = (states, id) => {
   return Number.isNaN(n) ? null : n;
 };
 
+// The dashboard's lamp count (window.casoraLightTally, scripts/local/01-basis.js) for the preview's light tiles and
+// badges. A Studio opened straight (not after a dashboard) has no dashboard scripts and counted groups instead of
+// lamps ("3 on" under a dashboard's "4 on"): that one module is loaded once, then the preview is drawn again.
+let lightTallyLoad = null;
+const lightTally = (ent, states, hass, V) => {
+  if (typeof window.casoraLightTally === "function") return window.casoraLightTally(ent, states || {}, hass, V);
+  if (!lightTallyLoad && typeof window.casoraImportScript === "function") {
+    lightTallyLoad = window.casoraImportScript("local/01-basis.js").then(() => {
+      const p = window._casoraStudioPanel;
+      if (p && p.isConnected && p._state && typeof p._rebuildPreview === "function") p._rebuildPreview();
+    }, () => {});
+  }
+  return null;
+};
+
 // casora_light: one row per physical light, groups of groups flattened.
 const lightUnits = (states, eid, seen) => {
   const memsOf = (id) => {
@@ -6718,8 +6750,11 @@ const tileStateWord = (kind, tile, ent, states, hass) => {
       const rt = !V.temp_sensor && window.casoraRoomTempOf ? window.casoraRoomTempOf(ent.entity_id, states || {}) : null;
       const ct = parseFloat((ent.attributes || {}).current_temperature);
       const alt = rt != null ? rt : !V.temp_sensor && mode !== "unavailable" && Number.isFinite(ct) ? Math.round(ct * 10) / 10 : null;
+      // In the user's locale like the dashboard („21,4°“, not „21.4°“; design audit 14.11.2026).
+      const deg = (x) => (window.casoraNum ? window.casoraNum(Math.round(x * 10) / 10, 0, 1)
+        : (Math.round(x * 10) / 10).toLocaleString(window.casoraLocale ? window.casoraLocale() : "de-DE", { maximumFractionDigits: 1 })) + "° · ";
       const room = Number.isFinite(v) && (sa.device_class === "temperature" || /°|^K$/.test(String(sa.unit_of_measurement || "")))
-        ? Math.round(v * 10) / 10 + "° · " : alt != null ? alt + "° · " : "";
+        ? deg(v) : alt != null ? deg(alt) : "";
       // Same calm words as casora_thermostat: room · state, no target (owner, 02.11.2026).
       const act = (typeof window.casoraClimateActive === "function" && window.casoraClimateActive(ent)) || {};
       const action = (ent.attributes || {}).hvac_action;
@@ -6740,7 +6775,7 @@ const tileStateWord = (kind, tile, ent, states, hass) => {
     }
     case "light": {
       // Same count as the dashboard's tile, badge and popup (window.casoraLightTally, scripts/local/01-basis.js).
-      const t = window.casoraLightTally ? window.casoraLightTally(ent, states || {}, hass, V) : null;
+      const t = lightTally(ent, states, hass, V);
       if (!t) return lightWord(states, ent.entity_id);
       if (!t.tot || t.tot === 1) return t.on ? "On" : "Off";
       if (!t.on) return "All off";
@@ -10360,6 +10395,15 @@ class CasoraPanel extends HTMLElement {
         .mini-tabs.clipped.cl-l .mini-strip { --fl:8%; }
         .mini-tabs.clipped.cl-r .mini-strip { --fr:8%; }
         .mini-tab.home { flex:none; }
+        /* Home as a house in a circle (nav_names default, not "all"), like .route.home .hic on the dashboard. */
+        .mini-tab.home.homeicon { padding:0; width:var(--nav-label-h, 1.7em); height:var(--nav-label-h, 1.7em);
+          justify-content:center; border-radius:50%; box-shadow:none; }
+        .mini-tab.home.homeicon::before {
+          content:""; width:62%; height:62%; background:currentColor;
+          -webkit-mask:var(--house) center/contain no-repeat; mask:var(--house) center/contain no-repeat;
+          --house:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 3l8 6v12h-5v-7H9v7H4V9z'/%3E%3C/svg%3E");
+        }
+        .mini-tab.home.homeicon.on { background:var(--primary-color, #B67A50); color:#fff; opacity:1; }
         .mini-tabsep { flex:none; align-self:center; width:1px; height:1.1em; background:currentColor; opacity:.25; }
         .mini-cap, .mini-capsep { display:none; }
         .capsule .mini-cap {
@@ -11487,6 +11531,10 @@ class CasoraPanel extends HTMLElement {
         /* Liste mit Chips (z. B. Kameras): das Minus gehört ans Ende, neben das Eingabefeld,
            nicht mittig zwischen Chip und Feld. */
         .row:has(> .chipwrap) > .drop { align-self:end !important; margin-bottom:8px; }
+        /* A section field drawn as segments (seg: true): label above, the segments across the full width. */
+        .row.segrow { grid-template-columns:minmax(0,1fr); row-gap:10px; }
+        .row.segrow > label, .row.segrow > .seg { grid-column:1 / -1; }
+        .row.segrow > .drop.blank { display:none; }
         .row:hover .drop { opacity:1; }
         .row .drop:hover { background:var(--casora-studio-danger, #ff453a); color:#fff; opacity:1; filter:none; }
         .row:first-of-type { border-top:0; }
@@ -12339,6 +12387,9 @@ class CasoraPanel extends HTMLElement {
         .conddel { width:28px; height:28px; border-radius:50%; border:none; padding:0; cursor:pointer; background:rgba(255,69,58,.16); color:var(--casora-studio-bad, #ff453a); display:grid; place-items:center; }
         .conddel svg { width:14px; height:14px; }
         .condadd { align-self:flex-start; border:none; background:none; color:var(--casora-studio-link, #0a84ff); font:500 var(--t-foot) var(--casora-font-studio, system-ui); cursor:pointer; padding:4px 2px; }
+        /* V21: the whole dashboard at card size looked the same three times. A close-up of badges and tiles over the
+           room photo shows the difference: blurred (all effects), sharp (reduced), half and half (automatic). */
+        .perfgrid .pvshot { background-size:266.7%; background-position:39% 71.6%; }
         :host(.phone) .perfgrid .pvshot { flex:0 0 96px; width:96px; aspect-ratio:auto; background-size:cover; background-position:82% 50%; }
         :host(.phone) .perfgrid { gap:10px; }
         .frec2 {
@@ -14707,7 +14758,7 @@ class CasoraPanel extends HTMLElement {
       if (go) go.disabled = false;
       if (this._flowTok !== tok) return;
       if (f.moves.length || f.yaml.length || (f.broken || []).length) return this._setupFoundStep(f, null, perf);
-      this._createForm({ back: perf });
+      this._createForm({ back: perf, setup: true });
     };
     // E10: back where the assistant was before a reload, with what was chosen.
     const sv = setupLoad();
@@ -14829,7 +14880,10 @@ class CasoraPanel extends HTMLElement {
     this._flowButton(s.acts, "Continue", () => {
       if (pick === "move") return this._casoraUmzug({ list: Object.assign(moves.slice(), { broken: f.broken }), back: again, hideNotNow: true });
       if (pick === "import") return this._importForm({ back: again });
-      this._createForm({ back: again });
+      // V17: starting from scratch over a found Hemma dashboard is a "not now" for the move: a week of quiet,
+      // like "Later", instead of the full-screen offer on the next visit.
+      if (moves.length && window.casoraUmzugSnooze) window.casoraUmzugSnooze();
+      this._createForm({ back: again, setup: true });
     });
   }
 
@@ -14838,7 +14892,7 @@ class CasoraPanel extends HTMLElement {
   _themeStep() {
     const t = (this._hass && this._hass.themes) || {};
     const themes = designsOnOffer();
-    const next = () => (this._firstRunGo ? this._firstRunGo() : this._createForm({ back: () => this._themeStep() }));
+    const next = () => (this._firstRunGo ? this._firstRunGo() : this._createForm({ back: () => this._themeStep(), setup: true }));
     if (!themes.length) return next();
     const CT = casoraThemeApi();
     const current = (CT && CT.active(this._hass)) || "";
@@ -14855,7 +14909,7 @@ class CasoraPanel extends HTMLElement {
 
     const s = this._flowScreen({
       full: true, icon: "palette",
-      title: "Choose Your Look",
+      title: "Choose Your Look", step: [1, SETUP_STEPS],
       lede: "Casora is designed around its theme. You can change it later in the Studio under Settings → Design.",
       // Erststart: zurück zur Begrüßung; aus dem Menü: Schließen zurück ins Studio.
       back: this._dashUrl ? null : () => this._welcomeScreen(),
@@ -14900,7 +14954,8 @@ class CasoraPanel extends HTMLElement {
     if (own) card(own, own, "Keep your current theme", null);
     s.body.appendChild(grid);
     s.box.classList.add("fwide");
-    s.box.style.setProperty("--fcols", cards.length);
+    // At most four side by side (V19): seven narrow cards broke every word of their text onto its own line.
+    s.box.style.setProperty("--fcols", Math.min(cards.length, THEME_COLS));
     paint();
 
     this._flowButton(s.acts, "Continue", async (ev) => {
@@ -14921,7 +14976,7 @@ class CasoraPanel extends HTMLElement {
     let pick = firstRunFont !== null ? firstRunFont : "";
     const s = this._flowScreen({
       full: true, icon: "font",
-      title: "Choose Your Font",
+      title: "Choose Your Font", step: [2, SETUP_STEPS],
       lede: "The lettering for titles, tiles and numbers. You can change it later in the Studio.",
       back: () => this._themeStep(),
     });
@@ -14984,7 +15039,7 @@ class CasoraPanel extends HTMLElement {
     let pick = firstRunPerf !== null ? firstRunPerf : "auto";
     const s = this._flowScreen({
       full: true, icon: "bolt",
-      title: "Smooth on Every Screen",
+      title: "Smooth on Every Screen", step: [3, SETUP_STEPS],
       lede: "Glass and blur look best but take power. Casora can choose for each device.",
       back: () => this._fontStep(() => this._perfStep(next)),
     });
@@ -15075,7 +15130,7 @@ class CasoraPanel extends HTMLElement {
         + "change rooms at any time.",
       back: o.back,
       // Mit dem Standardraum (casora-panel-basis.js) folgen „Räume füllen“ und die Vorschau.
-      step: typeof this._fillStep === "function" ? [1, 3] : null,
+      step: typeof this._fillStep === "function" ? setupStep(1, o.setup) : null,
     });
     if (failed) {
       this._flowError("Couldn't read your areas (" + failed.message
@@ -15187,7 +15242,7 @@ class CasoraPanel extends HTMLElement {
       setupSave({ rooms: picked, title, step: "rooms" });
       // Mit dem Standardraum-Modul (casora-panel-basis.js): erst fragen, ob Casora die Räume füllt.
       if (typeof this._fillStep === "function") {
-        return this._fillStep({ picked, back: () => this._createForm(o),
+        return this._fillStep({ picked, setup: !!o.setup, back: () => this._createForm(o),
           go: (filled) => this._create(url_path, title, picked, filled) });
       }
       this._create(url_path, title, picked);
@@ -16120,7 +16175,19 @@ class CasoraPanel extends HTMLElement {
         try {
           const ha = f.contentDocument.querySelector("home-assistant");
           if (!(ha && ha.hass)) { if (Date.now() - t0 < 15000) setTimeout(tick, 200); else box.classList.add("ready"); return; }
-          if (typeof ha._updateHass === "function") ha._updateHass({ dockedSidebar: "always_hidden" });
+          if (typeof ha._updateHass === "function") {
+            // The frame shares the viewer's localStorage, and HA writes its whole state there again later (every
+            // profile change, e.g. the design step of the setup): the frame's "always hidden" then became the
+            // viewer's setting. The frame's own realm never writes the sidebar setting.
+            try {
+              const SP = f.contentWindow.Storage.prototype, set = SP.setItem;
+              if (!set._casoraPreview) {
+                SP.setItem = function (k, v) { if (k === "dockedSidebar") return undefined; return set.call(this, k, v); };
+                SP.setItem._casoraPreview = true;
+              }
+            } catch (e) { /* no access: HA keeps its sidebar in the frame below */ }
+            ha._updateHass({ dockedSidebar: "always_hidden" });
+          }
           setTimeout(() => box.classList.add("ready"), 1500);
           // T11 (test 2): right after creating, a badge whose card script was not there yet stayed HA's red
           // "Configuration error" in the preview (the dashboard itself was fine) – look once more and reload the frame once.
@@ -19543,6 +19610,34 @@ class CasoraPanel extends HTMLElement {
           return;
         }
 
+        // A few fixed choices as segments (seg: true): one tap, all choices visible; "" is the default.
+        if (f.type === "select" && f.seg) {
+          const seg = document.createElement("div");
+          seg.className = "seg fieldseg";
+          seg.setAttribute("role", "group");
+          seg.setAttribute("aria-label", f.label);
+          seg.appendChild(document.createElement("span")).className = "segthumb";
+          (f.options || []).forEach((o) => {
+            const b = document.createElement("button");
+            b.type = "button";
+            b.className = "segopt";
+            b.dataset.v = o;
+            b.textContent = (f.optionLabels && f.optionLabels[o]) || o;
+            seg.appendChild(b);
+          });
+          const now = String(cur);
+          this._wireSeg(seg, "v", (f.options || []).includes(now) ? now : "", (v) => {
+            setVar(f.key, v || undefined, f);
+            filled(f);
+            if (f.reveals) this._renderForm();
+          });
+          row.classList.add("segrow");
+          row.appendChild(seg);
+          addDrop(row, f);
+          fs.appendChild(row);
+          addHint();
+          return;
+        }
         if (f.type === "select") {
           const c = this._combo(String(cur), f.options, "",
             (v) => { setVar(f.key, v, f); filled(f); if (f.reveals) this._renderForm(); },
@@ -24571,10 +24666,15 @@ class CasoraPanel extends HTMLElement {
     const lights = hl ? hl.ids : listed.length ? listed
       : (Array.isArray(members) && members.length ? members.filter(Boolean) : (grp ? [grp] : []));
     if (on("show_lights") && (grp || listed.length || (hl && hl.ids.length))) {
-      const lit = lights.filter((e) => (st(e) || {}).state === "on").length;
+      // The lamps the dashboard's badge counts (casora_badge_light_group: a group's lamps, not its sub-groups).
+      const tally = hl ? null : lightTally(null, this._hass.states, this._hass,
+        window._casoraHomeLightVarsOf ? window._casoraHomeLightVarsOf(V) : null);
+      const lit = tally ? tally.on : lights.filter((e) => (st(e) || {}).state === "on").length;
+      // The dashboard badge's words (casoraLightTallyText): one lamp On/Off, several All off/All on/"2 on".
+      const tot = tally ? tally.tot : lights.length;
       out.push({
         id: "lights", label: "Lights", icon: "light", color: LIGHT, dim: !lit,
-        text: lit ? lit + " on" : "All off",
+        text: tot <= 1 ? (lit ? "On" : "Off") : !lit ? "All off" : lit === tot ? "All on" : lit + " on",
         subs: (hl ? hl.subs : lights).map((e) => {
           const l = st(e) || {};
           const br = l.attributes && l.attributes.brightness;
@@ -25573,12 +25673,24 @@ class CasoraPanel extends HTMLElement {
     if ((this._state || {}).surface === "mobile") return this._state;
     const p = this._pair;
     if (!p || p.safe === false) return null;
+    // #149: keeping the phone half in step follows the last edit, it is not a step of its own. Recorded
+    // separately, Ctrl+Z landed on the half-synced state, the next phone preview synced it again and
+    // undo never got past it (split carousel stayed split). Fold it into the current history entry -
+    // only when nothing else is pending, so an edit not yet recorded keeps its own step.
+    const fold = this._shadow && this._lastPrint !== undefined && this._print() === this._lastPrint;
     syncPairRooms(p);
     syncHomeShared(p);
     syncPairTiles(p);
     syncScenesMobile(p, this._scenesMode() !== "off");
     syncCamerasMobile(p, this._hass);
     syncRoomChips(p);
+    if (fold) {
+      const now = this._print();
+      if (now !== this._lastPrint) {
+        this._lastPrint = now;
+        this._shadow = this._snap();
+      }
+    }
     return p.mobile;
   }
 
@@ -25759,7 +25871,12 @@ class CasoraPanel extends HTMLElement {
       t.textContent = deg + "\u00b0";
       const c = document.createElement("span");
       c.className = "mp-wcond";
-      const cond = went ? String(went.state).replace(/[-_]/g, " ") : "";
+      // HA's own word for the condition, as the dashboard and the desktop preview show it ("Teilweise bewölkt"; the
+      // raw state read "Partlycloudy"); the raw state only where HA has no word for it.
+      const raw = went ? String(went.state || "").toLowerCase() : "";
+      const lc = raw && this._hass.localize ? this._hass.localize("component.weather.entity_component._.state." + raw) : "";
+      const cond = lc || raw.replace(/[-_]/g, " ");
+      c.setAttribute("data-no-i18n", "");
       c.textContent = cond ? cond.charAt(0).toUpperCase() + cond.slice(1) : "";
       w.appendChild(t); w.appendChild(c);
       const file = WEATHER_SVG[String((went && went.state) || "").toLowerCase()];
@@ -26068,6 +26185,11 @@ class CasoraPanel extends HTMLElement {
         if (twin) {
           el.dataset.mk = "t:" + this._tileKey(twin.tile);
           el.dataset.mproom = String(twin.roomIndex);
+        } else if ((tile.variables || {}).casora_derived === "cameras") {
+          // #204: Casora builds this tile from Home › Security › Cameras (syncCamerasMobile); that is where it is edited.
+          const wide = (this._state && this._state.compact.rooms) || [];
+          el.dataset.mk = "b:security";
+          el.dataset.mproom = String(Math.max(0, wide.findIndex((r) => r.path === "home")));
         } else {
           // Phone-only, so there is nothing in the form to open.
           delete el.dataset.mk;
@@ -27100,6 +27222,12 @@ class CasoraPanel extends HTMLElement {
           this._renderTabs();
           this._renderForm();
         };
+      }
+      // "Show names: Home page as icon" (nav_names, the default): Home as its round house icon, as on the dashboard.
+      if (homeFixed && ri === 0 && V.nav_names !== "all") {
+        t.classList.add("homeicon");
+        t.setAttribute("aria-label", t.textContent);
+        t.textContent = "";
       }
       if (homeFixed && ri === 0) {
         tabs.insertBefore(t, strip);
@@ -30238,6 +30366,7 @@ function previewHasError(doc) {
 
 // Casora: Bausteine des Panels für Casora-Erweiterungen (Import-Assistent, Geräte-Assistent).
 window.__casoraPanelInternals = {
+  setupStep,
   blankRoom, roomPhoto, slug, translit, expandConfig, expandAny, extractAny, retargetRoutes, mobileFromRooms,
   applyScenePick, confirmEntities, confirmNames, entityUsers, wrapCustomCard, hostCard, FINGERPRINT_KEY, fingerprintOf, refreshTemplates, templatePrint, TILE_TYPES, USER_TILE_TYPES,
   fieldDefault, findType, tileTypeAny, newTile, previewHasError, isPetTracker, petName, isStatSensor, isPlantEntity, listCategory, TILE_MAIN_FIND, tileMissingEntity, tileEntityGone, iconUrl, studioIcon, roomGlyph, roomIconSrc, titleCase, clone, FLOW_TINT, isMobileConfig, applyKiosk,

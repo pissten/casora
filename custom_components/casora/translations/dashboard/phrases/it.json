@@ -600,6 +600,7 @@
     "Abfall morgen": "Rifiuti domani",
     "Restmüll": "Indifferenziato",
     "Biomüll": "Organico",
+    "Bio": "Organico",
     "Papier": "Carta",
     "Gelber Sack": "Plastica",
     "Wertstoff": "Riciclabili",
@@ -691,7 +692,7 @@
     "Status": "Stato",
     "Modus": "Modalità",
     "Zustand": "Stato",
-    "Zielwert": "Obiettivo",
+    "Zielwert": "Impostata",
     "Feinstaub PM2,5": "Polveri sottili PM2,5",
     "Bodenfeuchtigkeit": "Umidità del terreno",
     "Beleuchtungsstärke": "Illuminamento",
@@ -2967,7 +2968,11 @@
     "Sonstige": "Altri",
     "pro Stunde": "all'ora",
     "pro Tag": "al giorno",
-    "Nicht erfasst": "Non misurato"
+    "Nicht erfasst": "Non misurato",
+    "Wohlfühlbereich": "Intervallo di comfort",
+    "feucht": "umido",
+    "Lüften nicht nötig": "Non serve arieggiare",
+    "Optimal": "Ottimale"
   },
   "patterns": [
     [
@@ -3091,7 +3096,7 @@
       "Corrispondenza {1} %"
     ],
     [
-      "^Gestern (\\d{1,2}:\\d{2})$",
+      "^Gestern (\\d{1,2}:\\d{2}(?: [AP]M)?)$",
       "Ieri {1}"
     ],
     [
@@ -3875,6 +3880,10 @@
       "Ultima volta {1}"
     ],
     [
+      "^Zuletzt (.+) (vor \\d+ (?:Min\\.|Std\\.|T\\.|Tagen)|gestern|gerade eben)$",
+      "Ultimo {1} {2}"
+    ],
+    [
       "^Zuletzt (.+)$",
       "Ultimo {1}"
     ],
@@ -4543,11 +4552,11 @@
       "vs {1}"
     ],
     [
-      "^Heute (\\d\\d:\\d\\d)$",
+      "^Heute (\\d{1,2}:\\d{2}(?: [AP]M)?)$",
       "Oggi {1}"
     ],
     [
-      "^Morgen (\\d\\d:\\d\\d)$",
+      "^Morgen (\\d{1,2}:\\d{2}(?: [AP]M)?)$",
       "Domani {1}"
     ],
     [
@@ -5357,6 +5366,10 @@
     [
       "^Geräte · (\\d+)$",
       "Dispositivi · {1}"
+    ],
+    [
+      "^Wohlfühlbereich (\\d+)–(\\d+) %$",
+      "Intervallo di comfort {1}–{2} %"
     ]
   ]
 }

@@ -10,18 +10,22 @@
 //      states again (see below).
 //
 //   node dev/qa/bereit.mjs [--max 60] [--quiet 4] [--recorder 300]
+// Test only: CASORA_BEREIT_SCALE=<factor> (e.g. 0.01) scales every wait and time limit below; unset or 1 = real
+// time. Only dev/unit/bereit_recorder.mjs sets it. Messages print real elapsed seconds and the scaled limits.
 // Exit 0 = ready, 1 = not ready in time, 3 = cannot check (no access).
 import { login } from './token.mjs';
+import { timeScale } from './bereit_scale.mjs';
 
 const BASE = process.env.CASORA_URL || 'http://localhost:8124';
+const SCALE = timeScale(process.env); // test only, see header
 const arg = (n, d) => { const i = process.argv.indexOf('--' + n); return i > 0 ? Number(process.argv[i + 1]) : d; };
-const MAX = arg('max', 60) * 1000;
-const QUIET = arg('quiet', 4) * 1000;
-const RECORDER = arg('recorder', 0) * 1000;
-const MIN_AFTER_RUNNING = 1500;
+const MAX = arg('max', 60) * 1000 * SCALE;
+const QUIET = arg('quiet', 4) * 1000 * SCALE;
+const RECORDER = arg('recorder', 0) * 1000 * SCALE;
+const MIN_AFTER_RUNNING = 1500 * SCALE;
 const t0 = Date.now();
 const secs = () => ((Date.now() - t0) / 1000).toFixed(1);
-const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms * SCALE));
 // Events that show HA/Casora is still building something.
 const BUILD = new Set(['component_loaded', 'service_registered', 'entity_registry_updated', 'device_registry_updated',
   'lovelace_updated', 'lovelace_dashboards_updated', 'panels_updated', 'core_config_updated']);
@@ -61,7 +65,8 @@ function connect() {
       const m = JSON.parse(ev.data);
       if (m.type === 'auth_required') sock.send(JSON.stringify({ type: 'auth', access_token: tok.access_token }));
       else if (m.type === 'auth_ok') resolve(api);
-      else if (m.type === 'auth_invalid') reject(new Error('auth_invalid'));
+      // A token from just before a restart can be lost (HA had not saved its auth store yet): log in again.
+      else if (m.type === 'auth_invalid') { tok = null; reject(new Error('auth_invalid')); }
       else if (m.type === 'result' && wait.has(m.id)) {
         const w = wait.get(m.id); wait.delete(m.id);
         m.success ? w.res(m.result) : w.rej(Object.assign(new Error(JSON.stringify(m.error)), { code: m.error && m.error.code }));
@@ -76,7 +81,7 @@ let last = Date.now(), builds = 0;
 async function open() {
   c = null;
   while (!c) {
-    try { c = await connect(); } catch (e) {
+    try { if (!tok) tok = await login(); c = await connect(); } catch (e) {
       if (Date.now() - t0 > MAX) { console.log('bereit: WebSocket nicht erreichbar: ' + e.message); process.exit(1); }
       await sleep(500);
     }
@@ -141,7 +146,7 @@ c.close();
 // until one comes back from the history within FAST (the recorder commits every few seconds); one that took longer
 // only shows the queue it waited behind, the next one may wait behind the test house's import. The probe entity is
 // removed again. Not caught up in time: a warning only, the HA is usable otherwise.
-const FAST = 10000;
+const FAST = 10000 * SCALE;
 let rec = '';
 if (RECORDER > 0) {
   const H = { Authorization: 'Bearer ' + tok.access_token, 'Content-Type': 'application/json' };

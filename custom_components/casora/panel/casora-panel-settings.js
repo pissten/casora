@@ -27,7 +27,7 @@
   };
   // A focus inside an earlier page (a group of casora-panel-personal.js) → its block.
   const FOCUS_BLOCK = { waste: "waste", contacts: "contacts", security: "security", scenes: "scenes", media: "media",
-    devices: "devices", calendars: "calendars", notify: "notify", notify_exclude: "notify", battery: "battery", basis: "basis", umzug: "umzug" };
+    devices: "devices", calendars: "calendars", notify: "notify", notify_exclude: "notify", battery: "battery", basis: "basis", umzug: "umzug", climate: "climate" };
   const route = (pageId, focus) => {
     const id = String(pageId || "n-start");
     if (/^n-/.test(id)) return [id, focus];
@@ -52,6 +52,10 @@
       blocks: [
         { k: "design", page: "design", title: "Design", plain: "Pick how all Casora dashboards look.",
           kw: "design theme thema farben farbe hintergrund dunkel hell glas nebel aussehen look colors" },
+        // The room bar at the top (desktop and tablet): one field of Controls › Screen, shown as a block of its own.
+        { k: "navbar", sec: "General", sub: "chrome", keys: ["nav_names"], title: "Room bar",
+          plain: "The bar at the top with Home and your rooms, on desktop and tablet.",
+          kw: "raumleiste leiste navigation räume namen zuhause haus symbol text room bar names home icon" },
         { k: "time", sec: "Time", title: "Clock", plain: "Show the clock at the top left, as 12 or 24 hours.",
           kw: "uhr uhrzeit zeit 12 stunden 24 clock time zeitsensor suffix" },
         { k: "font", sec: "General", sub: "text", title: "Font", plain: "The typeface of this dashboard, or a font you bring yourself.",
@@ -143,6 +147,10 @@
         { k: "devices", personal: ["devices"], title: "Other devices",
           plain: "Devices Casora found that have no place of their own, e.g. an e-bike.",
           kw: "geräte ebike e-bike fahrrad" },
+        // #202: comfort rating by room type (casora-panel-personal.js, group "climate").
+        { k: "climate", personal: ["climate"], title: "Room climate",
+          plain: "How Casora rates temperature and humidity in each room: bedroom cooler, cellar damper, outdoor not at all.",
+          kw: "raumklima klima temperatur luftfeuchte luftfeuchtigkeit feuchte schimmel schlafzimmer keller bad küche flur außen komfort raumtyp wohlfühl room climate humidity mould mold comfort bedroom" },
       ] },
     { id: "wx", label: "Weather, power & fuel", icon: "temp-medium", tone: "set-outdoor",
       sub: "Weather source, outdoor values, electricity price and fuel nearby.",
@@ -1643,21 +1651,23 @@
         if (typeof this._mirrorToPair === "function") this._mirrorToPair(key, next.length ? next.slice() : undefined, all);
         if (typeof this._markDirty === "function") this._markDirty();
       };
-      const pickList = (key, items, title, ledeAll, ledeSome, none) => {
+      // items: { id, label, icon, tone, sub, raw, auto }. With auto on the items (cameras) none picked means
+      // „Automatic“: the items with auto true, the others grey; a row „Automatic“ on top goes back to it.
+      const pickList = (key, items, title, ledeAll, ledeSome, none, autoRow) => {
         lists.appendChild(el("div", "fhead", t(title)));
         if (!items.length) { lists.appendChild(el("p", "cs-lede", t(none))); return; }
         const ids = items.map((x) => x.id);
+        const auto = items.some((x) => x.auto !== undefined) ? items.filter((x) => x.auto).map((x) => x.id) : null;
         const cur = ((rooms0().map((r) => (r.variables || {})[key]).find((v) => Array.isArray(v) && v.length)) || []).map(String).filter((x) => ids.includes(x));
         lists.appendChild(el("p", "cs-lede", t(cur.length ? ledeSome : ledeAll)));
         const list = el("div", "cs-saver-list");
         list.dataset.key = key;
-        items.forEach((it) => {
-          const on = !cur.length || cur.includes(it.id);
-          const row = el("button", "cs-saver-row");
-          row.type = "button";
-          row.dataset.id = it.id;
-          row.setAttribute("aria-pressed", on ? "true" : "false");
-          row.style.setProperty("--cs-tone", it.tone || "var(--accent)");
+        const row = (it, on, tap) => {
+          const r = el("button", "cs-saver-row");
+          r.type = "button";
+          r.dataset.id = it.id;
+          r.setAttribute("aria-pressed", on ? "true" : "false");
+          r.style.setProperty("--cs-tone", it.tone || "var(--accent)");
           const ic = el("span", "cs-saver-ic");
           const hi = document.createElement("ha-icon");
           hi.setAttribute("icon", it.icon);
@@ -1667,15 +1677,14 @@
           if (it.raw) b.setAttribute("data-no-i18n", "");
           tx.appendChild(b);
           if (it.sub) tx.appendChild(el("span", "", t(it.sub)));
-          row.append(ic, tx);
-          row.onclick = () => {
-            let next = cur.length ? (cur.includes(it.id) ? cur.filter((x) => x !== it.id) : cur.concat([it.id])) : ids.filter((x) => x !== it.id);
-            next = ids.filter((x) => next.includes(x));
-            if (next.length === ids.length) next = [];
-            setVar(key, next);
-            live.update(); extra();
-          };
-          list.appendChild(row);
+          r.append(ic, tx);
+          r.onclick = () => { tap(); live.update(); extra(); };
+          list.appendChild(r);
+        };
+        if (autoRow) row(autoRow, !cur.length, () => { if (cur.length) setVar(key, []); });
+        items.forEach((it) => {
+          const on = cur.length ? cur.includes(it.id) : (!auto || auto.includes(it.id));
+          row(it, on, () => setVar(key, SV.pickNext(cur, ids, auto, it.id)));
         });
         lists.appendChild(list);
       };
@@ -1686,10 +1695,16 @@
           pickList("casora_screensaver_mix", SV.KINDS.map((k) => ({ id: k.id, label: k.label, icon: k.icon, tone: k.tone, sub: k.needs })), "Take turns",
             "All of them take turns, five minutes each. Tap one to leave it out. One with nothing to show right now is skipped.",
             "Only the ones picked here take turns, five minutes each. One with nothing to show right now is skipped.", "");
-        } else if (show === "kameras" && typeof SV.cameras === "function") {
-          pickList("casora_screensaver_cameras", SV.cameras(hass).map((c) => ({ id: c.id, label: c.name, raw: true, icon: "mdi:cctv", tone: "#5B8FC9" })), "Cameras",
-            "All cameras. Tap one to leave it out. On the tablet a tap on a camera shows its live picture.", "Only the cameras picked here.",
-            "No camera found. The preview shows an example.");
+        } else if (show === "kameras" && typeof SV.cameraChoices === "function") {
+          // Every camera; „Automatic“ (the default) takes the ones with a real picture, robot vacuum maps and
+          // printer cameras stay grey with the reason (the Cameras tile's rule, SV.cameraChoices).
+          const why = { map: "Map or robot vacuum, not taken automatically", printer: "3D printer, not taken automatically" };
+          pickList("casora_screensaver_cameras", SV.cameraChoices(hass).map((c) => ({ id: c.id, label: c.name, raw: true, icon: "mdi:cctv", tone: "#5B8FC9",
+            auto: c.auto, sub: why[c.why] || "" })), "Cameras",
+            "Automatic: every camera with a real picture; robot vacuum maps and 3D printer cameras stay out. Tap a camera to choose them yourself. On the tablet a tap on a camera shows its live picture.",
+            "Only the cameras picked here. “Automatic” takes every camera with a real picture again.",
+            "No camera found. The preview shows an example.",
+            { id: "auto", label: "Automatic", sub: "Every camera with a real picture", icon: "mdi:auto-fix", tone: "#5B8FC9" });
         } else if (["kalender", "linie", "woche"].includes(show) && typeof SV.calendars === "function") {
           const S0 = (hass && hass.states) || {};
           pickList("casora_screensaver_calendars", SV.calendars(hass).map((id) => ({ id, label: String(((S0[id] || {}).attributes || {}).friendly_name || id), raw: true,

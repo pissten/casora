@@ -600,6 +600,7 @@
     "Abfall morgen": "Waste tomorrow",
     "Restmüll": "General waste",
     "Biomüll": "Organic waste",
+    "Bio": "Organic",
     "Papier": "Paper",
     "Gelber Sack": "Recycling",
     "Wertstoff": "Recycling",
@@ -2949,7 +2950,11 @@
     "Sonstige": "Other",
     "pro Stunde": "per hour",
     "pro Tag": "per day",
-    "Nicht erfasst": "Untracked"
+    "Nicht erfasst": "Untracked",
+    "Wohlfühlbereich": "Comfort range",
+    "feucht": "humid",
+    "Lüften nicht nötig": "No need to ventilate",
+    "Optimal": "Optimal"
   },
   "patterns": [
     [
@@ -3073,7 +3078,7 @@
       "Match {1}%"
     ],
     [
-      "^Gestern (\\d{1,2}:\\d{2})$",
+      "^Gestern (\\d{1,2}:\\d{2}(?: [AP]M)?)$",
       "Yesterday {1}"
     ],
     [
@@ -3857,6 +3862,10 @@
       "Last seen {1}"
     ],
     [
+      "^Zuletzt (.+) (vor \\d+ (?:Min\\.|Std\\.|T\\.|Tagen)|gestern|gerade eben)$",
+      "Last {1} {2}"
+    ],
+    [
       "^Zuletzt (.+)$",
       "Last {1}"
     ],
@@ -4525,11 +4534,11 @@
       "vs {1}"
     ],
     [
-      "^Heute (\\d\\d:\\d\\d)$",
+      "^Heute (\\d{1,2}:\\d{2}(?: [AP]M)?)$",
       "Today {1}"
     ],
     [
-      "^Morgen (\\d\\d:\\d\\d)$",
+      "^Morgen (\\d{1,2}:\\d{2}(?: [AP]M)?)$",
       "Tomorrow {1}"
     ],
     [
@@ -5339,6 +5348,10 @@
     [
       "^Geräte · (\\d+)$",
       "Devices · {1}"
+    ],
+    [
+      "^Wohlfühlbereich (\\d+)–(\\d+) %$",
+      "Comfort range {1}–{2}%"
     ]
   ]
 }

@@ -5,11 +5,13 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
+import { loadCalendars } from './lib/calendars_block.mjs';
 
 const read = (p) => fs.readFileSync(new URL('../../' + p, import.meta.url), 'utf8');
 const win = { matchMedia: () => ({ matches: false }) };
 const box = { window: win, console, Intl, Date, Math, parseFloat, isFinite, isNaN, parseInt, String, Number, JSON, setInterval: () => 0, clearInterval() {}, location: { search: '', pathname: '/' } };
 vm.createContext(box);
+loadCalendars(win);
 vm.runInContext(read('custom_components/casora/scripts/local/46-screensaver.js'), box);
 const S = win._casoraSaver;
 assert.ok(S, 'module loads');
@@ -84,6 +86,20 @@ assert.equal(S.kindAt('quatsch', new Date()), 'himmel', 'unknown kind: the first
 assert.ok(S.KINDS.map((k) => k.id).includes(S.kindAt('mix', new Date())));
 let h = S.html('himmel', ctx());
 assert.ok(/16:42/.test(h) && /11°/.test(h) && /cs-sun/.test(h) && /07:22/.test(h) && /17:05/.test(h) && /Noch 23 Min\. Tageslicht/.test(h), 'sky: time, weather, sun on its path, rise and set');
+// The big clock as the dashboard's clock (#191): the HA user's time format, else the dashboard language.
+const clockOf = (time_format, lang) => {
+  win.casoraLocale = () => lang;
+  const out = S.html('himmel', S.context({ hass: { ...hass, locale: { time_format } }, now: new Date('2026-11-10T16:42:00'), sun: null, rooms: [] }));
+  delete win.casoraLocale;
+  return (out.match(/class="cs-time">([^<]*)</) || [])[1];
+};
+assert.equal(clockOf('language', 'en-US'), '4:42', 'English, no own format: 12 hours like the top bar');
+assert.equal(clockOf('system', 'en-US'), '4:42', 'format "system": the language decides');
+assert.equal(clockOf('language', 'de-DE'), '16:42');
+assert.equal(clockOf('24', 'en-US'), '16:42', 'own 24-hour format wins');
+assert.equal(clockOf('12', 'de-DE'), '4:42', 'own 12-hour format wins');
+assert.ok(/class="cs-time">4:42</.test(S.html('himmel', S.context({ hass: { ...hass, locale: { time_format: 'language', language: 'en' } }, now: new Date('2026-11-10T16:42:00'), sun: null, rooms: [] }))),
+  'the HA user language first, as the dashboard clock (use_12h in the templates)');
 h = S.html('himmel', ctx({ now: new Date('2026-11-10T22:00:00') }));
 assert.ok(!/cs-sun/.test(h) && /Nacht/.test(h), 'sky at night: no sun');
 h = S.html('himmel', ctx({ sun: null, wx: null }));
@@ -130,6 +146,16 @@ const media = { title: 'Song "A"', artist: 'Band', where: 'Wohnzimmer', cover: '
 h = S.html('musik', ctx({ media }));
 assert.ok(/data-kind="musik"/.test(h) && /Song &quot;A&quot;/.test(h) && /width:25\.0%/.test(h) && /0:50/.test(h) && /3:20/.test(h), 'music: title, progress');
 assert.ok(/data-kind="himmel"/.test(S.html('musik', ctx({ media: null }))), 'nothing playing: the sky');
+// Image addresses from media/camera attributes stay inside their CSS url("…"): a quote must not end the string
+// (escaped HTML is decoded in the attribute, so &quot; alone would let "); position:fixed … through).
+const evil = 'https://x/a.jpg?authSig=1&"); position:fixed; inset:0; background-image:url("https://evil/b.png';
+const styles = (html) => [...html.matchAll(/style="([^"]*)"/g)].map((m) => m[1].replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, '&'));
+const outside = (html) => styles(html).map((st) => st.replace(/url\("(?:[^"\\]|\\.)*"\)/g, 'url()')).join(' ');
+for (const [kind, o] of [['musik', { media: { ...media, cover: evil } }], ['fotos', { rooms: [{ name: 'K', url: evil }] }],
+  ['kameras', { cams: [{ id: 'camera.a', name: 'A', url: evil }] }]]) {
+  const out = outside(S.html(kind, ctx(o)));
+  assert.ok(!/position:fixed|evil/.test(out), kind + ': image address stays inside url(): ' + out);
+}
 h = S.html('energie', ctx({ energy: { solar: 3200, grid: -1200, battery: -500, soc: 64, hasSolar: true, hasBattery: true, house: 1500 } }));
 assert.ok(/3,2 kW|3\.2 kW/.test(h) && /ins Netz/.test(h) && /Akku lädt/.test(h) && /64 %/.test(h) && /100 %/.test(h), 'energy: sun, feed-in, battery, all own power');
 h = S.html('energie', ctx({ energy: { solar: null, grid: 800, battery: null, soc: null, hasSolar: false, hasBattery: false, house: 800 } }));

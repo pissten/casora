@@ -876,7 +876,7 @@
       if (window.casoraMenuGlass.frame) window.casoraMenuGlass.frame(pane);
       if (o.desk) { u.panel.style.background = 'transparent'; u.panel.style.boxShadow = 'none'; u.panel.style.backdropFilter = 'none'; u.panel.style.webkitBackdropFilter = 'none'; }
     }
-    if (!u.root.isConnected) document.body.appendChild(u.root);
+    if (!u.root.isConnected) { u.root.setAttribute('data-casora-window', ''); document.body.appendChild(u.root); }
     solidify(o.desk ? u.wrap : u.panel);
     render();
     fitViewport();
@@ -884,6 +884,11 @@
     try { u.input.focus({ preventScroll: true }); } catch (e) { u.input.focus(); }
     requestAnimationFrame(function () { u.root.classList.add('in'); fitViewport(); });
     if (window.visualViewport) {
+      // Opened again while open: the old pair goes first, close() only knows the last one.
+      if (state.vvOff) {
+        window.visualViewport.removeEventListener('resize', state.vvOff);
+        window.visualViewport.removeEventListener('scroll', state.vvOff);
+      }
       state.vvOff = function () { fitViewport(); };
       window.visualViewport.addEventListener('resize', state.vvOff);
       window.visualViewport.addEventListener('scroll', state.vvOff);
@@ -901,6 +906,7 @@
       window.visualViewport.removeEventListener('resize', state.vvOff);
       window.visualViewport.removeEventListener('scroll', state.vvOff);
     }
+    state.vvOff = null;
     try { ui.input.blur(); } catch (e) { /* ignore */ }
     ui.root.remove();
     ui.root.classList.remove('in');

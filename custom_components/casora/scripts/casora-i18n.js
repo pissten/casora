@@ -305,6 +305,20 @@
         });
       }
     }
+    // Joined names („Bio + Restmüll“, two bins on one day on the waste tile): the parts one by one; text with „ · “
+    // is split there first (seg, the groups above).
+    if (core.indexOf(' + ') > 0 && core.indexOf(' · ') < 0) {
+      var pp = core.split(' + ');
+      var pd = pp.map(function (p) { var r = /[A-Za-zÄÖÜäöüß]/.test(p) ? one(p.trim(), t, (depth || 0) + 1) : null; return r === null ? p : r; });
+      if (pd.some(function (p, i) { return p !== pp[i]; })) return pd.join(' + ');
+    }
+    // A name with a counter („Bio +1“, the waste tile's short form: first bin and the others): the name alone,
+    // the counter stays as it is.
+    var cm = /^(.+?) \+(\d+)$/.exec(core);
+    if (cm && /[A-Za-zÄÖÜäöüß]/.test(cm[1])) {
+      var cn = one(cm[1].trim(), t, (depth || 0) + 1);
+      if (cn !== null) return cn + ' +' + cm[2];
+    }
     return null;
   }
 
@@ -331,7 +345,11 @@
     return lead + pct(out) + trail;
   }
 
-  // Text oder HTML: nur die Textstücke zwischen den Tags werden übersetzt.
+  // Attributes that name or describe an element to people: translated like text (in HTML and on elements).
+  var NAME_ATTRS = ['aria-label', 'title', 'placeholder', 'alt'];
+  var NAME_ATTR_RE = /(\s(?:aria-label|title|placeholder|alt)=)(?:"([^"]*)"|'([^']*)')/gi;
+
+  // Text oder HTML: nur die Textstücke zwischen den Tags (und Namens-Attribute) werden übersetzt.
   function tr(s) {
     if (typeof s !== 'string' || !s) return s;
     var t = phTable();
@@ -349,7 +367,11 @@
           // <span data-no-i18n>…</span>: selbst gewählte Namen (z. B. „Home“) bleiben wörtlich.
           if (keep) { if (/^<span\b/i.test(p)) keep++; else if (/^<\/span/i.test(p)) keep--; }
           else if (/^<span\b[^>]*\bdata-no-i18n\b/i.test(p)) keep = 1;
-          return p;
+          // Screen reader names and tooltips speak the shown language too (a11y round 14.11.2026).
+          return keep || inStyle || /\bdata-no-i18n\b/i.test(p) ? p : p.replace(NAME_ATTR_RE, function (m, pre, dq, sq) {
+            var q = dq != null ? '"' : "'", v = dq != null ? dq : sq;
+            return pre + q + (/[A-Za-zÄÖÜäöüß]/.test(v) ? seg(v, t) : v) + q;
+          });
         }
         return inStyle || keep ? p : seg(p, t);
       }).join('');
@@ -403,9 +425,22 @@
     var out = tr(v);
     if (out !== v) { n.data = out; stats.fixed++; }
   }
+  function fixAttrs(el) {
+    if (!el || el.nodeType !== 1 || !el.getAttribute) return;
+    if (el.closest && el.closest('[data-no-i18n]')) return;
+    for (var i = 0; i < NAME_ATTRS.length; i++) {
+      var v = el.getAttribute(NAME_ATTRS[i]);
+      if (!v || !/[A-Za-zÄÖÜäöüß]/.test(v)) continue;
+      var out = tr(v);
+      if (out !== v) { el.setAttribute(NAME_ATTRS[i], out); stats.fixed++; }
+    }
+  }
+  var ATTR_SEL = NAME_ATTRS.map(function (a) { return '[' + a + ']'; }).join(',');
   function fixTree(node) {
     if (node.nodeType === 3) { fixText(node); return; }
     if ((node.nodeType !== 1 && node.nodeType !== 11) || node.nodeName === 'STYLE' || node.nodeName === 'SCRIPT') return;
+    fixAttrs(node);
+    if (node.querySelectorAll) { var els = node.querySelectorAll(ATTR_SEL); for (var i = 0; i < els.length; i++) fixAttrs(els[i]); }
     var w = document.createTreeWalker(node, NodeFilter.SHOW_TEXT), n;
     while ((n = w.nextNode())) fixText(n);
   }
@@ -419,14 +454,34 @@
       if (!active()) return;
       list.forEach(function (m) {
         if (m.type === 'characterData') fixText(m.target);
+        else if (m.type === 'attributes') fixAttrs(m.target);
         else m.addedNodes.forEach(fixTree);
       });
-    }).observe(root, { childList: true, subtree: true, characterData: true });
+    }).observe(root, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: NAME_ATTRS });
   }
   window.casoraTrWatch = watch;
   var TAGS = ['button-card', 'casora-popup', 'casora-smart-row'];
+  // Casora's own windows hang on <body> (bell, menus, dialogs, search, screensaver …), outside the tiles and popups
+  // above. Each carries data-casora-window and is watched like a popup, so a text that skips tr is still translated
+  // (#175, r151). dev/unit/i18n_body_windows.mjs fails for a body window without the mark or a stated reason.
+  var WIN_ATTR = 'data-casora-window';
+  function watchWindow(el) {
+    if (!el || el.nodeType !== 1 || !el.hasAttribute || !el.hasAttribute(WIN_ATTR)) return;
+    watch(el);
+    if (el.shadowRoot) watch(el.shadowRoot);
+  }
+  function watchBody() {
+    var b = document.body;
+    if (!b || watched.has(b)) return;
+    watched.add(b);
+    new MutationObserver(function (list) {
+      list.forEach(function (m) { m.addedNodes.forEach(watchWindow); });
+    }).observe(b, { childList: true });
+  }
   function rescan() {
+    watchBody();
     if (!active()) return;
+    if (document.body && document.body.children) [].forEach.call(document.body.children, watchWindow);
     (function walk(root, d) {
       if (!root || d > 30 || !root.querySelectorAll) return;
       var all = root.querySelectorAll('*');

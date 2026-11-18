@@ -600,6 +600,7 @@
     "Abfall morgen": "Lixo amanhã",
     "Restmüll": "Indiferenciado",
     "Biomüll": "Orgânico",
+    "Bio": "Orgânico",
     "Papier": "Papel",
     "Gelber Sack": "Embalagens",
     "Wertstoff": "Reciclagem",
@@ -2967,7 +2968,11 @@
     "Sonstige": "Outros",
     "pro Stunde": "por hora",
     "pro Tag": "por dia",
-    "Nicht erfasst": "Não medido"
+    "Nicht erfasst": "Não medido",
+    "Wohlfühlbereich": "Intervalo de conforto",
+    "feucht": "húmido",
+    "Lüften nicht nötig": "Não é preciso ventilar",
+    "Optimal": "Ótimo"
   },
   "patterns": [
     [
@@ -3091,7 +3096,7 @@
       "Correspondência {1} %"
     ],
     [
-      "^Gestern (\\d{1,2}:\\d{2})$",
+      "^Gestern (\\d{1,2}:\\d{2}(?: [AP]M)?)$",
       "Ontem {1}"
     ],
     [
@@ -3875,6 +3880,10 @@
       "Última vez {1}"
     ],
     [
+      "^Zuletzt (.+) (vor \\d+ (?:Min\\.|Std\\.|T\\.|Tagen)|gestern|gerade eben)$",
+      "Último {1} {2}"
+    ],
+    [
       "^Zuletzt (.+)$",
       "Último {1}"
     ],
@@ -4543,11 +4552,11 @@
       "vs {1}"
     ],
     [
-      "^Heute (\\d\\d:\\d\\d)$",
+      "^Heute (\\d{1,2}:\\d{2}(?: [AP]M)?)$",
       "Hoje {1}"
     ],
     [
-      "^Morgen (\\d\\d:\\d\\d)$",
+      "^Morgen (\\d{1,2}:\\d{2}(?: [AP]M)?)$",
       "Amanhã {1}"
     ],
     [
@@ -5357,6 +5366,10 @@
     [
       "^Geräte · (\\d+)$",
       "Dispositivos · {1}"
+    ],
+    [
+      "^Wohlfühlbereich (\\d+)–(\\d+) %$",
+      "Intervalo de conforto {1}–{2} %"
     ]
   ]
 }

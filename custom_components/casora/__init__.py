@@ -11,6 +11,7 @@ from homeassistant.components.frontend import (
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity_platform import async_get_platforms
 
 from .assets import CasoraAssetsView
 from .scripts_view import STUDIO_LOADER, STUDIO_LOADER_KEY, CasoraPanelView, CasoraScriptsView, studio_loader, studio_stamp
@@ -29,6 +30,7 @@ from .frontend_version import async_setup_frontend_version, set_frontend_stamp
 from .dashboard_kinds import async_setup_dashboard_kinds
 from .updates import async_setup_updates
 from .options import async_setup_options
+from .entity_renames import async_setup_entity_renames, async_unload_entity_renames
 from .template_refresh import async_setup_template_refresh
 from .phone_badges import async_setup_phone_badges
 from .mealie_plan import CasoraMealieImageView, async_setup_mealie_plan
@@ -152,7 +154,8 @@ async def _sync_script_resources(hass: HomeAssistant, scripts_dir: str, keep_hem
         await _set_preload(hass, scripts_dir, None)
         _LOGGER.warning(
             "Casora: Lovelace resources are not writable (yaml mode). Add these "
-            "under lovelace: resources: as type module: %s",
+            "under lovelace: resources: as type module (from HA 2026.12 together with "
+            "lovelace: resource_mode: yaml): %s",
             ", ".join(wanted[n] for n in names),
         )
         return
@@ -260,6 +263,22 @@ async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+    """Set Casora up; a step that raises rolls back what the steps before it registered.
+
+    HA does not call async_unload_entry after a failed setup (only the entry's on_unload callbacks), so without
+    the rollback listeners, timers and services of the earlier steps stayed and the next try registered them twice.
+    """
+    try:
+        return await _async_setup_entry(hass, entry)
+    except BaseException:  # also CancelledError: HA cancels a setup that hangs at shutdown
+        try:
+            await _async_teardown(hass, entry, remove_panel=True, failed=True)
+        except Exception:  # noqa: BLE001 - the original error is the one to report
+            _LOGGER.exception("Casora: rollback after a failed setup incomplete")
+        raise
+
+
+async def _async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Register the panel assets and the sidebar entry."""
     # Designs first: the frontend is running, and an open dashboard reconnects while Casora
     # still loads. Without the design it would draw in the wrong look that long.
@@ -354,6 +373,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     async_setup_hemma_cleanup(hass)
     # Nach einem Update: unveränderte Vorlagen der Dashboards erneuern (template_refresh.py).
     async_setup_template_refresh(hass)
+    # An entity ID changed in HA: the dashboards and settings follow it (entity_renames.py, #206).
+    async_setup_entity_renames(hass)
     # Handy-Raumseite: Raum-Badges wie am Desktop, Variablen zur Laufzeit (phone_badges.py).
     async_setup_phone_badges(hass)
     # Recipe tile with Mealie: week plan and today's recipe through mealie's actions (mealie_plan.py, issue #140).
@@ -456,13 +477,17 @@ async def async_remove_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
     async_remove_ai_jobs(hass)
 
 
-async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    """Remove the sidebar entry."""
-    if not hass.data.get(DOMAIN, {}).get("reloading"):
+async def _async_teardown(hass: HomeAssistant, entry: ConfigEntry, *, remove_panel: bool, failed: bool = False) -> bool:
+    """Undo async_setup_entry: on unload, and after a setup that raised part way (then only what got that far).
+
+    Every step looks up what it stops in hass.data or removes by name, so a step that never ran is skipped.
+    """
+    if remove_panel:
         async_remove_panel(hass, PANEL_URL, warn_if_unknown=False)
     async_unload_helfer(hass)
     async_unload_theme(hass)
     async_unload_preload(hass)
+    async_unload_entity_renames(hass)
     # Otherwise they stay callable until the restart, even after removing Casora.
     for name in ("einrichten", "umstellen", "setup_overview", "setup_plan", *ACTION_SERVICES):
         hass.services.async_remove(DOMAIN, name)
@@ -491,4 +516,13 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     live = hass.data.get(DOMAIN, {}).pop("live", None)
     if live:
         live.stop()
-    return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
+    if not failed:
+        return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
+    # Failed setup: only the platforms that got set up (unloading one that never loaded logs an error in HA).
+    loaded = {p.domain for p in async_get_platforms(hass, DOMAIN) if p.config_entry is entry}
+    return await hass.config_entries.async_unload_platforms(entry, [p for p in PLATFORMS if p in loaded])
+
+
+async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+    """Remove the sidebar entry and stop everything setup started."""
+    return await _async_teardown(hass, entry, remove_panel=not hass.data.get(DOMAIN, {}).get("reloading"))

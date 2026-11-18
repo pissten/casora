@@ -523,8 +523,8 @@
     var a = window.casoraClimateActive ? window.casoraClimateActive(e) : {};
     return !!(a && a.heating);
   };
-  /* Same words as the thermostat tile: Heizt/Kühlt auf, "Ziel" at the target ("An" next to a number said
-     nothing); with a range heating aims at its lower and cooling at its upper bound. */
+  /* Same words as the thermostat tile: Heizt/Kühlt auf, "Bereit" at the target ("An" next to a number said
+     nothing, "Ziel 22°" repeated the stage); with a range heating aims at its lower and cooling at its upper bound. */
   F.status = function (o, states) {
     var e = states[o.id]; if (!e) return '—';
     var at = e.attributes || {}, t = num(at.temperature), lo = num(at.target_temp_low), hi = num(at.target_temp_high);
@@ -536,7 +536,8 @@
     if (a.cooling) { var c = deg(t != null ? t : hi); return c ? 'Kühlt auf ' + c : 'Kühlt'; }
     if (F.heating(o, states)) { var h = deg(t != null ? t : lo); return h ? 'Heizt auf ' + h : 'Heizt'; }
     if (e.state === 'auto' || e.state === 'heat_cool') return tt ? 'Automatik · ' + tt : 'Automatik';
-    if (e.state === 'heat' || e.state === 'cool') return tt ? 'Ziel ' + tt : 'Bereit';
+    // At the target the tile's word „Bereit“; the target stands on the stage (V5, owner 14.11.2026).
+    if (e.state === 'heat' || e.state === 'cool') return 'Bereit';
     if (e.state === 'dry') return 'Entfeuchten';
     if (e.state === 'fan_only') return 'Nur Lüfter';
     return tt ? 'Bereit · ' + tt : 'Bereit';
@@ -1411,7 +1412,8 @@
   R.next = function (states) {
     var c = states[cal()]; if (!c || !c.attributes || !c.attributes.message) return null;
     var t = new Date(String(c.attributes.start_time || '').replace(' ', 'T'));
-    if (isNaN(t) || dayStart(t) - dayStart(new Date()) > 6 * 86400000) return null;
+    // Six days ahead by the calendar (across 25.10. that is 145 hours).
+    if (isNaN(t) || Math.round((dayStart(t) - dayStart(new Date())) / 86400000) > 6) return null;
     return { name: c.attributes.message, when: t, min: parseMin(c.attributes.description) };
   };
   /* Kurzname für die Kachel (24.09.2026): nur der Kern des Gerichts, der volle Name steht im Popup.
@@ -1454,7 +1456,7 @@
   R.heroHtml = function (states) {
     var UI = window._casoraUI; if (!UI) return '';
     if (!states) { var ha0 = document.querySelector('home-assistant'); states = (ha0 && ha0.hass && ha0.hass.states) || {}; }
-    var nx = R.next(states) || ((R.cal.list || []).filter(function (x) { return dayStart(x.when) - dayStart(new Date()) <= 6 * 86400000; })[0] || null);
+    var nx = R.next(states) || ((R.cal.list || []).filter(function (x) { return Math.round((dayStart(x.when) - dayStart(new Date())) / 86400000) <= 6; })[0] || null);
     if (!nx) return UI.hero({ value: R.cal.list ? 'Nichts geplant' : '…', sub: R.cal.list ? 'Speiseplan der nächsten 7 Tage ist leer' : null, center: true });
     return UI.hero({ value: dayName(nx.when) + ': ' + R.short(nx.name), sub: nx.min ? mins(nx.min) : null, center: true });
   };
@@ -3894,7 +3896,8 @@
   // ── KI-Fazit bzw. letztes Update für die Statuskarte ──
   var lastLine = function (states) {
     var u = H.list && H.list[0];
-    return u ? 'Zuletzt ' + esc(nameOf(states, u.id)) + ' ' + agoMs(u.t) : '';
+    // The update's name stays as written (V24): only „Zuletzt … gestern“ around it is translated.
+    return u ? 'Zuletzt <span data-no-i18n>' + esc(nameOf(states, u.id)) + '</span> ' + esc(agoMs(u.t)) : '';
   };
   X.ov = function (states, hass, pend) {
     pend = pend || Object.keys(states).filter(function (id) { return id.indexOf('update.') === 0 && states[id].state === 'on'; });
@@ -4762,12 +4765,13 @@
         + ((!st.attributes.color_mode || st.attributes.color_mode === 'color_temp') && k ? ' · ' + Math.round(k / 50) * 50 + ' K' : '');
     } else sub = tr('Aus');   // short as every row (owner, 03.11.2026: no „zuletzt …“ beside „Aus“)
     var tg = attr({ a: 'toggle', id: id });
+    var label = shown != null ? shown : short(nameOf(id, states), roomName);
     // The open lamp stays in its room's list, marked as the one in the dial (owner, 01.11.2026): ring + aria-current.
     return '<div class="lps-row' + (on ? ' on' : '') + (na ? ' na' : '') + (self ? ' sel' : '') + '"'
       + (self ? ' aria-current="true"' : ' data-lps-tap="' + attr({ a: 'mi', id: id }) + '"') + '>'
       + '<div class="lps-ic" data-lps-tap="' + tg + '">' + glyph('light') + '</div>'
-      + '<div class="lps-tx"><b>' + esc(shown != null ? shown : short(nameOf(id, states), roomName)) + '</b><small>' + esc(sub) + '</small></div>'
-      + '<div class="lps-sw" role="switch" aria-checked="' + (on ? 'true' : 'false') + '" data-lps-tap="' + tg + '"></div>'
+      + '<div class="lps-tx"><b>' + esc(label) + '</b><small>' + esc(sub) + '</small></div>'
+      + '<div class="lps-sw" role="switch" tabindex="0" aria-label="' + esc(label) + '" aria-checked="' + (on ? 'true' : 'false') + '" data-lps-tap="' + tg + '"></div>'
       + '</div>';
   };
 
@@ -4887,6 +4891,21 @@
     });
     return out;
   };
+  // Lit lamps that support tone take it; fall back to two-tone lamps only when all are off.
+  // onlyOn (the house popup never switches lamps on): no targets while no lamp is lit.
+  // Unreachable or missing lamps are left out, so one of them does not hide the row (maintainer, 13.11.2026).
+  var whiteTargets = function (ids, states, onlyOn) {
+    var lit = ids.filter(function (id) { return states[id] && states[id].state === 'on'; });
+    if (lit.length) return lit.filter(function (id) { return hasCt(states[id]) || hasCol(states[id]); });
+    if (onlyOn) return [];
+    return ids.filter(function (id) { return states[id] && states[id].state === 'off' && hasCt(states[id]); });
+  };
+  // A shared none entry ends a running effect on the tone targets where possible.
+  var ctData = function (k, targets, states) {
+    var data = { color_temp_kelvin: k }, effect = S.fxEnd(targets, states);
+    if (effect) data.effect = effect;
+    return data;
+  };
   // Stage S1: brightness of the dimmable lamps (the ones that are on, else all), light colour as the segment.
   // moons: the room's scenes as moons around the dial (a function: its UI.quick call is collected).
   var v3Stage = function (ids, states, onlyOn, moons) {
@@ -4901,7 +4920,7 @@
     var v = s.on ? (s.pct != null ? s.pct : 100) : plainOn ? 100 : 0;
     var target = lit.length ? lit : (onlyOn ? [] : dim);
     var ct = ids.filter(function (id) { return hasCt(states[id]); });
-    var ctOn = ct.filter(function (id) { return states[id].state === 'on'; });
+    var ctT = whiteTargets(ids, states, onlyOn);
     var seg = null, curLbl = '';
     // Colour lamps (hs/rgb/rgbw/rgbww/xy; an HA group lists its members' modes): „Farbe“ in the segment opens the colour
     // wheel page (33-color-wheel.js) for the ones that are on, else all (owner, 01.11.2026: no colour in the v3 popup).
@@ -4912,19 +4931,15 @@
     // white in colour mode („white“), a colour („col“) or a running effect („fx“), and its colour for the ring.
     var tones = S.lampTones(ids, states, pr);
     var same = tones.length && tones.every(function (t) { return t.kind === tones[0].kind; }) ? tones[0].kind : null;
-    // A white tone also ends running effects: the lamp's none entry along (S.fxEnd), and colour-only lamps take the tone
-    // too (HA emulates color_temp_kelvin as a colour on them, docs/ha-annahmen.md).
-    var ctData = function (k, tg) { var d = { color_temp_kelvin: k }, e = S.fxEnd(tg, states); if (e) d.effect = e; return d; };
-    if (ct.length && (!onlyOn || ctOn.length)) {
-      var colOnly = colOn.filter(function (id) { return !hasCt(states[id]); });
-      var ctT = ctOn.length ? ctOn.concat(colOnly) : ct;
+    // Colour-only lamps take the tone too (HA emulates color_temp_kelvin as a colour on them, docs/ha-annahmen.md).
+    if (ct.length && ctT.length) {
       if (same && same.indexOf('ct') === 0) {
         var k0 = tones[0].k;
         curLbl = tr(pr[Number(same.slice(2))].l) + ' ' + Math.round(k0 / 50) * 50 + ' K';
       }
       seg = pr.map(function (p, i) {
         return { label: tr(p.l), active: same === 'ct' + i,
-          svc: { domain: 'light', service: 'turn_on', data: ctData(p.k, ctT), target: { entity_id: ctT } } };
+          svc: { domain: 'light', service: 'turn_on', data: ctData(p.k, ctT, states), target: { entity_id: ctT } } };
       });
     }
     if (col.length && (!onlyOn || colOn.length)) {
@@ -5133,7 +5148,8 @@
         + '<i style="width:' + esc(v) + '%"></i>' + barText(v) + '</div>';
     }
     var ct = ids.filter(function (id) { return hasCt(states[id]); });
-    if (ct.length) {
+    var ctT = whiteTargets(ids, states);
+    if (ct.length && ctT.length) {
       var ctOn = ct.filter(function (id) { return states[id].state === 'on'; });
       var cur = null;
       ctOn.some(function (id) {
@@ -5146,8 +5162,8 @@
       if (cur != null) pr.forEach(function (p, i) { if (best < 0 || Math.abs(p.k - cur) < Math.abs(pr[best].k - cur)) best = i; });
       left += '<div class="lps-lbl' + (left ? ' lps-gap' : '') + '">' + esc(tr('Lichtfarbe')) + '</div><div class="lps-seg">'
         + pr.map(function (p, i) {
-          return '<div class="lps-sg' + (i === best ? ' on' : '') + '" role="button" data-lps-tap="'
-            + attr({ a: 'ct', ids: ctOn.length ? ctOn : ct, k: p.k }) + '">'
+          return '<div class="lps-sg' + (i === best ? ' on' : '') + '" role="button" tabindex="0" data-lps-tap="'
+            + attr({ a: 'ct', ids: ctT, k: p.k }) + '">'
             + '<i class="lps-dot" style="background:' + esc(p.d === 'cold' ? 'var(--casora-soft-dot-cold, var(--casora-lps-dot-cold))' : 'var(--casora-lps-dot-' + p.d + ')') + '"></i>' + esc(tr(p.l)) + '</div>';
         }).join('') + '</div>';
     }
@@ -5159,8 +5175,8 @@
       // 1.3 header A: scenes with their own section heading.
       left += '<div class="lps-lbl' + (left ? ' lps-gap' : '') + '">' + esc(tr('Szenen')) + '</div>'
         + '<div class="lps-chips" style="margin-top:0">' + sc2.map(function (id) {
-        return '<div class="lps-chip' + (id === last ? ' on' : '') + '" role="button" data-lps-tap="' + attr({ a: 'scene', id: id }) + '">'
-          + esc(short(nameOf(id, states), room)) + '</div>';
+        return '<div class="lps-chip' + (id === last ? ' on' : '') + '" role="button" tabindex="0" data-lps-tap="' + attr({ a: 'scene', id: id }) + '">'
+          + '<span data-no-i18n>' + esc(short(nameOf(id, states), room)) + '</span></div>';
       }).join('') + '</div>';
     }
     var lampList = sc.room ? S.keepOrder(sc.room.filter(function (id) { return states[id]; }), sc) : ids;
@@ -5248,7 +5264,7 @@
         return '<div class="lps-row' + (s.on ? ' on' : '') + '" data-lps-tap="' + attr({ a: 'room', gid: cfg.gid, idx: i, name: r.name }) + '">'
           + '<div class="lps-ic" data-lps-tap="' + attr(sc) + '">' + glyph('light') + '</div>'
           + '<div class="lps-tx"><b>' + esc(r.name) + '</b><small>' + esc(subline(s, false)) + '</small></div>'
-          + '<div class="lps-sw" role="switch" aria-checked="' + (s.on ? 'true' : 'false') + '" data-lps-tap="' + attr(sc) + '"></div>'
+          + '<div class="lps-sw" role="switch" tabindex="0" aria-label="' + esc(r.name) + '" aria-checked="' + (s.on ? 'true' : 'false') + '" data-lps-tap="' + attr(sc) + '"></div>'
           + '</div>';
       }).join('') + '</div>';
   };
@@ -5303,6 +5319,19 @@
   /* Nur Lichter, nur was der Benutzer sieht („Wer sieht das?“; im Haus auch ohne ausgeblendete Räume). */
   S.headFor = function (cfg, hass) {
     var states = hass.states, sc = scopeOf(cfg);
+    /* V9 (14.11.2026): „Wer sieht das?“ needs the dashboard's config, which loads on first use (casoraVisibleIdsNow:
+       null until then). On the phone the house light popup was the first to ask after a page load: the lists came
+       back null, the hook threw, and no later sync came – the house's „Alle aus“ switch was missing. Until the config
+       is there: no switch yet, and the shown popup syncs its head again once it has arrived. */
+    if (window.casoraVisibleIdsNow && window.casoraVisibleIdsNow([]) === null) {
+      if (window.casoraVisibleIds && !S._visWait) S._visWait = window.casoraVisibleIds([]).then(function () {
+        S._visWait = null;
+        var p = window.casoraPopup && window.casoraPopup.shown;
+        // Only once the config is really there (no HA connection: it stays null – no endless round).
+        if (window.casoraVisibleIdsNow([]) !== null && p && p._syncHeadSwitch && p.hasAttribute('open')) p._syncHeadSwitch();
+      });
+      return null;
+    }
     var lights = function (l, house) {
       var ids = (l || []).filter(function (x, i, a) { return states[x] && String(x).indexOf('light.') === 0 && a.indexOf(x) === i; });
       return window.casoraVisibleIdsNow ? window.casoraVisibleIdsNow(ids, house ? { rooms: true } : undefined) : ids;
@@ -5423,7 +5452,7 @@
     } else if (d.a === 'ct') {
       var sg = el.parentNode && el.parentNode.querySelectorAll('.lps-sg');
       if (sg) sg.forEach(function (x) { x.classList.toggle('on', x === el); });
-      h.callService('light', 'turn_on', { color_temp_kelvin: d.k }, { entity_id: d.ids });
+      h.callService('light', 'turn_on', ctData(d.k, d.ids, h.states), { entity_id: d.ids });
     } else if (d.a === 'room') {
       /* Popup v3 (richtlinien §4.4): a room of the house is a sub page in the same popup – ‹ back to the rooms,
          label = the room, title = „Beleuchtung“ (owner, 03.11.2026). Without v3 the room chips stay and the room is a
@@ -5496,6 +5525,13 @@
     tDone = Date.now(); if (ev.cancelable) ev.preventDefault(); ev.stopPropagation();
     act(el);
   }, { capture: true, passive: false });
+  window.addEventListener('keydown', function (ev) {
+    if (ev.key !== 'Enter' && ev.key !== ' ') return;
+    var el = ev.composedPath ? ev.composedPath()[0] : ev.target;
+    if (!el || !el.hasAttribute || !el.hasAttribute('data-lps-tap') || !/^(switch|button)$/.test(el.getAttribute('role') || '')) return;
+    ev.preventDefault(); ev.stopPropagation();
+    act(el);
+  }, true);
   window.addEventListener('click', function (ev) {
     var el = find(ev, 'data-lps-tap'); if (!el) return;
     ev.preventDefault(); ev.stopPropagation();

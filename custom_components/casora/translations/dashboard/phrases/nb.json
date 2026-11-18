@@ -603,6 +603,7 @@
     "Abfall morgen": "Avfall i morgen",
     "Restmüll": "Restavfall",
     "Biomüll": "Matavfall",
+    "Bio": "Matavfall",
     "Papier": "Papir",
     "Gelber Sack": "Plastemballasje",
     "Wertstoff": "Gjenvinning",
@@ -694,7 +695,7 @@
     "Status": "Status",
     "Modus": "Modus",
     "Zustand": "Tilstand",
-    "Zielwert": "Målverdi",
+    "Zielwert": "Mål",
     "Feinstaub PM2,5": "Svevestøv PM2,5",
     "Bodenfeuchtigkeit": "Jordfuktighet",
     "Beleuchtungsstärke": "Belysningsstyrke",
@@ -2960,7 +2961,11 @@
     "Sonstige": "Andre",
     "pro Stunde": "per time",
     "pro Tag": "per dag",
-    "Nicht erfasst": "Ikke målt"
+    "Nicht erfasst": "Ikke målt",
+    "Wohlfühlbereich": "Komfortområde",
+    "feucht": "fuktig",
+    "Lüften nicht nötig": "Ingen lufting nødvendig",
+    "Optimal": "Optimalt"
   },
   "patterns": [
     [
@@ -3084,7 +3089,7 @@
       "Treff {1}%"
     ],
     [
-      "^Gestern (\\d{1,2}:\\d{2})$",
+      "^Gestern (\\d{1,2}:\\d{2}(?: [AP]M)?)$",
       "I går {1}"
     ],
     [
@@ -3868,6 +3873,10 @@
       "Sist sett {1}"
     ],
     [
+      "^Zuletzt (.+) (vor \\d+ (?:Min\\.|Std\\.|T\\.|Tagen)|gestern|gerade eben)$",
+      "Sist {1} {2}"
+    ],
+    [
       "^Zuletzt (.+)$",
       "Sist {1}"
     ],
@@ -4536,11 +4545,11 @@
       "mot {1}"
     ],
     [
-      "^Heute (\\d\\d:\\d\\d)$",
+      "^Heute (\\d{1,2}:\\d{2}(?: [AP]M)?)$",
       "I dag {1}"
     ],
     [
-      "^Morgen (\\d\\d:\\d\\d)$",
+      "^Morgen (\\d{1,2}:\\d{2}(?: [AP]M)?)$",
       "I morgen {1}"
     ],
     [
@@ -5350,6 +5359,10 @@
     [
       "^Geräte · (\\d+)$",
       "Enheter · {1}"
+    ],
+    [
+      "^Wohlfühlbereich (\\d+)–(\\d+) %$",
+      "Komfortområde {1}–{2}%"
     ]
   ]
 }

@@ -35,6 +35,17 @@ for (const name of ['paper', 'Restmüll 240 l', 'GFT (groen)', 'recycling bin'])
 assert.equal(tile('Restmüll', 0, 'en'), 'General waste today', 'a known bin name is still translated with the sentence');
 assert.equal(tile('Restmüll 240 l', 0, 'de'), 'Heute Restmüll 240 l', 'German unchanged');
 assert.equal(tile('Bio', 1, 'de'), 'Morgen Bio');
+// r68 (English Studio preview): two bins on one day („Bio + Restmüll“) stayed German on the tile, the runtime
+// translator did not know the joined name; now it goes part by part, and „Bio“ has a phrase of its own.
+assert.equal(tile('Bio + Restmüll', 0, 'en'), 'Organic + General waste today', 'two bins today');
+assert.equal(tr(tile('Bio + Restmüll', 2, 'en')), '2 days · Organic + General waste', 'two bins in 2 days (translated on the way out)');
+assert.equal(tr('Bio + Tonne Hof'), 'Organic + Tonne Hof', 'an own name in a joined one stays');
+assert.equal(tr('Tonne + Hof'), 'Tonne + Hof', 'nothing known: unchanged');
+// Narrow phone tile (short form „In 2 T. · Bio +1“, first bin and a counter): the name stayed German in every
+// language while the popup said „Organic“ (Alltag round 14.11.2026). The name is translated, the counter stays.
+assert.equal(tr('In 2 T. · Bio +1'), 'In 2 d · Organic +1', 'short form: first bin translated');
+assert.equal(tr('In 5 T. · Restmüll +2'), 'In 5 d · General waste +2');
+assert.equal(tr('In 2 T. · Tonne Hof +1'), 'In 2 d · Tonne Hof +1', 'an own name stays');
 
 // 2. Name + state word of the alarm (01-basis.js describe: an + ' ' + word in lower case).
 assert.equal(tr('Verisure Alarm aus'), 'Verisure Alarm off');

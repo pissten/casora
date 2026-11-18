@@ -557,10 +557,7 @@ window.casoraIsPlant = window.casoraIsPlant || function (hass, id) {
     // stays when nothing else is found, so the tile can still say the source is unreachable.
     var calGiven = V.trash_calendar || cfg.calendar || null;
     var calendar = (calGiven && S[calGiven] ? calGiven : null) || Object.keys(S).filter(function (eid) {
-      if (eid.indexOf('calendar.') !== 0) return false;
-      var e = reg(hass)[eid];
-      return (e && e.platform === 'waste_collection_schedule')
-        || /^waste collection schedule/i.test((S[eid].attributes || {}).friendly_name || '');
+      return eid.indexOf('calendar.') === 0 && isWasteCalendar(hass, eid, null);
     }).sort()[0] || calGiven;
     // Calendar only, no bin sensors (issue #27): one bin per event title from the preloaded
     // waste calendar, countdown from its next event. Ids are synthetic (no HA state behind them).
@@ -824,6 +821,12 @@ window.casoraIsPlant = window.casoraIsPlant || function (hass, id) {
     return key ? (all[key] || {}) : all;
   }
   window.casoraSettings = settings;
+  // #194: the step of the quieter/louder keys (Studio › Settings › Home & devices › Music and players): 1, 2, 5 or 10 %
+  // as a fraction. null = not set: each key keeps its own step (quick menu: the player's volume_up/down, older popup 5 %).
+  window.casoraVolumeStep = function () {
+    var v = Number(settings('media').volume_step);
+    return [1, 2, 5, 10].indexOf(v) >= 0 ? v / 100 : null;
+  };
 
   // ── Network: routers, access points, switches, WLANs, latency (27.09.2026) ────
   // Maker-neutral (UniFi, FRITZ!Box, TP-Link, ASUS, Netgear, MikroTik,
@@ -1511,7 +1514,11 @@ window.casoraIsPlant = window.casoraIsPlant || function (hass, id) {
         && !plants.some(function (p) { return id.slice(7).indexOf(p) === 0; })) {
         add(id, 'co2', parseFloat(s) >= co2);
       }
-      if (warn && id.indexOf(warn) === 0) add(id, 'warning', s === 'on');
+      // A „Wetter & Warnungen“ slot is a warning source like NINA (#196, 01-basis.js casoraWarnings.isSlot).
+      if ((warn && id.indexOf(warn) === 0)
+        || (window.casoraWarnings && window.casoraWarnings.isSlot && window.casoraWarnings.isSlot((hass.entities || {})[id]))) {
+        add(id, 'warning', s === 'on');
+      }
       // DWD level sensor (issue #55): the same source as in the bell (01-basis.js casoraWarnings).
       else if (dom === 'sensor' && window.casoraWarnings && window.casoraWarnings.isLevelSensor(st, id)
         && !window.casoraWarnings.isAdvance(st, id)) {
@@ -1534,6 +1541,56 @@ window.casoraIsPlant = window.casoraIsPlant || function (hass, id) {
     });
     return Object.keys(out).sort().map(function (id) { return out[id]; });
   }
+  // casora-calendars:start
+  // The calendars that count (V26): one rule for the calendar tile, the line under the greeting and the screensaver.
+  // A list of the tile's own (vars.calendars), else the calendars picked under Settings › Home & devices › Calendars,
+  // else every calendar except holidays and working days (Workday, Holiday integrations), waste calendars (Casora's
+  // waste detection) and those disabled or hidden in Home Assistant. Returns [{ entity, name, color, tile }];
+  // tile: false = shown only in the calendar popup (callers that list appointments leave it out).
+  var CAL_PALETTE = ['#0A84FF', '#FF453A', '#30D158', '#BF5AF2', '#FF9F0A', '#64D2FF', '#FFD60A', '#FF375F'];
+  var calNormMemo = typeof WeakMap === 'function' ? new WeakMap() : null;
+  var calAutoMemo = { S: null, E: null, cfg: null, out: [] };
+  // Waste Collection Schedule's calendars (or the waste calendar Casora uses) are pickups, not appointments.
+  function isWasteCalendar(hass, id, wasteCal) {
+    var e = ((hass && hass.entities) || {})[id], st = ((hass && hass.states) || {})[id];
+    return id === wasteCal || !!(e && e.platform === 'waste_collection_schedule')
+      || /^waste collection schedule/i.test(((st && st.attributes) || {}).friendly_name || '');
+  }
+  function calNorm(list) {
+    var hit = calNormMemo && calNormMemo.get(list);
+    if (hit) return hit;
+    var out = list.map(function (c) { return typeof c === 'string' ? { entity: c } : c; })
+      .filter(function (c) { return c && typeof c.entity === 'string' && c.entity.indexOf('calendar.') === 0; });
+    if (calNormMemo) calNormMemo.set(list, out);
+    return out;
+  }
+  window.casoraCalendars = function (hass, vars) {
+    var v = vars && vars.calendars;
+    if (Array.isArray(v) && v.length) return calNorm(v);
+    var own = null;
+    try { own = window.casoraSettings ? window.casoraSettings().calendars : null; } catch (e) { own = null; }
+    if (Array.isArray(own) && own.length) {
+      var mine = calNorm(own);
+      if (mine.length) return mine;
+    }
+    var S = hass && hass.states;
+    if (!S) return calAutoMemo.out;
+    var E = hass.entities || {}, cfg = window.CASORA_SETTINGS || null;
+    if (calAutoMemo.S === S && calAutoMemo.E === E && calAutoMemo.cfg === cfg) return calAutoMemo.out;
+    var wasteCal = null;
+    try { wasteCal = window.casoraDevice && window.casoraDevice.waste ? window.casoraDevice.waste(hass, {}).calendar : null; } catch (e) { wasteCal = null; }
+    var out = Object.keys(S).filter(function (id) {
+      if (id.indexOf('calendar.') !== 0) return false;
+      var e = E[id];
+      if (e && (e.hidden || e.hidden_by || e.disabled_by || e.platform === 'workday' || e.platform === 'holiday')) return false;
+      return !isWasteCalendar(hass, id, wasteCal);
+    }).sort().map(function (id, n) {
+      return { entity: id, name: (S[id].attributes || {}).friendly_name || id, color: CAL_PALETTE[n % CAL_PALETTE.length] };
+    });
+    calAutoMemo = { S: S, E: E, cfg: cfg, out: out };
+    return out;
+  };
+  // casora-calendars:end
   // casora-home-next:start
   // The line under the Home greeting (#157, variables.casora_greeting_next): next calendar event and next waste pickup.
   window.casoraHomeNext = function (hass, vars, now) {
@@ -1549,34 +1606,34 @@ window.casoraIsPlant = window.casoraIsPlant || function (hass, id) {
     };
     var W = null;
     try { W = window.casoraDevice && window.casoraDevice.waste ? window.casoraDevice.waste(hass, {}) : null; } catch (e) { W = null; }
-    var best = null, R = hass.entities || {};
-    // The calendars picked in the Studio (Settings › Home & devices › Calendars) count, as on the calendar tile (#189);
-    // one shown only in the popup (tile: false) is no appointment. Without a pick, all calendars.
-    var own = null;
-    try { own = window.casoraSettings ? window.casoraSettings().calendars : null; } catch (e) { own = null; }
-    var picked = null;
-    if (Array.isArray(own) && own.length) {
-      picked = {};
-      own.forEach(function (c) { var id = typeof c === 'string' ? c : c && c.tile !== false && c.entity; if (id) picked[id] = 1; });
-    }
-    Object.keys(S).forEach(function (id) {
-      if (id.indexOf('calendar.') !== 0 || (W && W.calendar === id) || (picked && !picked[id])) return;
-      // A calendar hidden or disabled in Home Assistant is not shown (reported in #157: the Workday sensor's calendar,
-      // hidden with its device); the Workday integration's calendar („Workday Sensor“ every working day) is no appointment.
-      var e = R[id];
-      if (e && (e.hidden || e.disabled_by || e.platform === 'workday')) return;
+    var best = null;
+    var bins = W && Array.isArray(W.bins) ? W.bins.filter(function (b) { return b && b.days != null && isFinite(b.days) && b.days >= 0; }).sort(function (a, b) { return a.days - b.days; }) : [];
+    // #205: while the waste part shows a pickup, a waste calendar picked in the Studio is no next event (the pickup
+    // stood in the line twice), nor is an event of another calendar named exactly like a bin on its pickup day.
+    var sameBin = function (title, d) {
+      var n = Math.round((new Date(d.getFullYear(), d.getMonth(), d.getDate()) - day0) / 86400000), m = String(title).trim().toLowerCase();
+      return bins.some(function (b) { return b.days === n && String(b.label || '').trim().toLowerCase() === m; });
+    };
+    // The calendars that count, as on the calendar tile and the screensaver (V26, casoraCalendars); one shown only in
+    // the popup (tile: false) is no appointment.
+    var cals = window.casoraCalendars ? window.casoraCalendars(hass, null) : [];
+    cals.forEach(function (c) {
+      var id = c.entity;
+      if (c.tile === false || !S[id]) return;
+      if (bins.length && isWasteCalendar(hass, id, W && W.calendar)) return;
       var a = S[id].attributes || {};
       if (!a.message || !a.start_time) return;
       var d = new Date(String(a.start_time).replace(' ', 'T'));
-      if (!isNaN(d) && (!best || d < best.d)) best = { d: d, title: a.message, allDay: !!a.all_day, on: S[id].state === 'on' };
+      if (isNaN(d) || (bins.length && sameBin(a.message, d))) return;
+      if (!best || d < best.d) best = { d: d, title: a.message, allDay: !!a.all_day, on: S[id].state === 'on' };
     });
     var parts = [];
     if (best) {
       var hm = best.allDay ? '' : ' ' + String(best.d.getHours()).padStart(2, '0') + ':' + String(best.d.getMinutes()).padStart(2, '0');
       parts.push((best.on && !best.allDay ? tr('Jetzt') : word(best.d) + hm) + ' ' + best.title);
     }
-    var bins = W && Array.isArray(W.bins) ? W.bins.filter(function (b) { return b && b.days != null && isFinite(b.days) && b.days >= 0; }).sort(function (a, b) { return a.days - b.days; }) : [];
-    if (bins.length) parts.push(word(new Date(day0.getFullYear(), day0.getMonth(), day0.getDate() + bins[0].days)) + ' ' + bins[0].label);
+    // The line is no-i18n (the calendar title is the user's own): the bin name is translated here, as on the waste tile.
+    if (bins.length) parts.push(word(new Date(day0.getFullYear(), day0.getMonth(), day0.getDate() + bins[0].days)) + ' ' + tr(bins[0].label));
     return parts.join(' · ');
   };
   // casora-home-next:end
@@ -1855,6 +1912,24 @@ window.casoraIsPlant = window.casoraIsPlant || function (hass, id) {
     })();
   }
 
+  // ── Most important finding of the security sub-line (owner, 13.11.2026) ─────────
+  // Rank as everywhere in the badge: a jammed lock first (casoraSecurityLevel: always „alarm“; a triggered alarm says
+  // „Alarm!“ alone before this is asked), then what is open (doors, windows, gates, locks, blinds), then what is
+  // tilted, then what is offline (the old lead word: „N offen“, else tilted, else offline), then „Alarm aus“: an alarm
+  // that is off is normal by day and must not push the real findings aside (owner, 14.11.2026, „2B“). Within one rank
+  // the line's own order decides (the usual one or the Studio's security_sub_order). L = the list of
+  // casoraSecuritySummary ([word, icon, number, offline?, key, kind]); returns the index of the lead, -1 if empty.
+  var SEC_LEAD_RANK = { jammed: 0, open: 1, tilted: 2, offline: 3, disarmed: 4 };
+  window.casoraSecLead = function (L) {
+    var best = -1, r = 99;
+    (L || []).forEach(function (x, i) {
+      var k = SEC_LEAD_RANK[x && x[5]];
+      if (k === undefined) k = 5;
+      if (k < r) { r = k; best = i; }
+    });
+    return best;
+  };
+
   // ── Sub-line of the security group badge (Soft/Fog, 06.10.2026) ─────────
   // sec = count from casora_badge_security_group (triggered, disarmed, locks, doors, gates,
   // windows, windowsTilted, doorsTilted, covers, lockDead, camDead, insecure, problem).
@@ -1863,7 +1938,7 @@ window.casoraIsPlant = window.casoraIsPlant || function (hass, id) {
   // o.order: security_sub_order (casoraSecSub), the Studio's own order of the kinds.
   // Returns { text, html }: text is always the list in words (also for tooltip/screen reader),
   // html only for 'short' with findings, otherwise null.
-  // Order: alarm off, door, window open, tilted, gate, lock, covers, offline.
+  // Order: door, window open, tilted, gate, lock, covers, offline, alarm off (last: the real findings first, 2B).
   window.casoraSecuritySummary = function (sec, o) {
     var S = sec || {};
     o = o || {};
@@ -1873,21 +1948,22 @@ window.casoraIsPlant = window.casoraIsPlant || function (hass, id) {
       var al = String(o.alarmState || '').toLowerCase();
       return { text: ALARM_MODE[al] ? 'Aktiv · ' + ALARM_MODE[al] : 'Alles sicher', html: null };
     }
-    // [word, icon, number, offline?, key]; words with a number are in phrases/en.json.
+    // [word, icon, number, offline?, key, kind]; kind ranks the lead (casoraSecLead); words with a number are in phrases/en.json.
     var L = [];
-    if (S.disarmed) L.push(['Alarm aus', null, 0, false, 'alarm']);
-    if (S.doors) L.push([n(S.doors, 'Tür offen', 'Türen offen'), 'door-open', S.doors, false, 'doors']);
-    if (S.windows) L.push([n(S.windows, 'Fenster offen', 'Fenster offen'), 'window-open', S.windows, false, 'windows']);
-    if (S.windowsTilted) L.push([n(S.windowsTilted, 'Fenster gekippt', 'Fenster gekippt'), 'window-tilt', S.windowsTilted, false, 'windows']);
-    if (S.doorsTilted) L.push([n(S.doorsTilted, 'Tür gekippt', 'Türen gekippt'), 'window-tilt', S.doorsTilted, false, 'doors']);
-    if (S.gates) L.push([n(S.gates, 'Tor offen', 'Tore offen'), 'garage', S.gates, false, 'gates']);
-    if (S.locks) L.push([n(S.locks, 'Schloss offen', 'Schlösser offen'), 'lock-open', S.locks, false, 'locks']);
-    if (S.lockJammed) L.push([S.lockJammed === 1 ? 'Schloss klemmt' : S.lockJammed + ' Schlösser klemmen', 'lock-unlocking', S.lockJammed, false, 'locks']);
+    if (S.doors) L.push([n(S.doors, 'Tür offen', 'Türen offen'), 'door-open', S.doors, false, 'doors', 'open']);
+    if (S.windows) L.push([n(S.windows, 'Fenster offen', 'Fenster offen'), 'window-open', S.windows, false, 'windows', 'open']);
+    if (S.windowsTilted) L.push([n(S.windowsTilted, 'Fenster gekippt', 'Fenster gekippt'), 'window-tilt', S.windowsTilted, false, 'windows', 'tilted']);
+    if (S.doorsTilted) L.push([n(S.doorsTilted, 'Tür gekippt', 'Türen gekippt'), 'window-tilt', S.doorsTilted, false, 'doors', 'tilted']);
+    if (S.gates) L.push([n(S.gates, 'Tor offen', 'Tore offen'), 'garage', S.gates, false, 'gates', 'open']);
+    if (S.locks) L.push([n(S.locks, 'Schloss offen', 'Schlösser offen'), 'lock-open', S.locks, false, 'locks', 'open']);
+    if (S.lockJammed) L.push([S.lockJammed === 1 ? 'Schloss klemmt' : S.lockJammed + ' Schlösser klemmen', 'lock-unlocking', S.lockJammed, false, 'locks', 'jammed']);
     // Selected covers open in the evening/night (#76, 34-security-covers.js), Home only.
-    if (S.covers) L.push([n(S.covers, 'Jalousie offen', 'Jalousien offen'), 'cover_open', S.covers, false, 'covers']);
-    if (S.lockDead) L.push([n(S.lockDead, 'Schloss offline', 'Schlösser offline'), 'lock', S.lockDead, true, 'locks']);
-    if (S.camDead) L.push([n(S.camDead, 'Kamera offline', 'Kameras offline'), 'camera', S.camDead, true, 'cameras']);
-    // Own order from the Studio (security_sub_order): by kind, the lead word stays first.
+    if (S.covers) L.push([n(S.covers, 'Jalousie offen', 'Jalousien offen'), 'cover_open', S.covers, false, 'covers', 'open']);
+    if (S.lockDead) L.push([n(S.lockDead, 'Schloss offline', 'Schlösser offline'), 'lock', S.lockDead, true, 'locks', 'offline']);
+    if (S.camDead) L.push([n(S.camDead, 'Kamera offline', 'Kameras offline'), 'camera', S.camDead, true, 'cameras', 'offline']);
+    // Alarm off: a sign behind the findings (icon, no number); alone it stays in words like any single finding.
+    if (S.disarmed) L.push(['Alarm aus', 'shield_off', 0, false, 'alarm', 'disarmed']);
+    // Own order from the Studio (security_sub_order): by kind; the lead (most important finding) still goes first.
     if (o.order && window.casoraSecSub) L = window.casoraSecSub.sort(L, o.order, function (x) { return x[4]; });
     var text = L.map(function (x) { return x[0]; }).join(' · ');
     if (o.summary === 'detailed') return { text: text, html: null };
@@ -1900,25 +1976,23 @@ window.casoraIsPlant = window.casoraIsPlant || function (hass, id) {
     var tr = function (t) { return typeof window.casoraTr === 'function' ? window.casoraTr(t) : t; };
     var escAttr = function (t) { return String(t == null ? '' : t).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
     var url = function (k) { return typeof window.casoraIconUrl === 'function' ? window.casoraIconUrl(k) : '/casora_assets/icons/' + k + '.svg'; };
-    var items = L.map(function (x) {
-      if (!x[1]) return '<span class="cs-sum-item">' + escAttr(x[0]) + '</span>';
+    // Several findings: the most important one in words, the rest as icons with a number (owner, 13.11.2026 – a
+    // count like „4 offen“ in front of four icons said nothing about what matters most). Lead = window.casoraSecLead.
+    var li = window.casoraSecLead(L);
+    var items = L.map(function (x, i) {
+      if (i === li || !x[1]) return '<span class="cs-sum-item' + (i === li ? ' cs-sum-lead' : '') + '" style="white-space:nowrap">' + escAttr(x[0]) + '</span>';
       var lab = tr(x[0]), u = url(x[1]);
       return '<span class="cs-sum-item" role="img" aria-label="' + escAttr(lab) + '" title="' + escAttr(lab) + '"'
         + ' style="display:inline-flex;align-items:center;gap:3px;white-space:nowrap">'
         + '<span aria-hidden="true" style="position:relative;display:inline-block;width:1.05em;height:1.05em;flex:none">'
         + '<span style="position:absolute;inset:0;background-color:currentColor;-webkit-mask:url(\'' + u + '\') center / contain no-repeat;mask:url(\'' + u + '\') center / contain no-repeat;' + (x[3] ? 'opacity:.7;' : '') + '"></span>'
         + (x[3] ? '<span style="position:absolute;left:-12%;top:50%;width:124%;height:1.6px;margin-top:-0.8px;border-radius:1px;background:currentColor;transform:rotate(-45deg)"></span>' : '')
-        + '</span><span aria-hidden="true" style="font-variant-numeric:tabular-nums;font-weight:700">' + x[2] + '</span></span>';
+        + '</span>' + (x[2] ? '<span aria-hidden="true" style="font-variant-numeric:tabular-nums;font-weight:700">' + x[2] + '</span>' : '') + '</span>';
     });
+    // The lead goes first, the rest keep their order (the usual one or the Studio's).
+    if (li > 0) items.unshift(items.splice(li, 1)[0]);
     // Height = line height of the badge sub-line (.badge-sub line-height 1.2): with 1.25em the
     // security badge was 0.6 px taller than every other badge (polish 1.3, d-kacheln).
-    /* Icons alone said nothing to a newcomer (review 2, E31: „🔓1 ▢2 ▯1 ⌀1“): a short word leads – what is open,
-       else tilted, else offline. */
-    var sumOf = function (keys) { return keys.reduce(function (a, k) { return a + (Number(S[k]) || 0); }, 0); };
-    var nOpen = sumOf(['doors', 'gates', 'locks', 'windows', 'covers']), nTilt = sumOf(['windowsTilted', 'doorsTilted']);
-    var nJam = sumOf(['lockJammed']), nDead = sumOf(['lockDead', 'camDead']);
-    var lead = nOpen ? nOpen + ' offen' : nJam ? (nJam === 1 ? '1 klemmt' : nJam + ' klemmen') : nTilt ? nTilt + ' gekippt' : nDead ? nDead + ' offline' : '';
-    if (lead) items.unshift('<span class="cs-sum-lead" aria-hidden="true" style="white-space:nowrap">' + escAttr(lead) + '</span>');
     return { text: text, html: '<span class="cs-sum" style="display:inline-flex;align-items:center;gap:9px;height:1.2em;line-height:1;vertical-align:top">' + items.join('') + '</span>' };
   };
 

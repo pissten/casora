@@ -286,7 +286,7 @@
       this.style.display = 'block';
       this.style.height = 'calc(84px + env(safe-area-inset-bottom, 0px))';
       if (!this._bar) this._build();
-      if (!this._bar.isConnected) document.body.appendChild(this._bar);
+      if (!this._bar.isConnected) document.body.appendChild(this._bar);  // casora-window: none, the bar translates itself (casoraRoomName keeps own room names, r502); watched, it flickered on every hass update
       /* Raum-/Kategorie-Seiten (filter-overlay) scrollen in einem eigenen Fenster: ohne diesen Platz
          unten bleibt die letzte Kachelreihe dauerhaft unter der Leiste liegen. */
       document.documentElement.style.setProperty('--casora-mobile-nav-space', 'calc(84px + env(safe-area-inset-bottom, 0px))');
@@ -302,6 +302,9 @@
         var root = document.documentElement;
         window._hmnResvObs = new MutationObserver(function () {
           if (!(window._casoraSoft && window._casoraSoft()) || !document.querySelector('.hmn-dock button-card')) return;
+          // Already 8px inline: setting it again changes nothing. Skips a forced style recalculation on every
+          // style change of <html> (popups lock the page scroll there on each open).
+          if (root.style.getPropertyValue('--casora-mhead-reserve').trim() === '8px') return;
           if (getComputedStyle(root).getPropertyValue('--casora-mhead-reserve').trim() !== '8px') root.style.setProperty('--casora-mhead-reserve', '8px');
         });
         window._hmnResvObs.observe(root, { attributes: true, attributeFilter: ['style'] });
@@ -634,7 +637,7 @@
       if (bg0.indexOf('menu-pane-webkit') < 0) m.style.backgroundColor = 'var(--casora-mnav-menu-pane, ' + bg0 + ')';
       m.style.setProperty('--casora-menu-shadow', 'var(--casora-mnav-menu-shadow, var(--casora-elevation-floating-phone, 0 10px 26px rgba(0,0,0,0.18)))');
       this._items(kind).forEach(function (it) {
-        if (it.header) { var hd = document.createElement('div'); hd.className = 'hmn-ghead'; hd.textContent = it.header; m.appendChild(hd); return; }
+        if (it.header) { var hd = document.createElement('div'); hd.className = 'hmn-ghead'; hd.setAttribute('data-no-i18n', ''); hd.textContent = it.header; m.appendChild(hd); return; }
         var b = document.createElement('button');
         b.type = 'button'; b.className = 'hmn-item' + (it.on ? ' on' : '');
         b.title = String(it.label || '');
@@ -647,7 +650,7 @@
         m.appendChild(b);
       });
       this._scrimOpen();
-      document.body.appendChild(m);
+      m.setAttribute('data-casora-window', ''); document.body.appendChild(m);
       /* Erst die Leiste neu zeichnen, dann messen: in Weich (hmn-ic) wird die getippte Taste beim Öffnen
          zur breiten Ton-Pille mit Wort und die Kapsel zentriert sich neu – mit den alten Maßen saß das
          Menü bis zu 35 px neben der Taste (05.10.2026). */
@@ -688,7 +691,7 @@
         if (sv) sc.style.setProperty('--hmn-scrim', sv);
         if (bv) sc.style.setProperty('--hmn-scrim-bd', bv);
       } catch (e) {}
-      document.body.appendChild(sc);
+      document.body.appendChild(sc);  // casora-window: none, the scrim behind the menu, no text
       if (this._bar) this._bar.classList.add('hmn-up');
       requestAnimationFrame(function () { sc.classList.add('open'); });
     }
@@ -791,7 +794,7 @@
       };
       this._scrimOpen();
       if (this._bar) this._bar.classList.add('hmn-up');
-      document.body.appendChild(m);
+      m.setAttribute('data-casora-window', ''); document.body.appendChild(m);
       this._render();
       /* Breite nach Inhalt beim Öffnen festhalten: ändert sich ein Zustand rechts (Fenster geht auf), springt das Fenster nicht. */
       /* Breite nach Inhalt; WebKit rechnet die Namensspalte einige Pixel zu schmal – den Fehlbetrag der

@@ -695,6 +695,31 @@
       inner.style.setProperty('width', `${Math.ceil(ext)}px`, 'important');
     }
   }
+  // Dashboard header and row widths for every overlay that was built (or retries) in this frame, in one pass
+  // (Tempo 2, 13.11.2026): first all overlays look up their elements (reads), then the header, then each
+  // container's rows once. The phone has several overlays on one container; each used to do all of it right
+  // away on its own, so the same rows were measured once per overlay, a forced layout each time.
+  const _dashExtrasQ = new Set();
+  let _dashExtrasRaf = 0;
+  function _dashExtrasFrame() {
+    _dashExtrasRaf = 0;
+    const list = Array.from(_dashExtrasQ);
+    _dashExtrasQ.clear();
+    if (_activeOverlay) return;
+    for (const inst of list) { try { inst._discoverElements(); } catch (_) {} }
+    const containers = new Set();
+    for (const inst of list) {
+      if (!_dashHeader?.grad?.isConnected && inst._headerEl) _ensureDashboardHeader(inst);
+      if (inst._container) containers.add(inst._container);
+    }
+    // Give the sub-badge rows real scrollWidth as soon as they render.
+    containers.forEach((c) => _fixRowWidths(c));
+  }
+  function _dashExtrasSoon(inst) {
+    _dashExtrasQ.add(inst);
+    if (!_dashExtrasRaf) _dashExtrasRaf = requestAnimationFrame(_dashExtrasFrame);
+  }
+
   function _fixRowWidths(root) {
     const walk = (node, depth) => {
       if (depth > 12 || !(node instanceof Element)) return;
@@ -1077,7 +1102,10 @@
         if (title.style.opacity !== '0') { title.style.opacity = '0'; title.style.pointerEvents = 'none'; }
         if (grad.style.opacity !== '0') { grad.style.opacity = '0'; veil.style.opacity = '0'; edge.style.opacity = '0'; }
         _dashBarOn = false;
-        if (cp > 0) {
+        // Phone (owner, 15.11.2026): no pill on Home – the greeting scrolls away, the Home tab in the bar says where
+        // you are. The soft fade under the status bar stays. Tablet/desktop keep the pill; room pages have their own.
+        const pc = (window.innerWidth || 0) <= 600 ? 0 : cp;
+        if (pc > 0) {
           // Startseite: nur „Zuhause“ – Meldungen zeigen Glocke und Sicherheits-Badge (07.10.2026).
           _setHeadPill(pill, nameText || _tr('Zuhause'), []);
           // Nie unter Glocke/Menü: Breite bis 8 px vor deren Kapsel.
@@ -1086,9 +1114,9 @@
           if (_docked(pillHost)) pill.style.maxWidth = 'calc(100vw - 32px)';
           else if (pr.width && pr.left > pl) pill.style.maxWidth = `${Math.max(88, Math.floor(pr.left - 8 - pl))}px`;
         }
-        pill.style.opacity       = String(cp);
-        pill.style.transform     = `translateY(${(1 - cp) * 5}px)`;
-        pill.style.pointerEvents = cp > 0.5 ? 'auto' : 'none';
+        pill.style.opacity       = String(pc);
+        pill.style.transform     = `translateY(${(1 - pc) * 5}px)`;
+        pill.style.pointerEvents = pc > 0.5 ? 'auto' : 'none';
         fade.style.opacity = String(cp);
         return;
       }
@@ -1453,7 +1481,7 @@
             _tw.setAttribute('data-casora-room-bg-twin', this._config.room);
             _tw.style.cssText = blurLayer.style.cssText;
             Object.assign(_tw.style, { position: 'fixed', zIndex: '-1', width: 'calc(100vw + 192px)', height: 'calc(100lvh + 192px)' });
-            document.body.appendChild(_tw);
+            document.body.appendChild(_tw);  // casora-window: none, the room background twin, no text
             const _sync = () => {
               _tw.style.display = blurLayer.style.display;
               _tw.style.opacity = blurLayer.style.opacity;
@@ -1543,12 +1571,7 @@
 
       const tryDashExtras = (n) => {
         const headerDone = !!_dashHeader?.grad?.isConnected;
-        if (!_activeOverlay) {
-          this._discoverElements();
-          if (!headerDone && this._headerEl) _ensureDashboardHeader(this);
-          // Give the sub-badge rows real scrollWidth as soon as they render.
-          _fixRowWidths(this._container);
-        }
+        _dashExtrasSoon(this);
         if (n < 20 && !headerDone) setTimeout(() => tryDashExtras(n + 1), 500);
       };
       tryDashExtras(0);
@@ -1661,7 +1684,7 @@
       const b = this._blurLayerEl;
       if (!this._showing || _activeOverlay !== this || !b) return;
       if (!b.isConnected && this._appendTarget) { this._appendTarget.appendChild(b); _blurLayers.add(b); }
-      if (this._blurTwinEl && !this._blurTwinEl.isConnected) document.body.appendChild(this._blurTwinEl);
+      if (this._blurTwinEl && !this._blurTwinEl.isConnected) document.body.appendChild(this._blurTwinEl);  // casora-window: none, the room background twin, no text
       if (b.style.display === 'none' || b.style.opacity !== '1') {
         b.style.transition = 'none';
         b.style.display = 'block';
@@ -1843,7 +1866,7 @@
       box.setAttribute('aria-hidden', 'true');
       box.style.cssText = 'position:fixed;left:-10000px;top:0;width:360px;height:1px;overflow:hidden;opacity:0;pointer-events:none;contain:strict;';
       box.appendChild(el);
-      document.body.appendChild(box);
+      document.body.appendChild(box);  // casora-window: none, an off-screen scene row primer, translated as a button-card
       _scenePrimer = box;
       if (this._hass) { try { el.hass = this._hass; } catch (_) {} }
       const done = () => {
