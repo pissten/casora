@@ -1,5 +1,15 @@
 {
   "exact": {
+    "Tage": "jours",
+    "neue Folgen": "nouveaux épisodes",
+    "1 neu": "1 nouveau",
+    "Neu hinzugefügt": "Ajouté récemment",
+    "Fußboden": "Sol",
+    "Fußbodentemperatur": "Température du sol",
+    "Anforderung": "Demande",
+    "Adaptives Licht": "Éclairage adaptatif",
+    "Adaptives Licht pausieren": "Mettre en pause l'éclairage adaptatif",
+    "Adaptives Licht fortsetzen": "Reprendre l'éclairage adaptatif",
     "Nur ansehen": "Lecture seule",
     "Nur ansehen – hier wird nichts geschaltet": "Lecture seule – rien n’est commandé ici",
     "Alle Änderungen": "Toutes les modifications",
@@ -5370,6 +5380,10 @@
     [
       "^Wohlfühlbereich (\\d+)–(\\d+) %$",
       "Zone de confort {1}–{2} %"
+    ],
+    [
+      "^(\\d+) neu$",
+      "{1} nouveaux"
     ]
   ]
 }

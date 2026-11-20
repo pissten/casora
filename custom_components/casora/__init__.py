@@ -16,6 +16,7 @@ from homeassistant.helpers.entity_platform import async_get_platforms
 from .assets import CasoraAssetsView
 from .scripts_view import STUDIO_LOADER, STUDIO_LOADER_KEY, CasoraPanelView, CasoraScriptsView, studio_loader, studio_stamp
 from .actions import SERVICES as ACTION_SERVICES, async_setup_actions
+from .adaptive_lighting import async_setup_adaptive_lighting
 from .helfer import async_setup_helfer, async_unload_helfer
 from .preload import async_set_preload, async_unload_preload
 from .theme import async_setup_theme, async_unload_theme, remove_old_theme_file
@@ -288,6 +289,7 @@ async def _async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         _LOGGER.exception("Casora: designs not set up")
     # The cards' actions (formerly scripts in scripts.yaml).
     async_setup_actions(hass)
+    async_setup_adaptive_lighting(hass)
     # Optionen des früheren Update-Servers (Schlüssel/Adresse/Token) still entfernen – vor dem
     # Update-Listener, damit das kein Neuladen auslöst.
     if any(k in entry.options for k in LEGACY_OPTIONS):

@@ -1,5 +1,15 @@
 {
   "exact": {
+    "Tage": "days",
+    "neue Folgen": "new episodes",
+    "1 neu": "1 new",
+    "Neu hinzugefügt": "Recently added",
+    "Fußboden": "Floor",
+    "Fußbodentemperatur": "Floor temperature",
+    "Anforderung": "Demand",
+    "Adaptives Licht": "Adaptive lighting",
+    "Adaptives Licht pausieren": "Pause adaptive lighting",
+    "Adaptives Licht fortsetzen": "Resume adaptive lighting",
     "Nur ansehen": "View only",
     "Nur ansehen – hier wird nichts geschaltet": "View only – nothing switches here",
     "Alle Änderungen": "All changes",
@@ -5352,6 +5362,10 @@
     [
       "^Wohlfühlbereich (\\d+)–(\\d+) %$",
       "Comfort range {1}–{2}%"
+    ],
+    [
+      "^(\\d+) neu$",
+      "{1} new"
     ]
   ]
 }

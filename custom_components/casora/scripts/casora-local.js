@@ -259,6 +259,9 @@ const MODULES = [
   '46-screensaver',
   '47-media-extra',
   '48-energie-verlauf',
+  '49-adaptive-lighting',
+  '50-floor',
+  '51-plex-recent',
 ];
 
 const START_MODULES = MODULES.slice(0, 5);

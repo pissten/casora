@@ -367,7 +367,19 @@ window.CASORA_TILE_TYPES = [
   // (like) but has its own name and id, otherwise "Thermostat" would appear twice in the picker.
   { id: "fbh", like: "thermostat", label: "Floor heating", template: ["casora_thermostat", "casora_popup_fbh"],
     domains: ["climate"], icon: "heating_coil", fields: [
-      { key: "temp_sensor", label: "Temperature sensor", domains: ["sensor"], classes: ["temperature"] },
+      { key: "temp_sensor", label: "Temperature sensor", domains: ["sensor", "climate"], classes: { sensor: ["temperature"] } },
+      { key: "floor_sensor", label: "Floor temperature", domains: ["sensor", "climate"], classes: { sensor: ["temperature"] },
+        placeholder: "None", group: "Floor",
+        hint: "A floor sensor for this room. The climate card shows it, and the tile uses it when Floor is the main reading." },
+      { key: "floor_target", label: "Floor target", domains: ["number", "input_number", "sensor", "climate"],
+        placeholder: "None", group: "Floor",
+        hint: "Optional target setpoint for the floor sensor, shown in parentheses behind the floor temperature." },
+      { key: "floor_demand", label: "Heating demand", domains: ["sensor", "binary_sensor", "switch", "input_boolean", "number"],
+        placeholder: "None", group: "Floor",
+        hint: "On/off, or 0 to 100. Shown as a pedal next to the icon and in the climate card." },
+      { key: "climate_main", label: "Main reading", type: "select", options: ["", "floor"],
+        optionLabels: { "": "Room", floor: "Floor" }, group: "Floor",
+        hint: "Which temperature the tile shows. The heating control stays as it is." },
       { key: "show_toggle", label: "Toggle button", type: "bool", boolDefault: true },
       { key: "master_switch", label: "Main switch", domains: ["switch"], find: { keys: ["main_switch"], domain: "switch" },
         advanced: true, group: "Popup", hint: "For a heating group: the switch that turns the whole system on or off." },
@@ -698,6 +710,23 @@ window.CASORA_TILE_TYPES = [
     ] },
   // Aquarium overview (Hemma 1 and older versions "…_aquarium"): up to three tanks in one tile. Only for
   // editing migrated tiles – new tanks get the aquarium tile (casora_aquarium_tank).
+  { id: "casora_plex_recent", label: "Recently added", template: "casora_plex_recent", domains: ["sensor"],
+    icon: "plex", color: "var(--casora-color-yellow, #FFCC00)",
+    entityLabel: "Movies", entityPlaceholder: "The Plex movies sensor",
+    onlyIf: (hass) => {
+      const E = hass && hass.entities;
+      if (E && Object.values(E).some((e) => e && e.platform === "plex_recently_added")) return true;
+      const S = (hass && hass.states) || {};
+      return !!(S["sensor.plex_recently_added"] || S["sensor.plex_recently_added_movie"]);
+    },
+    fields: [
+      ICON,
+      { key: "plex_shows", label: "TV shows", domains: ["sensor"], placeholder: "The Plex series sensor",
+        hint: "Leave empty when the movie sensor already lists series too." },
+      { key: "plex_days", label: "Days", type: "number", placeholder: "7",
+        hint: "How many days count as newly added." },
+      TITLE_NAME,
+    ] },
   { id: "casora_aquariums", label: "Aquariums", template: "casora_aquarium", hidden: true, domains: ["sensor"],
     classes: ["temperature"], entityLabel: "Water temperature", icon: "fish", fields: [
       ICON,

@@ -1,5 +1,15 @@
 {
   "exact": {
+    "Tage": "dni",
+    "neue Folgen": "nowe odcinki",
+    "1 neu": "1 nowy",
+    "Neu hinzugefügt": "Ostatnio dodane",
+    "Fußboden": "Podłoga",
+    "Fußbodentemperatur": "Temperatura podłogi",
+    "Anforderung": "Zapotrzebowanie",
+    "Adaptives Licht": "Oświetlenie adaptacyjne",
+    "Adaptives Licht pausieren": "Wstrzymaj oświetlenie adaptacyjne",
+    "Adaptives Licht fortsetzen": "Wznów oświetlenie adaptacyjne",
     "Nur ansehen": "Tylko podgląd",
     "Nur ansehen – hier wird nichts geschaltet": "Tylko podgląd – tutaj nic się nie przełącza",
     "Alle Änderungen": "Wszystkie zmiany",
@@ -5370,6 +5380,10 @@
     [
       "^Wohlfühlbereich (\\d+)–(\\d+) %$",
       "Zakres komfortu {1}–{2} %"
+    ],
+    [
+      "^(\\d+) neu$",
+      "{1} nowych"
     ]
   ]
 }

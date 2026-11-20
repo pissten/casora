@@ -1,5 +1,15 @@
 {
   "exact": {
+    "Tage": "dagen",
+    "neue Folgen": "nieuwe afleveringen",
+    "1 neu": "1 nieuw",
+    "Neu hinzugefügt": "Onlangs toegevoegd",
+    "Fußboden": "Vloer",
+    "Fußbodentemperatur": "Vloertemperatuur",
+    "Anforderung": "Warmtevraag",
+    "Adaptives Licht": "Adaptieve verlichting",
+    "Adaptives Licht pausieren": "Adaptieve verlichting pauzeren",
+    "Adaptives Licht fortsetzen": "Adaptieve verlichting hervatten",
     "Nur ansehen": "Alleen bekijken",
     "Nur ansehen – hier wird nichts geschaltet": "Alleen bekijken – hier wordt niets geschakeld",
     "Alle Änderungen": "Alle wijzigingen",
@@ -5370,6 +5380,10 @@
     [
       "^Wohlfühlbereich (\\d+)–(\\d+) %$",
       "Comfortbereik {1}–{2} %"
+    ],
+    [
+      "^(\\d+) neu$",
+      "{1} nieuw"
     ]
   ]
 }

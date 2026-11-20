@@ -1,5 +1,15 @@
 {
   "exact": {
+    "Tage": "dias",
+    "neue Folgen": "episódios novos",
+    "1 neu": "1 novo",
+    "Neu hinzugefügt": "Adicionado recentemente",
+    "Fußboden": "Piso",
+    "Fußbodentemperatur": "Temperatura do piso",
+    "Anforderung": "Pedido",
+    "Adaptives Licht": "Iluminação adaptativa",
+    "Adaptives Licht pausieren": "Pausar a iluminação adaptativa",
+    "Adaptives Licht fortsetzen": "Retomar a iluminação adaptativa",
     "Nur ansehen": "Só ver",
     "Nur ansehen – hier wird nichts geschaltet": "Só ver – aqui nada é ligado ou desligado",
     "Alle Änderungen": "Todas as alterações",
@@ -5370,6 +5380,10 @@
     [
       "^Wohlfühlbereich (\\d+)–(\\d+) %$",
       "Intervalo de conforto {1}–{2} %"
+    ],
+    [
+      "^(\\d+) neu$",
+      "{1} novos"
     ]
   ]
 }

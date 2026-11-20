@@ -1,5 +1,15 @@
 {
   "exact": {
+    "Tage": "dager",
+    "neue Folgen": "nye episoder",
+    "1 neu": "1 ny",
+    "Neu hinzugefügt": "Nylig lagt til",
+    "Fußboden": "Gulv",
+    "Fußbodentemperatur": "Gulvtemperatur",
+    "Anforderung": "Pådrag",
+    "Adaptives Licht": "Adaptiv belysning",
+    "Adaptives Licht pausieren": "Sett adaptiv belysning på pause",
+    "Adaptives Licht fortsetzen": "Fortsett adaptiv belysning",
     "Nur ansehen": "Bare se",
     "Nur ansehen – hier wird nichts geschaltet": "Bare se – ingenting slås av eller på her",
     "Favorites": "Favoritter",
@@ -5363,6 +5373,10 @@
     [
       "^Wohlfühlbereich (\\d+)–(\\d+) %$",
       "Komfortområde {1}–{2}%"
+    ],
+    [
+      "^(\\d+) neu$",
+      "{1} nye"
     ]
   ]
 }

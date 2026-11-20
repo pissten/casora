@@ -1,5 +1,15 @@
 {
  "exact": {
+  "Tage": "Tage",
+  "neue Folgen": "neue Folgen",
+  "1 neu": "1 neu",
+  "Neu hinzugefügt": "Neu hinzugefügt",
+  "Fußboden": "Fußboden",
+  "Fußbodentemperatur": "Fußbodentemperatur",
+  "Anforderung": "Anforderung",
+  "Adaptives Licht": "Adaptives Licht",
+  "Adaptives Licht pausieren": "Adaptives Licht pausieren",
+  "Adaptives Licht fortsetzen": "Adaptives Licht fortsetzen",
   "Favorites": "Favoriten",
   "Scenes": "Szenen",
   "Ein": "An",

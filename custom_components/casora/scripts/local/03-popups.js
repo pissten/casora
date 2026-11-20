@@ -844,7 +844,7 @@
         if (r.trv && r.bat && nv(states[r.bat]) != null) sub += ' · Akku ' + Math.round(nv(states[r.bat])) + ' %';
         return { icon: r.trv ? 'mdi:radiator' : 'mdi:heating-coil',
           iconTone: h ? 'var(--casora-tone-heat, var(--casora-color-red, #FF453A))' : (s && s.state !== 'off' && s.state !== 'unavailable' ? 'accent' : 'rgba(255,255,255,0.18)'),
-          label: r.name, sub: sub, value: t != null ? fmt(t) + ' ' + TU() : null, entity: r.id,
+          label: r.name, sub: sub, value: (window.casoraClimateEntityTemp && s ? window.casoraClimateEntityTemp(s, states, r.temp) : null) || (t != null ? fmt(t) + ' ' + TU() : null), entity: r.id,
           /* Weich: eingeschalteter Raum/Heizkörper als aktive Zeile (heller Grund, Zustand in Ton) –
              wie die Thermostat-Kachel nach hvac_mode, nicht nur solange er gerade heizt. */
           active: !!(s && s.state !== 'off' && s.state !== 'unavailable' && s.state !== 'unknown') };
@@ -1019,7 +1019,21 @@
       .forEach(function (k) { if (o[k]) watch.push(o[k]); }); };
     if (c.group) { c.rooms.concat(c.trvs).forEach(addW); if (c.houseTemp) watch.push(c.houseTemp); if (c.master) watch.push(c.master);
       watch.push('sensor.casora_heizungs_coach'); } else addW(c);
+    if (variables && variables.floor_sensor) watch.push(variables.floor_sensor);
+    if (variables && variables.floor_target) watch.push(variables.floor_target);
+    if (variables && variables.floor_demand) watch.push(variables.floor_demand);
     watch = watch.filter(function (w, i) { return watch.indexOf(w) === i && states[w]; });
+    var floorTpl = (variables && (variables.floor_sensor || variables.floor_demand))
+      ? '[[[ return window.casoraFloorGroup ? window.casoraFloorGroup(window._casoraUI, '
+        + JSON.stringify({
+          floor_sensor: variables.floor_sensor || '',
+          floor_target: variables.floor_target || '',
+          floor_demand: variables.floor_demand || '',
+          climate_main: variables.climate_main || '',
+          temp_sensor: variables.temp_sensor || '',
+        })
+        + ', states, states[' + JSON.stringify(id) + ']) : ""; ]]]'
+      : '';
 
     var fields = {}, fstyle = {};
     var sec = function (n) { return '[[[ return window._casoraFbh ? window._casoraFbh.sec(' + JSON.stringify(n) + ', ' + cj + ', states, hass) : ""; ]]]'; };
@@ -1067,7 +1081,9 @@
            no coach, main switch or settings. */
         var g3 = { hero: sec('v3house'), stage: sec('stage'), allrooms: sec('allrooms') };
         if (fields.chart) g3.chart = fields.chart;
-        return HH.layout({ entity: id, watch: watch, fields: g3, top: ['hero'], stage: 'stage', left: fields.chart ? ['chart'] : [], right: ['allrooms'] });
+        if (floorTpl) g3.floor = floorTpl;
+        var g3left = [].concat(fields.chart ? ['chart'] : [], floorTpl ? ['floor'] : []);
+        return HH.layout({ entity: id, watch: watch, fields: g3, top: ['hero'], stage: 'stage', left: g3left, right: ['allrooms'] });
       }
       if (c.group) {
         var g = { hero: fields.hero, house: fields.house, allrooms: sec('allrooms'),
@@ -1081,11 +1097,15 @@
         /* v3: state word (and humidity) in the status line, stage + quick, then Verlauf 120 high, Einstellungen, Mehr. */
         var r3 = { hero: sec('v3hero'), stage: sec('stage'), chart: fields.chart,
           more: HH.moreCard(watch, mcode(['det']), id) };
-        return HH.layout({ entity: id, watch: watch, fields: r3, top: ['hero'], stage: 'stage', left: ['chart'],
+        if (floorTpl) r3.floor = floorTpl;
+        return HH.layout({ entity: id, watch: watch, fields: r3, top: ['hero'], stage: 'stage',
+          left: floorTpl ? ['chart', 'floor'] : ['chart'],
           right: ['more'], settings: id });
       }
       var r1 = { hero: fields.hero, chart: fields.chart, ctl: fields.ctl, more: HH.moreCard(watch, mcode(['det']), id) };
-      return HH.layout({ entity: id, watch: watch, fields: r1, top: ['hero', 'chart'], left: ['ctl'], right: ['more'], settings: id });
+      if (floorTpl) r1.floor = floorTpl;
+      return HH.layout({ entity: id, watch: watch, fields: r1, top: floorTpl ? ['hero', 'chart', 'floor'] : ['hero', 'chart'],
+        left: ['ctl'], right: ['more'], settings: id });
     }
 
     var colStyle = ':host { display: block; } ha-card { background: transparent !important; border: none !important;'
